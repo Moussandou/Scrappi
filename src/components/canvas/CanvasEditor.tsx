@@ -540,7 +540,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
 
                         {/* Tool Parameters HUD */}
                         {(activeTool === 'draw' || activeTool === 'arrow' || activeTool === 'eraser') && (
-                            <div className="flex flex-col gap-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl animate-in fade-in slide-in-from-left-4 duration-200 pointer-events-auto w-32">
+                            <div className="flex flex-col gap-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl animate-in fade-in slide-in-from-left-4 duration-200 pointer-events-auto w-28">
                                 {activeTool !== 'eraser' && (
                                     <>
                                         <div className="flex flex-col gap-2">
@@ -577,18 +577,18 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                     <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider mb-1">
                                         {activeTool === 'eraser' ? 'Taille gomme' : 'Épaisseur'}
                                     </p>
-                                    <div className="grid grid-cols-2 gap-1.5">
+                                    <div className="grid grid-cols-2 gap-2">
                                         {[2, 4, 8, 16].map((w) => (
                                             <button
                                                 key={w}
                                                 onClick={() => setActiveStrokeWidth(w)}
-                                                className={`h-7 rounded-lg flex items-center justify-center transition-all ${activeStrokeWidth === w ? 'bg-sage text-white shadow-sm' : 'text-ink-light hover:bg-black/5'}`}
+                                                className={`size-10 rounded-xl flex items-center justify-center transition-all ${activeStrokeWidth === w ? 'bg-sage text-white shadow-sm' : 'text-ink-light hover:bg-black/5'}`}
                                             >
                                                 <div
-                                                    className="rounded-full bg-current"
+                                                    className="rounded-full bg-current transition-all"
                                                     style={{
-                                                        width: Math.max(2, w / 2),
-                                                        height: Math.max(2, w / 2)
+                                                        width: w,
+                                                        height: w
                                                     }}
                                                 />
                                             </button>
