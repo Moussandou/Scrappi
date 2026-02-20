@@ -56,6 +56,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const colorMenuRef = useRef<HTMLDivElement>(null);
     const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser' | 'hand'>('select');
     const [activeColor, setActiveColor] = useState('#1a1e26');
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const helpRef = useRef<HTMLDivElement>(null);
 
     // Refs for stable event listeners
     const elementsRef = useRef(elements);
@@ -118,16 +120,37 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         if (isColorMenuOpen) document.addEventListener("mousedown", handleClickOutsideColor);
         else document.removeEventListener("mousedown", handleClickOutsideColor);
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.key === "Delete" || e.key === "Backspace") && !isEditingTitleRef.current) {
-                // Only delete if we are not editing a text element or input
-                const activeEl = document.activeElement;
-                if (activeEl?.tagName !== "INPUT" && activeEl?.tagName !== "TEXTAREA" && activeEl?.getAttribute("contenteditable") !== "true") {
-                    // Directly filter here using refs for maximum stability
-                    setElements(prev => prev.filter(el => !selectedIdsRef.current.includes(el.id)));
-                    setSelectedIds([]);
-                }
+        const handleClickOutsideHelp = (event: MouseEvent) => {
+            if (helpRef.current && !helpRef.current.contains(event.target as Node)) {
+                setIsHelpOpen(false);
             }
+        };
+
+        if (isHelpOpen) document.addEventListener("mousedown", handleClickOutsideHelp);
+        else document.removeEventListener("mousedown", handleClickOutsideHelp);
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Meta check to avoid triggering while typing in inputs
+            const activeEl = document.activeElement;
+            const isTyping = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA" || activeEl?.getAttribute("contenteditable") === "true";
+
+            if (isTyping || isEditingTitleRef.current) return;
+
+            // Delete logic
+            if (e.key === "Delete" || e.key === "Backspace") {
+                // Directly filter here using refs for maximum stability
+                setElements(prev => prev.filter(el => !selectedIdsRef.current.includes(el.id)));
+                setSelectedIds([]);
+                return;
+            }
+
+            // Tool switching shortcuts
+            const key = e.key.toLowerCase();
+            if (key === 'v') setActiveTool('select');
+            else if (key === 'h') setActiveTool('hand');
+            else if (key === 'b') setActiveTool('draw');
+            else if (key === 'a') setActiveTool('arrow');
+            else if (key === 'e') setActiveTool('eraser');
         };
 
         window.addEventListener("keydown", handleKeyDown);
@@ -135,9 +158,10 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideZoom);
             document.removeEventListener("mousedown", handleClickOutsideColor);
+            document.removeEventListener("mousedown", handleClickOutsideHelp);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isZoomMenuOpen, isColorMenuOpen]);
+    }, [isZoomMenuOpen, isColorMenuOpen, isHelpOpen]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -549,7 +573,41 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                         </div>
                     </div>
 
-                    <div className="pointer-events-auto p-8 flex justify-end">
+                    <div className="pointer-events-auto p-8 flex items-end gap-3">
+                        <div className="relative" ref={helpRef}>
+                            <button
+                                onClick={() => setIsHelpOpen(!isHelpOpen)}
+                                className={`size-10 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm flex items-center justify-center text-ink-light hover:text-ink transition-all ${isHelpOpen ? 'bg-white shadow-md scale-110' : ''}`}
+                                title="Raccourcis clavier"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">help</span>
+                            </button>
+
+                            {isHelpOpen && (
+                                <div className="absolute bottom-14 right-0 w-64 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-black/5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 z-50">
+                                    <h4 className="text-xs font-bold text-ink mb-3 uppercase tracking-wider flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-sm">keyboard</span>
+                                        Raccourcis
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {[
+                                            { key: 'V', label: 'Sélection' },
+                                            { key: 'H', label: 'Main (Pan)' },
+                                            { key: 'B', label: 'Pinceau' },
+                                            { key: 'A', label: 'Flèche' },
+                                            { key: 'E', label: 'Gomme' },
+                                            { key: '⌫', label: 'Supprimer' },
+                                        ].map((item) => (
+                                            <div key={item.key} className="flex items-center justify-between text-xs">
+                                                <span className="text-ink-light">{item.label}</span>
+                                                <kbd className="px-2 py-1 bg-black/5 rounded font-mono font-bold border border-black/5">{item.key}</kbd>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <button
                             onClick={handleRecenter}
                             className="size-12 rounded-full bg-white/80 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center text-ink-light hover:text-ink hover:bg-white transition-all hover:scale-110 active:scale-95"
