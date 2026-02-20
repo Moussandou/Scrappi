@@ -555,13 +555,15 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                             const selectedElements = elements.filter(el => selectedIds.includes(el.id));
                             const hasPostIt = selectedElements.some(el => el.type === 'text' && el.backgroundColor);
                             const hasText = selectedElements.some(el => el.type === 'text' && !el.backgroundColor);
-                            const hasLines = selectedElements.some(el => el.type === 'line' || el.type === 'arrow' || el.type === 'eraser');
+                            const hasLines = selectedElements.some(el => el.type === 'line' || el.type === 'arrow');
+                            const hasEraser = selectedElements.some(el => el.type === 'eraser');
 
                             const showHUD = (activeTool === 'draw' || activeTool === 'arrow' || activeTool === 'eraser') || selectedIds.length > 0;
-                            const showColor = (activeTool !== 'eraser' && !selectedElements.every(el => el.type === 'eraser')) && (activeTool === 'draw' || activeTool === 'arrow' || hasPostIt || hasText || hasLines);
-                            const showThickness = activeTool === 'draw' || activeTool === 'arrow' || activeTool === 'eraser' || hasLines;
+                            const showColor = (activeTool !== 'eraser' && !hasEraser) && (activeTool === 'draw' || activeTool === 'arrow' || hasPostIt || hasText || hasLines);
+                            const showThickness = activeTool === 'draw' || activeTool === 'arrow' || activeTool === 'eraser' || hasLines || hasEraser;
 
-                            if (!showHUD || (!showColor && !showThickness)) return null;
+                            if (!showHUD) return null;
+                            if (!showColor && !showThickness && selectedIds.length > 0 && !selectedElements.some(el => el.type === 'text' || el.type === 'line' || el.type === 'arrow' || el.type === 'eraser')) return null;
 
                             let colorLabel = "Couleur";
                             if (hasPostIt && !hasText && !hasLines && activeTool === 'select') colorLabel = "Couleur Papier";
