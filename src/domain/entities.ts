@@ -12,7 +12,7 @@ export interface Scrapbook {
     updatedAt: string;
 }
 
-export type CanvasElementType = 'text' | 'image' | 'video' | 'sticker' | 'line';
+export type CanvasElementType = 'text' | 'image' | 'video' | 'sticker' | 'line' | 'arrow' | 'eraser';
 
 export interface CanvasElement {
     id: string;

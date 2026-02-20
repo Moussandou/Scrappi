@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Text, Image as KonvaImage, Transformer, Group, Rect, Line } from "react-konva";
+import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
@@ -96,7 +96,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                         height={element.height}
                         fontSize={24}
                         fontFamily="var(--font-handwriting, Caveat)"
-                        fill="#1a1e26" // ink
+                        fill={element.strokeColor || "#1a1e26"} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
                     />
@@ -124,12 +124,13 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                                 }}
                                 onBlur={() => setIsEditing(false)}
                                 autoFocus
-                                className="w-full bg-transparent border-2 border-sage border-dashed outline-none resize-none font-handwriting text-[24px] text-ink m-0 rounded-lg shadow-xl"
+                                className="w-full bg-transparent border-2 border-sage border-dashed outline-none resize-none font-handwriting text-[24px] m-0 rounded-lg shadow-xl"
                                 style={{
                                     height: element.height || 50,
                                     minHeight: '50px',
                                     padding: element.backgroundColor ? '16px' : '8px',
                                     backgroundColor: element.backgroundColor || 'var(--color-paper)',
+                                    color: element.strokeColor || '#1a1e26',
                                 }}
                             />
                         </Html>
@@ -155,7 +156,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 />
             )}
 
-            {element.type === 'line' && (
+            {(element.type === 'line' || element.type === 'eraser') && (
                 <Line
                     points={element.points || []}
                     stroke={element.strokeColor || '#1a1e26'}
@@ -171,12 +172,43 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}
+                    globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
+                />
+            )}
+
+            {element.type === 'arrow' && (
+                <Arrow
+                    points={element.points || []}
+                    stroke={element.strokeColor || '#1a1e26'}
+                    strokeWidth={element.strokeWidth || 4}
+                    fill={element.strokeColor || '#1a1e26'}
+                    lineCap="round"
+                    lineJoin="round"
+                    x={element.x}
+                    y={element.y}
+                    rotation={element.rotation}
+                    draggable={isDraggable}
+                    listening={isDraggable}
+                    onClick={onSelect}
+                    onTap={onSelect}
+                    onDragEnd={handleDragEnd}
+                    pointerLength={10}
+                    pointerWidth={10}
                 />
             )}
 
             {isSelected && !isEditing && (
                 <Transformer
                     ref={trRef}
+                    anchorFill="#8a9a86"
+                    anchorStroke="#ffffff"
+                    anchorSize={10}
+                    anchorCornerRadius={3}
+                    borderStroke="#8a9a86"
+                    borderStrokeWidth={2}
+                    borderDash={[4, 4]}
+                    padding={10}
+                    rotateAnchorOffset={30}
                     boundBoxFunc={(oldBox, newBox) => {
                         // limit resize
                         if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {

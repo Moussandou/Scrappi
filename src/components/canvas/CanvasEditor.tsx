@@ -45,12 +45,24 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [scale, setScale] = useState(1);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
     const zoomMenuRef = useRef<HTMLDivElement>(null);
-    const [activeTool, setActiveTool] = useState<'select' | 'draw'>('select');
+    const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
+    const colorMenuRef = useRef<HTMLDivElement>(null);
+    const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser'>('select');
+    const [activeColor, setActiveColor] = useState('#1a1e26');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+    const colors = [
+        { name: 'Ink', value: '#1a1e26' },
+        { name: 'Sage', value: '#8a9a86' },
+        { name: 'Red', value: '#ef4444' },
+        { name: 'Blue', value: '#3b82f6' },
+        { name: 'Yellow', value: '#eab308' },
+        { name: 'Pink', value: '#ec4899' },
+    ];
 
     useEffect(() => {
         async function loadData() {
@@ -74,20 +86,28 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     }, [projectId]);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutsideZoom = (event: MouseEvent) => {
             if (zoomMenuRef.current && !zoomMenuRef.current.contains(event.target as Node)) {
                 setIsZoomMenuOpen(false);
             }
         };
+        const handleClickOutsideColor = (event: MouseEvent) => {
+            if (colorMenuRef.current && !colorMenuRef.current.contains(event.target as Node)) {
+                setIsColorMenuOpen(false);
+            }
+        };
 
-        if (isZoomMenuOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        } else {
-            document.removeEventListener("mousedown", handleClickOutside);
-        }
+        if (isZoomMenuOpen) document.addEventListener("mousedown", handleClickOutsideZoom);
+        else document.removeEventListener("mousedown", handleClickOutsideZoom);
 
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isZoomMenuOpen]);
+        if (isColorMenuOpen) document.addEventListener("mousedown", handleClickOutsideColor);
+        else document.removeEventListener("mousedown", handleClickOutsideColor);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutsideZoom);
+            document.removeEventListener("mousedown", handleClickOutsideColor);
+        };
+    }, [isZoomMenuOpen, isColorMenuOpen]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -104,8 +124,9 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const addTextElement = (isPostIt: boolean = false) => {
         const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
         const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
+        const id = crypto.randomUUID();
         const newElement: CanvasElement = {
-            id: crypto.randomUUID(),
+            id,
             type: "text",
             content: isPostIt ? "Nouvelle note" : "Double click to edit",
             x,
@@ -114,10 +135,31 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
             height: isPostIt ? 200 : 50,
             rotation: 0,
             zIndex: elements.length + 1,
-            backgroundColor: isPostIt ? "#fef08a" : undefined, // Tailwind yellow-200
+            backgroundColor: isPostIt ? activeColor : undefined,
+            strokeColor: !isPostIt ? activeColor : undefined, // We'll use strokeColor to store text color for simplicity if needed
         };
         setElements([...elements, newElement]);
+        setSelectedIds([id]);
     };
+    const handleColorSelect = (colorValue: string) => {
+        setActiveColor(colorValue);
+
+        // Apply color to currently selected elements if any
+        if (selectedIds.length > 0) {
+            selectedIds.forEach(id => {
+                const el = elements.find(e => e.id === id);
+                if (el) {
+                    if (el.type === 'text' && el.backgroundColor) {
+                        handleElementChange(id, { backgroundColor: colorValue });
+                    } else {
+                        handleElementChange(id, { strokeColor: colorValue });
+                    }
+                }
+            });
+        }
+        setIsColorMenuOpen(false);
+    };
+
     const handleElementChange = (id: string, partial: Partial<CanvasElement>) => {
         setElements(elements.map(el => el.id === id ? { ...el, ...partial } : el));
     };
@@ -245,6 +287,9 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                     scale={scale}
                     setScale={setScale}
                     activeTool={activeTool}
+                    activeColor={activeColor}
+                    selectedIds={selectedIds}
+                    setSelectedIds={setSelectedIds}
                 />
             </div>
 
@@ -340,6 +385,16 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 <span className="material-symbols-outlined">brush</span>
                             </button>
                             <button
+                                onClick={() => setActiveTool('arrow')}
+                                className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'arrow' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
+                                <span className="material-symbols-outlined">architecture</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTool('eraser')}
+                                className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'eraser' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
+                                <span className="material-symbols-outlined">ink_eraser</span>
+                            </button>
+                            <button
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={uploading}
                                 className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors pointer-events-auto"
@@ -357,15 +412,57 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 <span className="material-symbols-outlined">title</span>
                             </button>
                         </div>
+                        <div className="relative" ref={colorMenuRef}>
+                            <button
+                                onClick={() => setIsColorMenuOpen(!isColorMenuOpen)}
+                                className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors pointer-events-auto"
+                                title="Couleur"
+                            >
+                                <div
+                                    className="size-6 rounded-full border-2 border-black/10 shadow-sm"
+                                    style={{ backgroundColor: activeColor }}
+                                />
+                            </button>
+
+                            {isColorMenuOpen && (
+                                <div className="absolute right-14 top-1/2 -translate-y-1/2 flex flex-row gap-2 bg-white/90 backdrop-blur-md p-2.5 rounded-full border border-black/5 shadow-xl pointer-events-auto animate-in fade-in slide-in-from-right-4 duration-200">
+                                    {colors.map(color => (
+                                        <button
+                                            key={color.name}
+                                            onClick={() => handleColorSelect(color.value)}
+                                            className={`size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 ${activeColor === color.value ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
+                                            style={{ backgroundColor: color.value }}
+                                            title={color.name}
+                                        />
+                                    ))}
+                                    <div
+                                        className={`relative size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 overflow-hidden flex items-center justify-center ${!colors.some(c => c.value === activeColor) ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
+                                        style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                                        title="Couleur personnalisée"
+                                    >
+                                        <input
+                                            type="color"
+                                            value={activeColor}
+                                            onChange={(e) => {
+                                                setActiveColor(e.target.value);
+                                                handleColorSelect(e.target.value);
+                                                setIsColorMenuOpen(true); // Keep open when using custom picker
+                                            }}
+                                            className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-
-                <footer className="pointer-events-auto px-8 py-6 flex justify-between items-end">
-                    <div className="bg-white/80 backdrop-blur-md px-5 py-3 rounded-full border border-black/5 shadow-soft flex items-center gap-5">
-                        <span className="text-xs text-ink-light font-medium">Brouillon en cours</span>
-                    </div>
-                </footer>
             </div>
+
+            <footer className="pointer-events-auto px-8 py-6 flex justify-between items-end">
+                <div className="bg-white/80 backdrop-blur-md px-5 py-3 rounded-full border border-black/5 shadow-soft flex items-center gap-5">
+                    <span className="text-xs text-ink-light font-medium">Brouillon en cours</span>
+                </div>
+            </footer>
         </div>
     );
 }
