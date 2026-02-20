@@ -228,8 +228,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
             height: isPostIt ? 200 : 50,
             rotation: 0,
             zIndex: elements.length + 1,
-            backgroundColor: isPostIt ? activeColor : undefined,
-            strokeColor: !isPostIt ? activeColor : undefined,
+            backgroundColor: isPostIt ? '#eab308' : undefined,
+            strokeColor: !isPostIt ? '#1a1e26' : undefined,
         };
         setElements([...elements, newElement]);
         setSelectedIds([id]);
