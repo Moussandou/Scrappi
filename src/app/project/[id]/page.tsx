@@ -1,9 +1,10 @@
 import CanvasEditor from "@/components/canvas/CanvasEditor";
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
+export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
     return (
         <main className="w-full h-screen overflow-hidden">
-            <CanvasEditor projectId={params.id} />
+            <CanvasEditor projectId={resolvedParams.id} />
         </main>
     );
 }

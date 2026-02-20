@@ -11,7 +11,34 @@ const Canvas = dynamic(() => import("./InfiniteCanvas"), {
 });
 
 export default function CanvasEditor({ projectId }: { projectId: string }) {
-    const [elements, setElements] = useState<CanvasElement[]>([]);
+    const [history, setHistory] = useState<CanvasElement[][]>([[]]);
+    const [historyStep, setHistoryStep] = useState(0);
+    const elements = history[historyStep] || [];
+
+    const setElements = (action: CanvasElement[] | ((prev: CanvasElement[]) => CanvasElement[])) => {
+        const currentState = history[historyStep] || [];
+        const nextState = typeof action === 'function' ? action(currentState) : action;
+
+        // Don't push to history if nothing changed
+        if (JSON.stringify(currentState) === JSON.stringify(nextState)) return;
+
+        const newHistory = history.slice(0, historyStep + 1);
+        newHistory.push(nextState);
+        setHistory(newHistory);
+        setHistoryStep(newHistory.length - 1);
+    };
+
+    const handleUndo = () => {
+        if (historyStep > 0) {
+            setHistoryStep(historyStep - 1);
+        }
+    };
+
+    const handleRedo = () => {
+        if (historyStep < history.length - 1) {
+            setHistoryStep(historyStep + 1);
+        }
+    };
     const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -26,7 +53,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 setScrapbook(fetchedScrapbook);
 
                 const fetchedElements = await getElements(projectId);
-                setElements(fetchedElements);
+                setHistory([fetchedElements]);
+                setHistoryStep(0);
             } catch (error) {
                 console.error("Failed to load project data", error);
             } finally {
@@ -172,10 +200,16 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                     </div>
 
                     <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-2 rounded-full border border-black/5 shadow-soft">
-                        <button className="size-10 rounded-full flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-all">
+                        <button
+                            onClick={handleUndo}
+                            disabled={historyStep === 0}
+                            className={`size-10 rounded-full flex items-center justify-center transition-all ${historyStep === 0 ? 'text-ink-light/30 cursor-not-allowed' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
                             <span className="material-symbols-outlined">undo</span>
                         </button>
-                        <button className="size-10 rounded-full flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-all">
+                        <button
+                            onClick={handleRedo}
+                            disabled={historyStep === history.length - 1}
+                            className={`size-10 rounded-full flex items-center justify-center transition-all ${historyStep === history.length - 1 ? 'text-ink-light/30 cursor-not-allowed' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
                             <span className="material-symbols-outlined">redo</span>
                         </button>
                         <div className="w-px h-6 bg-black/10 mx-1"></div>
