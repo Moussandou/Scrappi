@@ -14,7 +14,7 @@ interface InfiniteCanvasProps {
     setScale: (s: number) => void;
     position: { x: number, y: number };
     setPosition: (pos: { x: number, y: number }) => void;
-    activeTool: 'select' | 'draw' | 'arrow' | 'eraser';
+    activeTool: 'select' | 'draw' | 'arrow' | 'eraser' | 'hand';
     activeColor: string;
     selectedIds: string[];
     setSelectedIds: (ids: string[]) => void;
@@ -116,7 +116,7 @@ export default function InfiniteCanvas({
                 strokeWidth: 4,
             });
         } else if (activeTool === 'select') {
-            const clickedOnEmpty = e.target === e.target.getStage();
+            const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-rect';
             if (clickedOnEmpty) {
                 setSelectedIds([]);
                 setSelectionBox({ x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y });
@@ -205,20 +205,22 @@ export default function InfiniteCanvas({
             onTouchMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onTouchEnd={handleMouseUp}
-            draggable={activeTool === 'select' && selectedIds.length === 0}
+            draggable={activeTool === 'hand'}
             scaleX={scale}
             scaleY={scale}
             x={position.x}
             y={position.y}
             ref={stageRef}
-            className={`absolute inset-0 z-0 ${activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'arrow' ? 'cursor-crosshair' : (selectedIds.length === 0 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
+            className={`absolute inset-0 z-0 ${activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'arrow' ? 'cursor-crosshair' : (activeTool === 'hand' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
         >
             <Layer>
                 <Rect
-                    x={-10000}
-                    y={-10000}
-                    width={20000}
-                    height={20000}
+                    name="background-rect"
+                    x={-50000}
+                    y={-50000}
+                    width={100000}
+                    height={100000}
+                    fill="transparent"
                 />
                 {elements.map((el) => (
                     <RenderElement

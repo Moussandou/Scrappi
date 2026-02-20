@@ -54,8 +54,19 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const zoomMenuRef = useRef<HTMLDivElement>(null);
     const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
     const colorMenuRef = useRef<HTMLDivElement>(null);
-    const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser'>('select');
+    const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser' | 'hand'>('select');
     const [activeColor, setActiveColor] = useState('#1a1e26');
+
+    // Refs for stable event listeners
+    const elementsRef = useRef(elements);
+    const selectedIdsRef = useRef(selectedIds);
+    const isEditingTitleRef = useRef(isEditingTitle);
+
+    useEffect(() => {
+        elementsRef.current = elements;
+        selectedIdsRef.current = selectedIds;
+        isEditingTitleRef.current = isEditingTitle;
+    }, [elements, selectedIds, isEditingTitle]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -108,11 +119,13 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         else document.removeEventListener("mousedown", handleClickOutsideColor);
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.key === "Delete" || e.key === "Backspace") && !isEditingTitle) {
+            if ((e.key === "Delete" || e.key === "Backspace") && !isEditingTitleRef.current) {
                 // Only delete if we are not editing a text element or input
                 const activeEl = document.activeElement;
                 if (activeEl?.tagName !== "INPUT" && activeEl?.tagName !== "TEXTAREA" && activeEl?.getAttribute("contenteditable") !== "true") {
-                    handleDelete();
+                    // Directly filter here using refs for maximum stability
+                    setElements(prev => prev.filter(el => !selectedIdsRef.current.includes(el.id)));
+                    setSelectedIds([]);
                 }
             }
         };
@@ -124,7 +137,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
             document.removeEventListener("mousedown", handleClickOutsideColor);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isZoomMenuOpen, isColorMenuOpen, selectedIds, elements, isEditingTitle]);
+    }, [isZoomMenuOpen, isColorMenuOpen]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -440,6 +453,11 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                     <div className="flex-1 flex justify-between px-8">
                         <div className="pointer-events-auto flex flex-col gap-4 mt-4">
                             <div className="flex flex-col gap-2 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-soft">
+                                <button
+                                    onClick={() => setActiveTool('hand')}
+                                    className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'hand' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
+                                    <span className="material-symbols-outlined">back_hand</span>
+                                </button>
                                 <button
                                     onClick={() => setActiveTool('select')}
                                     className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'select' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
