@@ -563,7 +563,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 </button>
 
                                 {isColorMenuOpen && (
-                                    <div className="absolute left-14 top-0 flex flex-col gap-2 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-xl pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-200">
+                                    <div className="absolute left-14 bottom-0 flex flex-col gap-2 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-xl pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-200">
                                         {colors.map(color => (
                                             <button
                                                 key={color.name}
