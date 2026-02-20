@@ -483,8 +483,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between pointer-events-none">
-                    <div className="flex-1 flex justify-between px-8">
-                        <div className="pointer-events-auto flex flex-col gap-4 mt-4">
+                    <div className="flex-1 flex items-start justify-start gap-4 px-8 mt-4">
+                        <div className="pointer-events-auto flex flex-col gap-4">
                             <div className="flex flex-col gap-2 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-soft">
                                 <button
                                     onClick={() => setActiveTool('hand')}
