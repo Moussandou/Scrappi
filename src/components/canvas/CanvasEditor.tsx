@@ -56,6 +56,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const colorMenuRef = useRef<HTMLDivElement>(null);
     const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser' | 'hand'>('select');
     const [activeColor, setActiveColor] = useState('#1a1e26');
+    const [activeStrokeWidth, setActiveStrokeWidth] = useState(4);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const helpRef = useRef<HTMLDivElement>(null);
 
@@ -395,6 +396,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                     setPosition={setPosition}
                     activeTool={activeTool}
                     activeColor={activeColor}
+                    activeStrokeWidth={activeStrokeWidth}
                     selectedIds={selectedIds}
                     setSelectedIds={setSelectedIds}
                 />
@@ -563,31 +565,82 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 </button>
 
                                 {isColorMenuOpen && (
-                                    <div className="absolute left-14 bottom-0 flex flex-col gap-2 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-xl pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-200">
-                                        {colors.map(color => (
-                                            <button
-                                                key={color.name}
-                                                onClick={() => handleColorSelect(color.value)}
-                                                className={`size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 ${activeColor === color.value ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
-                                                style={{ backgroundColor: color.value }}
-                                                title={color.name}
-                                            />
-                                        ))}
-                                        <div
-                                            className={`relative size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 overflow-hidden flex items-center justify-center ${!colors.some(c => c.value === activeColor) ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
-                                            style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
-                                            title="Couleur personnalisée"
-                                        >
-                                            <input
-                                                type="color"
-                                                value={activeColor}
-                                                onChange={(e) => {
-                                                    setActiveColor(e.target.value);
-                                                    handleColorSelect(e.target.value);
-                                                    setIsColorMenuOpen(true);
-                                                }}
-                                                className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
-                                            />
+                                    <div className="absolute left-14 bottom-0 flex flex-col gap-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-200">
+                                        <div className="flex flex-col gap-2">
+                                            <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider mb-1">Couleur</p>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {colors.map(color => (
+                                                    <button
+                                                        key={color.name}
+                                                        onClick={() => handleColorSelect(color.value)}
+                                                        className={`size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 ${activeColor === color.value ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
+                                                        style={{ backgroundColor: color.value }}
+                                                        title={color.name}
+                                                    />
+                                                ))}
+                                                <div
+                                                    className={`relative size-8 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 overflow-hidden flex items-center justify-center ${!colors.some(c => c.value === activeColor) ? 'border-ink scale-110 shadow-md' : 'border-transparent'}`}
+                                                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                                                    title="Couleur personnalisée"
+                                                >
+                                                    <input
+                                                        type="color"
+                                                        value={activeColor}
+                                                        onChange={(e) => {
+                                                            setActiveColor(e.target.value);
+                                                            handleColorSelect(e.target.value);
+                                                            setIsColorMenuOpen(true);
+                                                        }}
+                                                        className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px w-full bg-ink/5 my-1" />
+
+                                        <div className="flex flex-col gap-2">
+                                            <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider mb-1">Épaisseur</p>
+                                            <div className="flex items-center justify-between gap-1">
+                                                {[2, 4, 8, 16].map((w) => (
+                                                    <button
+                                                        key={w}
+                                                        onClick={() => setActiveStrokeWidth(w)}
+                                                        className={`size-8 rounded-lg flex items-center justify-center transition-all ${activeStrokeWidth === w ? 'bg-sage text-white shadow-sm' : 'text-ink-light hover:bg-black/5'}`}
+                                                    >
+                                                        <div
+                                                            className="rounded-full bg-current"
+                                                            style={{
+                                                                width: Math.max(2, w / 2),
+                                                                height: Math.max(2, w / 2)
+                                                            }}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px w-full bg-ink/5 my-1" />
+
+                                        <div className="flex flex-col gap-2">
+                                            <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider mb-1">Épaisseur</p>
+                                            <div className="flex items-center justify-between gap-1">
+                                                {[2, 4, 8, 16].map((w) => (
+                                                    <button
+                                                        key={w}
+                                                        onClick={() => setActiveStrokeWidth(w)}
+                                                        className={`size-8 rounded-lg flex items-center justify-center transition-all ${activeStrokeWidth === w ? 'bg-sage text-white shadow-sm' : 'text-ink-light hover:bg-black/5'}`}
+                                                    >
+                                                        <div
+                                                            className="rounded-full bg-current"
+                                                            style={{
+                                                                width: Math.max(2, w / 2),
+                                                                height: Math.max(2, w / 2)
+                                                            }}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

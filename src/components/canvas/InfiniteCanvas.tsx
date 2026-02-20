@@ -16,6 +16,7 @@ interface InfiniteCanvasProps {
     setPosition: (pos: { x: number, y: number }) => void;
     activeTool: 'select' | 'draw' | 'arrow' | 'eraser' | 'hand';
     activeColor: string;
+    activeStrokeWidth: number;
     selectedIds: string[];
     setSelectedIds: (ids: string[]) => void;
 }
@@ -30,6 +31,7 @@ export default function InfiniteCanvas({
     setPosition,
     activeTool,
     activeColor,
+    activeStrokeWidth,
     selectedIds,
     setSelectedIds
 }: InfiniteCanvasProps) {
@@ -112,8 +114,8 @@ export default function InfiniteCanvas({
                 rotation: 0,
                 zIndex: elements.length + 1,
                 points: [pos.x, pos.y],
-                strokeColor: activeColor,
-                strokeWidth: 4,
+                strokeColor: activeTool === 'eraser' ? '#ffffff' : activeColor,
+                strokeWidth: activeTool === 'eraser' ? activeStrokeWidth * 3 : activeStrokeWidth,
             });
         } else if (activeTool === 'select') {
             const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-rect';
