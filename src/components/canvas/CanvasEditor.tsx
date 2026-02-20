@@ -136,6 +136,28 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
 
             if (isTyping || isEditingTitleRef.current) return;
 
+            const isMod = e.metaKey || e.ctrlKey;
+
+            // Standard Shortcuts
+            if (isMod) {
+                if (e.key.toLowerCase() === 'a') {
+                    e.preventDefault();
+                    setSelectedIds(elementsRef.current.map(el => el.id));
+                    return;
+                }
+                if (e.key.toLowerCase() === 'z') {
+                    e.preventDefault();
+                    if (e.shiftKey) handleRedo();
+                    else handleUndo();
+                    return;
+                }
+                if (e.key.toLowerCase() === 'y') {
+                    e.preventDefault();
+                    handleRedo();
+                    return;
+                }
+            }
+
             // Delete logic
             if (e.key === "Delete" || e.key === "Backspace") {
                 // Directly filter here using refs for maximum stability
@@ -573,14 +595,14 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                         </div>
                     </div>
 
-                    <div className="pointer-events-auto p-8 flex items-end gap-3">
+                    <div className="pointer-events-auto p-8 flex justify-end items-center gap-3">
                         <div className="relative" ref={helpRef}>
                             <button
                                 onClick={() => setIsHelpOpen(!isHelpOpen)}
                                 className={`size-10 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm flex items-center justify-center text-ink-light hover:text-ink transition-all ${isHelpOpen ? 'bg-white shadow-md scale-110' : ''}`}
                                 title="Raccourcis clavier"
                             >
-                                <span className="material-symbols-outlined text-[20px]">help</span>
+                                <span className="material-symbols-outlined text-[20px]">help_outline</span>
                             </button>
 
                             {isHelpOpen && (
@@ -596,11 +618,14 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                             { key: 'B', label: 'Pinceau' },
                                             { key: 'A', label: 'Flèche' },
                                             { key: 'E', label: 'Gomme' },
+                                            { key: '⌘A', label: 'Tout choisir' },
+                                            { key: '⌘Z', label: 'Annuler' },
+                                            { key: '⌘Y', label: 'Refaire' },
                                             { key: '⌫', label: 'Supprimer' },
                                         ].map((item) => (
-                                            <div key={item.key} className="flex items-center justify-between text-xs">
+                                            <div key={item.key} className="flex items-center justify-between text-[10px]">
                                                 <span className="text-ink-light">{item.label}</span>
-                                                <kbd className="px-2 py-1 bg-black/5 rounded font-mono font-bold border border-black/5">{item.key}</kbd>
+                                                <kbd className="px-1.5 py-0.5 bg-black/5 rounded font-mono font-bold border border-black/5">{item.key}</kbd>
                                             </div>
                                         ))}
                                     </div>
