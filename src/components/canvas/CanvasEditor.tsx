@@ -599,10 +599,10 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                         <div className="relative" ref={helpRef}>
                             <button
                                 onClick={() => setIsHelpOpen(!isHelpOpen)}
-                                className={`size-10 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm flex items-center justify-center text-ink-light hover:text-ink transition-all ${isHelpOpen ? 'bg-white shadow-md scale-110' : ''}`}
+                                className={`size-12 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center text-ink-light hover:text-ink transition-all hover:scale-110 active:scale-95 ${isHelpOpen ? 'bg-white shadow-md' : ''}`}
                                 title="Raccourcis clavier"
                             >
-                                <span className="material-symbols-outlined text-[20px]">help_outline</span>
+                                <span className="material-symbols-outlined text-[24px]">help_outline</span>
                             </button>
 
                             {isHelpOpen && (
