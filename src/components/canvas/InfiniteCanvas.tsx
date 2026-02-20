@@ -8,15 +8,16 @@ import { RenderElement } from "./RenderElement";
 
 interface InfiniteCanvasProps {
     elements: CanvasElement[];
+    onElementChange?: (id: string, partial: any) => void;
 }
 
-export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCanvasProps & { onElementChange?: (id: string, partial: any) => void }) {
+export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCanvasProps) {
     const stageRef = useRef<any>(null);
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const [selectedId, setSelectedId] = useState<string | null>(null);
 
-    // Handle window resize
     useEffect(() => {
         const handleResize = () => {
             setDimensions({
@@ -51,36 +52,48 @@ export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCa
         });
     };
 
-    const handleDragEnd = (id: string, x: number, y: number) => {
-        if (onElementChange) onElementChange(id, { x, y });
+    const checkDeselect = (e: any) => {
+        // deselect when clicked on empty area
+        const clickedOnEmpty = e.target === e.target.getStage();
+        if (clickedOnEmpty) {
+            setSelectedId(null);
+        }
     };
 
-    if (dimensions.width === 0) return null; // Avoid rendering before dimensions are known
+    if (dimensions.width === 0) return null;
 
     return (
         <Stage
             width={dimensions.width}
             height={dimensions.height}
             onWheel={handleWheel}
-            draggable
+            onMouseDown={checkDeselect}
+            onTouchStart={checkDeselect}
+            draggable={selectedId === null} // only pan stage when nothing is selected
             scaleX={scale}
             scaleY={scale}
             x={position.x}
             y={position.y}
             ref={stageRef}
-            className="absolute inset-0 cursor-grab active:cursor-grabbing z-0"
+            className={`absolute inset-0 z-0 ${selectedId === null ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
         >
             <Layer>
-                {/* Helper grid for visual feedback while panning */}
                 <Rect
                     x={-10000}
                     y={-10000}
                     width={20000}
                     height={20000}
-                    fillPatternImage={(() => { /* We rely on CSS background for the whole page */ return undefined })()}
                 />
                 {elements.map((el) => (
-                    <RenderElement key={el.id} element={el} onDragEnd={handleDragEnd} />
+                    <RenderElement
+                        key={el.id}
+                        element={el}
+                        isSelected={el.id === selectedId}
+                        onSelect={() => setSelectedId(el.id)}
+                        onChange={(id, newProps) => {
+                            if (onElementChange) onElementChange(id, newProps);
+                        }}
+                    />
                 ))}
             </Layer>
         </Stage>

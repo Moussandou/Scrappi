@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Caveat } from "next/font/google";
+import { Plus_Jakarta_Sans, Caveat, Work_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -12,8 +12,18 @@ const caveat = Caveat({
   subsets: ["latin"],
 });
 
+const workSans = Work_Sans({
+  variable: "--font-display",
+  subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-serif",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "SCRAPPI - Creative Canvas",
+  title: "Atelier - Creative Canvas",
   description: "Create an infinite visual scrapbook",
 };
 
@@ -28,9 +38,8 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body
-        className={`${jakarta.variable} ${caveat.variable} antialiased bg-bg-dark text-text-cream min-h-screen relative overflow-hidden felt-texture`}
+        className={`${jakarta.variable} ${caveat.variable} ${workSans.variable} ${playfair.variable} antialiased`}
       >
-        <div className="fixed inset-0 pointer-events-none opacity-30 z-0 bg-noise mix-blend-overlay"></div>
         {children}
       </body>
     </html>
