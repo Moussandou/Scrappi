@@ -1,27 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { CanvasElement } from "@/domain/entities";
+import { CanvasElement, Scrapbook } from "@/domain/entities";
+import { getScrapbook, getElements, saveElements } from "@/infra/db/firestoreService";
 
 const Canvas = dynamic(() => import("./InfiniteCanvas"), {
     ssr: false,
 });
 
-export default function CanvasEditor() {
-    const [elements, setElements] = useState<CanvasElement[]>([
-        {
-            id: "1",
-            type: "text",
-            content: "Welcome to your new Scrapbook!",
-            x: 300,
-            y: 200,
-            width: 300,
-            height: 100,
-            rotation: -5,
-            zIndex: 1,
+export default function CanvasEditor({ projectId }: { projectId: string }) {
+    const [elements, setElements] = useState<CanvasElement[]>([]);
+    const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        async function loadData() {
+            setLoading(true);
+            try {
+                const fetchedScrapbook = await getScrapbook(projectId);
+                setScrapbook(fetchedScrapbook);
+
+                const fetchedElements = await getElements(projectId);
+                setElements(fetchedElements);
+            } catch (error) {
+                console.error("Failed to load project data", error);
+            } finally {
+                setLoading(false);
+            }
         }
-    ]);
+        if (projectId) {
+            loadData();
+        }
+    }, [projectId]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await saveElements(projectId, elements);
+        } catch (error) {
+            console.error("Failed to save elements", error);
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const addTextElement = () => {
         const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
@@ -56,7 +79,9 @@ export default function CanvasEditor() {
                             <span className="material-symbols-outlined text-[24px]">dark_mode</span>
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold tracking-tight text-text-cream">Nocturnal.</h1>
+                            <h1 className="text-lg font-bold tracking-tight text-text-cream">
+                                {loading ? "Chargement..." : scrapbook?.title || "Scrapbook Introuvable"}
+                            </h1>
                             <p className="text-[10px] text-accent-glow font-medium uppercase tracking-wider">Canvas Mode</p>
                         </div>
                     </div>
@@ -74,9 +99,12 @@ export default function CanvasEditor() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="pointer-events-auto px-5 py-2.5 rounded-full bg-accent-teal/10 border border-accent-teal/30 text-accent-glow hover:bg-accent-teal hover:text-white transition-all backdrop-blur-sm shadow-glow text-sm font-semibold flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px]">share</span>
-                            Share Canvas
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="pointer-events-auto px-5 py-2.5 rounded-full bg-accent-teal/10 border border-accent-teal/30 text-accent-glow hover:bg-accent-teal hover:text-white transition-all backdrop-blur-sm shadow-glow text-sm font-semibold flex items-center gap-2 disabled:opacity-50">
+                            <span className="material-symbols-outlined text-[18px]">save</span>
+                            {saving ? "Enregistrement..." : "Sauvegarder"}
                         </button>
                         <div className="size-12 rounded-full bg-surface-glass frosted p-1 border border-white/5 shadow-glass">
                             <div className="w-full h-full rounded-full bg-cover bg-center ring-2 ring-transparent hover:ring-accent-teal transition-all cursor-pointer" style={{ backgroundImage: "url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix')" }}></div>
