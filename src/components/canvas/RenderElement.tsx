@@ -71,6 +71,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     height={element.height || 50}
                     rotation={element.rotation}
                     draggable={isDraggable}
+                    listening={isDraggable}
                     onClick={onSelect}
                     onTap={onSelect}
                     onDblClick={handleDoubleClick}
@@ -146,6 +147,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     height={element.height}
                     rotation={element.rotation}
                     draggable={isDraggable}
+                    listening={isDraggable}
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}
@@ -165,6 +167,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     y={element.y}
                     rotation={element.rotation}
                     draggable={isDraggable}
+                    listening={isDraggable}
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}

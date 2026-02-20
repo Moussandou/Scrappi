@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
@@ -60,8 +60,21 @@ export const saveElements = async (scrapbookId: string, elements: CanvasElement[
     const elementsRef = doc(db, "elements", scrapbookId);
     // We'll store all elements of a scrapbook in a single document for simplicity in V1
     // If the canvas gets huge, we might need a subcollection `scrapbooks/{id}/elements` instead.
+
+    // Firestore does not support undefined values. We must strip them.
+    const sanitizedElements = elements.map(el => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sanitized: any = { ...el };
+        Object.keys(sanitized).forEach(key => {
+            if (sanitized[key] === undefined) {
+                delete sanitized[key];
+            }
+        });
+        return sanitized;
+    });
+
     await setDoc(elementsRef, {
-        elements,
+        elements: sanitizedElements,
         updatedAt: serverTimestamp(),
     });
 };

@@ -35,6 +35,7 @@ export default function InfiniteCanvas({ elements, onElementChange, onAddElement
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+
     const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
         if (!stageRef.current) return;
@@ -147,7 +148,7 @@ export default function InfiniteCanvas({ elements, onElementChange, onAddElement
                     <RenderElement
                         key={el.id}
                         element={el}
-                        isSelected={el.id === selectedId}
+                        isSelected={activeTool === 'select' && el.id === selectedId}
                         onSelect={() => setSelectedId(el.id)}
                         onChange={(id, newProps) => {
                             if (onElementChange) onElementChange(id, newProps);

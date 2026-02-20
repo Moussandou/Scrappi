@@ -45,8 +45,12 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [scale, setScale] = useState(1);
+    const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
+    const zoomMenuRef = useRef<HTMLDivElement>(null);
     const [activeTool, setActiveTool] = useState<'select' | 'draw'>('select');
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
 
     useEffect(() => {
         async function loadData() {
@@ -69,6 +73,22 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         }
     }, [projectId]);
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (zoomMenuRef.current && !zoomMenuRef.current.contains(event.target as Node)) {
+                setIsZoomMenuOpen(false);
+            }
+        };
+
+        if (isZoomMenuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isZoomMenuOpen]);
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -81,7 +101,6 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
             setSaving(false);
         }
     };
-
     const addTextElement = (isPostIt: boolean = false) => {
         const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
         const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
@@ -265,9 +284,31 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                             <span className="material-symbols-outlined">redo</span>
                         </button>
                         <div className="w-px h-6 bg-black/10 mx-1"></div>
-                        <div className="flex items-center gap-1 px-4 py-1.5 bg-black/5 rounded-full cursor-pointer hover:bg-black/10 transition-colors">
-                            <span className="text-xs font-bold text-ink">{Math.round(scale * 100)}%</span>
-                            <span className="material-symbols-outlined text-[16px] text-ink-light">expand_more</span>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsZoomMenuOpen(!isZoomMenuOpen)}
+                                className={`flex items-center gap-1 px-4 py-1.5 rounded-full transition-colors pointer-events-auto ${isZoomMenuOpen ? 'bg-black/10' : 'bg-black/5 hover:bg-black/10'}`}
+                            >
+                                <span className="text-xs font-bold text-ink">{Math.round(scale * 100)}%</span>
+                                <span className="material-symbols-outlined text-[16px] text-ink-light">expand_more</span>
+                            </button>
+                            {isZoomMenuOpen && (
+                                <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border border-black/5 py-2 w-32 pointer-events-auto">
+                                    {zoomLevels.map((level) => (
+                                        <button
+                                            key={level}
+                                            onClick={() => {
+                                                setScale(level);
+                                                setIsZoomMenuOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-ink hover:bg-black/5 flex items-center justify-between"
+                                        >
+                                            {Math.round(level * 100)}%
+                                            {scale === level && <span className="material-symbols-outlined text-[16px] text-sage">check</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
