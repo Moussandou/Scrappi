@@ -158,6 +158,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
 
             {(element.type === 'line' || element.type === 'eraser') && (
                 <Line
+                    ref={shapeRef}
                     points={element.points || []}
                     stroke={element.strokeColor || '#1a1e26'}
                     strokeWidth={element.strokeWidth || 4}
@@ -172,12 +173,14 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}
+                    hitStrokeWidth={20}
                     globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
                 />
             )}
 
             {element.type === 'arrow' && (
                 <Arrow
+                    ref={shapeRef}
                     points={element.points || []}
                     stroke={element.strokeColor || '#1a1e26'}
                     strokeWidth={element.strokeWidth || 4}
@@ -192,6 +195,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}
+                    hitStrokeWidth={20}
                     pointerLength={10}
                     pointerWidth={10}
                 />
