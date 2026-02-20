@@ -59,6 +59,25 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const helpRef = useRef<HTMLDivElement>(null);
 
+    // Sync active params with selection
+    useEffect(() => {
+        if (selectedIds.length === 1) {
+            const el = elements.find(e => e.id === selectedIds[0]);
+            if (el) {
+                if (el.type === 'text') {
+                    if (el.backgroundColor) {
+                        setActiveColor(el.backgroundColor);
+                    } else if (el.strokeColor) {
+                        setActiveColor(el.strokeColor);
+                    }
+                } else if ((el.type === 'line' || el.type === 'arrow' || el.type === 'eraser') && el.strokeColor) {
+                    if (el.type !== 'eraser') setActiveColor(el.strokeColor);
+                    if (el.strokeWidth) setActiveStrokeWidth(el.type === 'eraser' ? Math.round(el.strokeWidth / 3) : el.strokeWidth);
+                }
+            }
+        }
+    }, [selectedIds, elements]);
+
     // Refs for stable event listeners
     const elementsRef = useRef(elements);
     const selectedIdsRef = useRef(selectedIds);
