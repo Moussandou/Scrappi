@@ -231,6 +231,110 @@ export default function LandingPage() {
             </div>
           </section>
 
+          {/* Esthétique */}
+          <section className="py-24 bg-paper relative">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+              <div className="text-center mb-16">
+                <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Esthétique</h2>
+                <h3 className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl">Une âme analogique</h3>
+              </div>
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="col-span-1 lg:col-span-2 bg-white rounded-3xl p-8 border border-paper-dark shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-12 bg-sage/5 rounded-bl-full -mr-16 -mt-16 z-0"></div>
+                  <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
+                    <div className="flex-1 space-y-4">
+                      <h4 className="font-serif text-2xl font-bold text-ink">Effet Bords Brûlés</h4>
+                      <p className="text-ink-light">Nos algorithmes génèrent procéduralement des bords vieillis, brûlés ou déchirés pour chaque image. Aucun doublon, chaque texture est unique.</p>
+                      <div className="flex gap-2 mt-4">
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold uppercase tracking-wider rounded-full">Exclusif</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 w-full flex justify-center">
+                      <div className="relative w-64 h-64">
+                        <div className="absolute inset-0 bg-[#f8f5f0] shadow-2xl rotate-3 p-2 burnt-edge overflow-hidden rounded-sm">
+                          <img alt="Texture papier" className="w-full h-full object-cover opacity-80 mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtseUCbljV07eM8W4TshhEEFyHVScYuuhUk-CE8_JhtNYnWuRhOwnhOfj5gSAwlP7jvHQC423DnfvzIcIIToVgzGfLC5hVVmdA-R6901BbwS91JlXwq0v6BbigV1iapGJVPwAbCj7M591QH4FDQaKbZ-yBnHixAgRsCRtccvIP3pQVMozy-rRime_BxuOasVpRKanjJtytLBmDIOe15pkIPaHOx7tGpgbbl3x0EJtgglh_0xfWhPx7WZVurQEz-jkW0gtxHu97aHBR" />
+                        </div>
+                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white rounded-full border-4 border-sage/20 shadow-xl flex items-center justify-center overflow-hidden z-20">
+                          <div className="w-[200%] h-[200%] bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAtseUCbljV07eM8W4TshhEEFyHVScYuuhUk-CE8_JhtNYnWuRhOwnhOfj5gSAwlP7jvHQC423DnfvzIcIIToVgzGfLC5hVVmdA-R6901BbwS91JlXwq0v6BbigV1iapGJVPwAbCj7M591QH4FDQaKbZ-yBnHixAgRsCRtccvIP3pQVMozy-rRime_BxuOasVpRKanjJtytLBmDIOe15pkIPaHOx7tGpgbbl3x0EJtgglh_0xfWhPx7WZVurQEz-jkW0gtxHu97aHBR')] bg-cover bg-center scale-150 brightness-110 contrast-125"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#f0ece3] rounded-3xl p-8 border border-paper-dark shadow-sm flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-40"></div>
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-sage">
+                      <span className="material-symbols-outlined">texture</span>
+                    </div>
+                    <h4 className="font-serif text-xl font-bold text-ink mb-2">Grain Papier 800DPI</h4>
+                    <p className="text-sm text-ink-light">Scans haute résolution de papiers rares : Canson, aquarelle, Kraft, et plus encore.</p>
+                  </div>
+                  <div className="mt-8 relative h-32 w-full rounded-lg overflow-hidden shadow-inner border border-gray-200/50">
+                    <img alt="Texture papier zoom" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc8tAkaINvGiyMendbdq3b6OSlE4swTgc5hwDULXgMHIdqLHclEpDw7SOjcwXYirOMFeYJ6PdZ2Pyk8PJJlMxXUdEE6jTcU_0Di2UkDDmjTlqly1AGyTnZSjqdz6b_r6GYqIUWw-s8e_pxGjF0pHT7FnswGaEgbquvmFhrZYXh5fr-5NxFybGY6VLFvYIxFzs_MQUvDGklPHAmXYshfXuxCeUIs5aNq4KGQ3vA10ocdxNEzXvufFXWg1qnuyXQkUNzr5oz5hjspyJK" />
+                  </div>
+                </div>
+              </div>
+              <div className="grid lg:grid-cols-3 gap-8 mt-8">
+                <div className="bg-white rounded-3xl p-8 border border-paper-dark shadow-sm flex flex-col justify-between relative overflow-hidden">
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-sage/10 rounded-full flex items-center justify-center shadow-sm mb-6 text-sage">
+                      <span className="material-symbols-outlined">edit_note</span>
+                    </div>
+                    <h4 className="font-serif text-xl font-bold text-ink mb-2">Typos Manuscrites</h4>
+                    <p className="text-sm text-ink-light">Une collection de polices cursives imparfaites pour donner du caractère à vos notes.</p>
+                  </div>
+                  <div className="mt-6 space-y-2">
+                    <p className="font-handwriting text-2xl text-ink">Chère journal...</p>
+                    <p className="font-serif italic text-lg text-ink/70">Idées pour demain</p>
+                    <p className="font-mono text-xs text-ink/50 uppercase tracking-widest">Note rapide</p>
+                  </div>
+                </div>
+                <div className="col-span-1 lg:col-span-2 bg-[#e8f5e9] rounded-3xl p-8 border border-sage/20 shadow-sm relative overflow-hidden flex flex-col justify-center">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#6B8E6B_1px,transparent_1px)] [background-size:20px_20px] opacity-10"></div>
+                  <div className="flex flex-wrap justify-center items-center gap-6 relative z-10">
+                    <div className="bg-white p-2 rounded shadow-md rotate-[-6deg] hover:rotate-0 transition-transform duration-300 cursor-pointer">
+                      <span className="material-symbols-outlined text-4xl text-orange-400">local_cafe</span>
+                    </div>
+                    <div className="bg-yellow-200 px-4 py-1 rounded-full shadow-md rotate-[3deg] hover:rotate-0 transition-transform duration-300 border border-yellow-300/50">
+                      <span className="font-handwriting font-bold text-yellow-800">Important !</span>
+                    </div>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg rotate-12 hover:rotate-0 transition-transform duration-300">
+                      <img alt="texture" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W0K44iD_5eD8yWfQF5Y_u1H4Io_QM8igfS66uhHTf-AEtIglT7SMXfKDHXSDD2V4bEhJPDqQnddsNl9rRBLTFWdSEv-a4haCU156Lf7xsBaGCtFkKGZzyYmd-ttXh5MxGZKRimA8U32wBqun8UgaX5wDLcaYfEUf71SEiWHQP_mC8ghWZbLU4hOSrluWGOd0sicF1EwXCgmQyTJ3igVsCnOavh4a6EyiwD4diYZc9tv2W1-O8k47ldf57kHrbkZNJHGDVOl2ew9" />
+                    </div>
+                    <div className="bg-blue-100 p-2 rounded shadow-md rotate-[-3deg] hover:rotate-0 transition-transform duration-300">
+                      <span className="material-symbols-outlined text-4xl text-blue-400">flight</span>
+                    </div>
+                    <div className="w-32 h-8 bg-white/60 backdrop-blur-sm border-l-2 border-r-2 border-dashed border-gray-300 rotate-[-2deg] hover:rotate-0 transition-transform shadow-sm"></div>
+                  </div>
+                  <div className="text-center mt-6 z-10">
+                    <h4 className="font-serif text-xl font-bold text-ink mb-1">Bibliothèque de Stickers</h4>
+                    <p className="text-sm text-ink-light">Des centaines d'éléments pour personnaliser vos pages.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Quote */}
+          <section className="py-20 border-y border-paper-dark bg-sage/5">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
+              <span className="material-symbols-outlined text-4xl text-sage mb-6">format_quote</span>
+              <blockquote className="text-2xl font-serif italic text-ink max-w-3xl mx-auto leading-relaxed">
+                "Atelier est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle."
+              </blockquote>
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <div className="h-12 w-12 rounded-full overflow-hidden border border-sage/50">
+                  <img alt="Portrait of an artist" className="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACsve0e0p5t3U7PtElqo_r6JWf-szXvH5kvqmeLvgDNzb2kCMl4fWzSdWb2dD2w5ji4DUyr4-KcymqSO8u3JSPZkZS37ndXwe-2eu62PrUjZA81iYtTKAvrFqIgWbjRFuM0XIxGnY9qh20qiK8ff4_7c5FeQWmk52CIZ7JXFPC4pam-2rOXdC352wkRto72gs0DsAlUbqiUPJsP2VfmOP91C9tRHDRl2EzzPIX1YgjWgs7KyAs8v2S-j1dGmT0ut_SrWbUUfdAVYwY" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-ink text-sm">Elena R.</div>
+                  <div className="text-ink-light text-xs uppercase tracking-wide">Artiste Mix Media</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Call to Action */}
           <section className="relative isolate overflow-hidden py-24 sm:py-32 bg-sage/5 border-t border-paper-dark">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
