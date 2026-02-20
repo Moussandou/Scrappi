@@ -42,7 +42,10 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [scale, setScale] = useState(1);
+    const [activeTool, setActiveTool] = useState<'select' | 'draw'>('select');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -70,6 +73,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         setSaving(true);
         try {
             await saveElements(projectId, elements);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
             console.error("Failed to save elements", error);
         } finally {
@@ -77,25 +82,29 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         }
     };
 
-    const addTextElement = () => {
+    const addTextElement = (isPostIt: boolean = false) => {
         const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
         const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
         const newElement: CanvasElement = {
             id: crypto.randomUUID(),
             type: "text",
-            content: "Double click to edit",
+            content: isPostIt ? "Nouvelle note" : "Double click to edit",
             x,
             y,
-            width: 200,
-            height: 50,
+            width: isPostIt ? 200 : 200,
+            height: isPostIt ? 200 : 50,
             rotation: 0,
             zIndex: elements.length + 1,
+            backgroundColor: isPostIt ? "#fef08a" : undefined, // Tailwind yellow-200
         };
         setElements([...elements, newElement]);
     };
-
-    const handleElementChange = (id: string, partial: any) => {
+    const handleElementChange = (id: string, partial: Partial<CanvasElement>) => {
         setElements(elements.map(el => el.id === id ? { ...el, ...partial } : el));
+    };
+
+    const handleAddElement = (newElement: CanvasElement) => {
+        setElements(prev => [...prev, newElement]);
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +114,24 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         setUploading(true);
         try {
             const url = await uploadImage(file, `projects/${projectId}`);
+
+            // Get original image dimensions
+            const img = new window.Image();
+            img.src = url;
+            await new Promise((resolve) => {
+                img.onload = resolve;
+            });
+
+            let finalWidth = img.width;
+            let finalHeight = img.height;
+            const maxSize = 400; // reasonable max size
+
+            if (finalWidth > maxSize || finalHeight > maxSize) {
+                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
             const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
             const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
 
@@ -114,8 +141,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 content: url,
                 x,
                 y,
-                width: 300,
-                height: 300,
+                width: finalWidth,
+                height: finalHeight,
                 rotation: 0,
                 zIndex: elements.length + 1,
             };
@@ -141,6 +168,24 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         setUploading(true);
         try {
             const url = await uploadImage(file, `projects/${projectId}`);
+
+            // Get original image dimensions
+            const img = new window.Image();
+            img.src = url;
+            await new Promise((resolve) => {
+                img.onload = resolve;
+            });
+
+            let finalWidth = img.width;
+            let finalHeight = img.height;
+            const maxSize = 400;
+
+            if (finalWidth > maxSize || finalHeight > maxSize) {
+                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
             // Basic coordinate mapping (doesn't account for pan/zoom yet, but good for MVP)
             const x = e.clientX;
             const y = e.clientY;
@@ -151,8 +196,8 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 content: url,
                 x,
                 y,
-                width: 300,
-                height: 300,
+                width: finalWidth,
+                height: finalHeight,
                 rotation: 0,
                 zIndex: elements.length + 1,
             };
@@ -174,7 +219,14 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
-                <Canvas elements={elements} onElementChange={handleElementChange} />
+                <Canvas
+                    elements={elements}
+                    onElementChange={handleElementChange}
+                    onAddElement={handleAddElement}
+                    scale={scale}
+                    setScale={setScale}
+                    activeTool={activeTool}
+                />
             </div>
 
             <input
@@ -214,7 +266,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                         </button>
                         <div className="w-px h-6 bg-black/10 mx-1"></div>
                         <div className="flex items-center gap-1 px-4 py-1.5 bg-black/5 rounded-full cursor-pointer hover:bg-black/10 transition-colors">
-                            <span className="text-xs font-bold text-ink">100%</span>
+                            <span className="text-xs font-bold text-ink">{Math.round(scale * 100)}%</span>
                             <span className="material-symbols-outlined text-[16px] text-ink-light">expand_more</span>
                         </div>
                     </div>
@@ -223,9 +275,9 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="pointer-events-auto px-6 py-3 rounded-full bg-sage text-white hover:bg-sage/90 transition-all shadow-md shadow-sage/20 text-sm font-bold flex items-center gap-2 disabled:opacity-50">
-                            <span className="material-symbols-outlined text-[18px]">save</span>
-                            {saving ? "Sauvegarde..." : "Enregistrer"}
+                            className={`pointer-events-auto px-6 py-3 rounded-full text-white transition-all shadow-md text-sm font-bold flex items-center gap-2 disabled:opacity-50 ${saveSuccess ? 'bg-green-500 shadow-green-500/20' : 'bg-sage hover:bg-sage/90 shadow-sage/20'}`}>
+                            <span className="material-symbols-outlined text-[18px]">{saveSuccess ? 'check' : 'save'}</span>
+                            {saving ? "Sauvegarde..." : saveSuccess ? "Enregistré !" : "Enregistrer"}
                         </button>
                         <div className="size-12 rounded-full bg-white/80 backdrop-blur-md p-1 border border-black/5 shadow-soft">
                             <div className="w-full h-full rounded-full bg-cover bg-center ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer" style={{ backgroundImage: "url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix')" }}></div>
@@ -236,10 +288,14 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 <div className="flex-1 flex justify-between px-8 pointer-events-none">
                     <div className="pointer-events-auto flex flex-col gap-4 self-center">
                         <div className="flex flex-col gap-2 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-soft">
-                            <button className="size-11 rounded-xl bg-sage text-white shadow-sm flex items-center justify-center transition-transform hover:scale-105">
+                            <button
+                                onClick={() => setActiveTool('select')}
+                                className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'select' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
                                 <span className="material-symbols-outlined">arrow_selector_tool</span>
                             </button>
-                            <button className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors">
+                            <button
+                                onClick={() => setActiveTool('draw')}
+                                className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'draw' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
                                 <span className="material-symbols-outlined">brush</span>
                             </button>
                             <button
@@ -251,15 +307,13 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                     {uploading ? "hourglass_empty" : "image"}
                                 </span>
                             </button>
-                            <button className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors">
+                            <button
+                                onClick={() => addTextElement(true)}
+                                className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors pointer-events-auto">
                                 <span className="material-symbols-outlined">sticky_note_2</span>
                             </button>
-                            <button onClick={addTextElement} className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors pointer-events-auto">
+                            <button onClick={() => addTextElement(false)} className="size-11 rounded-xl text-ink-light hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors pointer-events-auto">
                                 <span className="material-symbols-outlined">title</span>
-                            </button>
-                            <div className="h-px w-6 bg-black/5 mx-auto my-1"></div>
-                            <button className="size-11 rounded-xl text-pink-500 hover:bg-pink-50 flex items-center justify-center transition-colors">
-                                <span className="material-symbols-outlined border-pink-500">favorite</span>
                             </button>
                         </div>
                     </div>
@@ -268,14 +322,6 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 <footer className="pointer-events-auto px-8 py-6 flex justify-between items-end">
                     <div className="bg-white/80 backdrop-blur-md px-5 py-3 rounded-full border border-black/5 shadow-soft flex items-center gap-5">
                         <span className="text-xs text-ink-light font-medium">Brouillon en cours</span>
-                    </div>
-                    <div className="bg-white/80 backdrop-blur-md p-2.5 rounded-full border border-black/5 shadow-soft flex items-center gap-2">
-                        <button className="size-9 rounded-full bg-black/5 hover:bg-black/10 text-ink-light hover:text-ink flex items-center justify-center transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">help</span>
-                        </button>
-                        <button className="size-9 rounded-full bg-black/5 hover:bg-black/10 text-ink-light hover:text-ink flex items-center justify-center transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">settings</span>
-                        </button>
                     </div>
                 </footer>
             </div>

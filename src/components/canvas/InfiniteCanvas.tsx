@@ -8,15 +8,20 @@ import { RenderElement } from "./RenderElement";
 
 interface InfiniteCanvasProps {
     elements: CanvasElement[];
-    onElementChange?: (id: string, partial: any) => void;
+    onElementChange?: (id: string, partial: Partial<CanvasElement>) => void;
+    onAddElement?: (element: CanvasElement) => void;
+    scale: number;
+    setScale: (s: number) => void;
+    activeTool: 'select' | 'draw';
 }
 
-export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCanvasProps) {
+export default function InfiniteCanvas({ elements, onElementChange, onAddElement, scale, setScale, activeTool }: InfiniteCanvasProps) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stageRef = useRef<any>(null);
-    const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -52,11 +57,61 @@ export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCa
         });
     };
 
-    const checkDeselect = (e: any) => {
-        // deselect when clicked on empty area
-        const clickedOnEmpty = e.target === e.target.getStage();
-        if (clickedOnEmpty) {
-            setSelectedId(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleMouseDown = (e: any) => {
+        if (activeTool === 'draw') {
+            const stage = e.target.getStage();
+            const pointerPosition = stage.getPointerPosition();
+            if (!pointerPosition) return;
+            const pos = {
+                x: (pointerPosition.x - stage.x()) / scale,
+                y: (pointerPosition.y - stage.y()) / scale,
+            };
+
+            setCurrentLine({
+                id: crypto.randomUUID(),
+                type: 'line',
+                content: '',
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                rotation: 0,
+                zIndex: elements.length + 1,
+                points: [pos.x, pos.y],
+                strokeColor: '#f472b6', // pink-400
+                strokeWidth: 4,
+            });
+        } else {
+            const clickedOnEmpty = e.target === e.target.getStage();
+            if (clickedOnEmpty) {
+                setSelectedId(null);
+            }
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleMouseMove = (e: any) => {
+        if (activeTool !== 'draw' || !currentLine) return;
+
+        const stage = e.target.getStage();
+        const pointerPosition = stage.getPointerPosition();
+        if (!pointerPosition) return;
+        const pos = {
+            x: (pointerPosition.x - stage.x()) / scale,
+            y: (pointerPosition.y - stage.y()) / scale,
+        };
+
+        setCurrentLine({
+            ...currentLine,
+            points: [...(currentLine.points || []), pos.x, pos.y]
+        });
+    };
+
+    const handleMouseUp = () => {
+        if (activeTool === 'draw' && currentLine) {
+            if (onAddElement) onAddElement(currentLine);
+            setCurrentLine(null);
         }
     };
 
@@ -67,15 +122,19 @@ export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCa
             width={dimensions.width}
             height={dimensions.height}
             onWheel={handleWheel}
-            onMouseDown={checkDeselect}
-            onTouchStart={checkDeselect}
-            draggable={selectedId === null} // only pan stage when nothing is selected
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onTouchMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onTouchEnd={handleMouseUp}
+            draggable={activeTool === 'select' && selectedId === null} // only pan stage when nothing is selected
             scaleX={scale}
             scaleY={scale}
             x={position.x}
             y={position.y}
             ref={stageRef}
-            className={`absolute inset-0 z-0 ${selectedId === null ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+            className={`absolute inset-0 z-0 ${activeTool === 'draw' ? 'cursor-crosshair' : (selectedId === null ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
         >
             <Layer>
                 <Rect
@@ -93,8 +152,18 @@ export default function InfiniteCanvas({ elements, onElementChange }: InfiniteCa
                         onChange={(id, newProps) => {
                             if (onElementChange) onElementChange(id, newProps);
                         }}
+                        isDraggable={activeTool === 'select'}
                     />
                 ))}
+                {currentLine && (
+                    <RenderElement
+                        element={currentLine}
+                        isSelected={false}
+                        onSelect={() => { }}
+                        onChange={() => { }}
+                        isDraggable={false}
+                    />
+                )}
             </Layer>
         </Stage>
     );

@@ -81,13 +81,13 @@ export default function LandingPage() {
                         <img alt="Photo artistique" className="h-full w-full object-cover sepia-[.3]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyetwpAH_UbgWjf8AN1pvblXr04wz5Hjg9nZvayATytnj_AYH0TELnnjwZb3Ryt5kN2Ez4GlZ2FHqU9GIhCFPCDwoKYp-MKeTivArCH6GiXopdO6pf_BS5fgaHHAzm6TtMzOLLCPYDDs2Rw-mctLo-pcv6JOYem-yblxjBjQWAWut7TeRTafNlvNo8ixtDMtxW-mMPrJ-M268_KeY9YW5vJrGJfjRfcGEaEQ0B7WckphpgGTmSeNBLu4JJ7QXLP1zgspbIfnSPmv2n" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-50"></div>
                       </div>
-                      <div className="mt-4 font-handwriting text-center text-gray-600 text-xl rotate-[-2deg]">Souvenirs d'été</div>
+                      <div className="mt-4 font-handwriting text-center text-gray-600 text-xl rotate-[-2deg]">{"Souvenirs d'été"}</div>
                     </div>
 
                     {/* Sticky Note */}
                     <div className="absolute bottom-20 left-0 bg-[#FFF9C4] w-56 p-6 shadow-lg rotate-[-3deg] z-30 animate-float rounded-sm transform transition-transform hover:rotate-0 duration-300">
                       <div className="w-8 h-8 rounded-full bg-sage/20 absolute -top-3 left-1/2 -translate-x-1/2 backdrop-blur-sm border border-white/50 shadow-sm"></div>
-                      <p className="font-handwriting text-ink text-2xl leading-tight">"La créativité, c'est l'intelligence qui s'amuse."</p>
+                      <p className="font-handwriting text-ink text-2xl leading-tight">{"\"La créativité, c'est l'intelligence qui s'amuse.\""}</p>
                       <div className="mt-2 flex gap-1 justify-end">
                         <span className="material-symbols-outlined text-yellow-600 text-sm">star</span>
                         <span className="material-symbols-outlined text-yellow-600 text-sm">star</span>
@@ -113,7 +113,7 @@ export default function LandingPage() {
                 <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Organisation Visuelle</h2>
                 <p className="mt-2 text-4xl font-serif font-medium tracking-tight text-ink sm:text-5xl">Galerie de Classeurs</p>
                 <p className="mt-6 text-lg leading-8 text-ink-light font-light">
-                  Organisez vos projets dans des classeurs virtuels magnifiquement texturés. Une bibliothèque visuelle qui inspire avant même d'ouvrir une page.
+                  {"Organisez vos projets dans des classeurs virtuels magnifiquement texturés. Une bibliothèque visuelle qui inspire avant même d'ouvrir une page."}
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -181,7 +181,7 @@ export default function LandingPage() {
                       </div>
                       <div>
                         <h4 className="font-bold text-ink text-lg font-serif">Canvas Infini</h4>
-                        <p className="text-ink-light text-sm font-light mt-1">Ne soyez jamais à court de place. Le canvas s'étend au fur et à mesure que votre imagination grandit.</p>
+                        <p className="text-ink-light text-sm font-light mt-1">{"Ne soyez jamais à court de place. Le canvas s'étend au fur et à mesure que votre imagination grandit."}</p>
                       </div>
                     </div>
 
@@ -191,7 +191,7 @@ export default function LandingPage() {
                       </div>
                       <div>
                         <h4 className="font-bold text-ink text-lg font-serif">Stickers & Washi Tape</h4>
-                        <p className="text-ink-light text-sm font-light mt-1">Une collection d'éléments interactifs et texturés pour enrichir la mise en page de vos boards.</p>
+                        <p className="text-ink-light text-sm font-light mt-1">{"Une collection d'éléments interactifs et texturés pour enrichir la mise en page de vos boards."}</p>
                       </div>
                     </div>
 
@@ -309,7 +309,7 @@ export default function LandingPage() {
                   </div>
                   <div className="text-center mt-6 z-10">
                     <h4 className="font-serif text-xl font-bold text-ink mb-1">Bibliothèque de Stickers</h4>
-                    <p className="text-sm text-ink-light">Des centaines d'éléments pour personnaliser vos pages.</p>
+                    <p className="text-sm text-ink-light">{"Des centaines d'éléments pour personnaliser vos pages."}</p>
                   </div>
                 </div>
               </div>
@@ -321,7 +321,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
               <span className="material-symbols-outlined text-4xl text-sage mb-6">format_quote</span>
               <blockquote className="text-2xl font-serif italic text-ink max-w-3xl mx-auto leading-relaxed">
-                "Atelier est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle."
+                {"\"Atelier est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle.\""}
               </blockquote>
               <div className="mt-8 flex items-center justify-center gap-4">
                 <div className="h-12 w-12 rounded-full overflow-hidden border border-sage/50">

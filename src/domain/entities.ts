@@ -12,7 +12,7 @@ export interface Scrapbook {
     updatedAt: string;
 }
 
-export type CanvasElementType = 'text' | 'image' | 'video' | 'sticker';
+export type CanvasElementType = 'text' | 'image' | 'video' | 'sticker' | 'line';
 
 export interface CanvasElement {
     id: string;
@@ -23,7 +23,11 @@ export interface CanvasElement {
     height: number;
     rotation: number;
     zIndex: number;
+    backgroundColor?: string;
     content: string; // URL for images/videos/stickers or raw text
+    points?: number[]; // For drawings
+    strokeColor?: string;
+    strokeWidth?: number;
 }
 
 export interface CanvasPage {

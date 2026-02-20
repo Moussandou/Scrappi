@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Text, Image as KonvaImage, Transformer, Group } from "react-konva";
+import { Text, Image as KonvaImage, Transformer, Group, Rect, Line } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
@@ -10,11 +10,14 @@ interface ElementProps {
     element: CanvasElement;
     isSelected: boolean;
     onSelect: () => void;
-    onChange: (id: string, newProps: any) => void;
+    onChange: (id: string, newProps: Partial<CanvasElement>) => void;
+    isDraggable: boolean;
 }
 
-export function RenderElement({ element, isSelected, onSelect, onChange }: ElementProps) {
+export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable }: ElementProps) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const trRef = useRef<any>(null);
     const [img] = useImage(element.type === 'image' || element.type === 'sticker' ? element.content : '');
     const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +29,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange }: Eleme
         }
     }, [isSelected]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleDragEnd = (e: any) => {
         onChange(element.id, {
             x: e.target.x(),
@@ -33,7 +37,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange }: Eleme
         });
     };
 
-    const handleTransformEnd = (e: any) => {
+    const handleTransformEnd = () => {
         const node = shapeRef.current;
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
@@ -59,53 +63,77 @@ export function RenderElement({ element, isSelected, onSelect, onChange }: Eleme
     return (
         <Group>
             {element.type === 'text' && (
-                <>
+                <Group
+                    ref={shapeRef}
+                    x={element.x}
+                    y={element.y}
+                    width={element.width}
+                    height={element.height || 50}
+                    rotation={element.rotation}
+                    draggable={isDraggable}
+                    onClick={onSelect}
+                    onTap={onSelect}
+                    onDblClick={handleDoubleClick}
+                    onDblTap={handleDoubleClick}
+                    onDragEnd={handleDragEnd}
+                    onTransformEnd={handleTransformEnd}
+                >
+                    {element.backgroundColor && (
+                        <Rect
+                            width={element.width}
+                            height={element.height || 50}
+                            fill={element.backgroundColor}
+                            cornerRadius={8}
+                            shadowColor="rgba(0,0,0,0.1)"
+                            shadowBlur={10}
+                            shadowOffsetY={4}
+                        />
+                    )}
                     <Text
-                        ref={shapeRef}
                         text={element.content}
-                        x={element.x}
-                        y={element.y}
                         width={element.width}
+                        height={element.height}
                         fontSize={24}
                         fontFamily="var(--font-handwriting, Caveat)"
                         fill="#1a1e26" // ink
                         opacity={isEditing ? 0 : 1}
-                        rotation={element.rotation}
-                        draggable
-                        onClick={onSelect}
-                        onTap={onSelect}
-                        onDblClick={handleDoubleClick}
-                        onDblTap={handleDoubleClick}
-                        onDragEnd={handleDragEnd}
-                        onTransformEnd={handleTransformEnd}
+                        padding={element.backgroundColor ? 16 : 0}
                     />
                     {isEditing && (
                         <Html
                             divProps={{
                                 style: {
                                     position: 'absolute',
-                                    top: element.y,
-                                    left: element.x,
+                                    top: 0,
+                                    left: 0,
                                     width: element.width,
-                                    transform: `rotate(${element.rotation}deg)`,
-                                    transformOrigin: 'top left',
+                                    zIndex: 100,
                                 }
                             }}
                         >
                             <textarea
                                 value={element.content}
-                                onChange={(e) => onChange(element.id, { content: e.target.value })}
+                                onChange={(e) => {
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                    onChange(element.id, {
+                                        content: e.target.value,
+                                        height: Math.max(50, e.target.scrollHeight)
+                                    });
+                                }}
                                 onBlur={() => setIsEditing(false)}
                                 autoFocus
-                                className="w-full bg-transparent border-none outline-none resize-none font-handwriting text-[24px] text-ink overflow-hidden p-0 m-0"
+                                className="w-full bg-transparent border-2 border-sage border-dashed outline-none resize-none font-handwriting text-[24px] text-ink m-0 rounded-lg shadow-xl"
                                 style={{
-                                    height: 'auto',
-                                    minHeight: '50px'
+                                    height: element.height || 50,
+                                    minHeight: '50px',
+                                    padding: element.backgroundColor ? '16px' : '8px',
+                                    backgroundColor: element.backgroundColor || 'var(--color-paper)',
                                 }}
                             />
                         </Html>
                     )}
-                </>
+                </Group>
             )}
 
             {(element.type === 'image' || element.type === 'sticker') && (
@@ -117,11 +145,29 @@ export function RenderElement({ element, isSelected, onSelect, onChange }: Eleme
                     width={element.width}
                     height={element.height}
                     rotation={element.rotation}
-                    draggable
+                    draggable={isDraggable}
                     onClick={onSelect}
                     onTap={onSelect}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
+                />
+            )}
+
+            {element.type === 'line' && (
+                <Line
+                    points={element.points || []}
+                    stroke={element.strokeColor || '#1a1e26'}
+                    strokeWidth={element.strokeWidth || 4}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    x={element.x}
+                    y={element.y}
+                    rotation={element.rotation}
+                    draggable={isDraggable}
+                    onClick={onSelect}
+                    onTap={onSelect}
+                    onDragEnd={handleDragEnd}
                 />
             )}
 

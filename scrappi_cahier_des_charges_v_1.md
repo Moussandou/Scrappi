@@ -10,7 +10,6 @@ SCRAPPI est une application web de scrapbook multimédia permettant aux utilisat
 - vidéos
 - textes
 - dessins
-- stickers
 
 L’objectif est de proposer un classeur visuel infini, personnalisable et intuitif, sans les limitations des outils existants (stockage limité, peu de liberté créative, abonnements coûteux).
 
