@@ -163,7 +163,7 @@ export default function InfiniteCanvas({
             const x1 = Math.min(selectionBox.x1, selectionBox.x2);
             const y1 = Math.min(selectionBox.y1, selectionBox.y2);
             const x2 = Math.max(selectionBox.x1, selectionBox.x2);
-            const y2 = Math.max(selectionBox.x1, selectionBox.x2);
+            const y2 = Math.max(selectionBox.y1, selectionBox.y2);
 
             const selected = elements.filter(el => {
                 // Approximate bounding boxes for simplicity

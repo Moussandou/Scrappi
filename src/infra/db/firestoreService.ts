@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
@@ -54,6 +54,20 @@ export const getScrapbook = async (id: string): Promise<Scrapbook | null> => {
     } else {
         return null;
     }
+};
+
+export const updateScrapbook = async (id: string, partial: Partial<Scrapbook>): Promise<void> => {
+    const docRef = doc(db, "scrapbooks", id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+        ...partial,
+        updatedAt: serverTimestamp(),
+    };
+
+    // Remove id from updateData to avoid writing it back
+    delete updateData.id;
+
+    await updateDoc(docRef, updateData);
 };
 
 export const saveElements = async (scrapbookId: string, elements: CanvasElement[]) => {
