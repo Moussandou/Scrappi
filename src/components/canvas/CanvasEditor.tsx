@@ -419,12 +419,12 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
 
                 <div className="flex-1 flex flex-col justify-between pointer-events-none">
                     <div className="flex-1 flex justify-between px-8">
-                        <div className="pointer-events-auto flex flex-col gap-4 mt-6">
+                        <div className="pointer-events-auto flex flex-col gap-4 mt-4">
                             <div className="flex flex-col gap-2 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-soft">
                                 <button
                                     onClick={() => setActiveTool('select')}
                                     className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'select' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
-                                    <span className="material-symbols-outlined font-bold">select</span>
+                                    <span className="material-symbols-outlined">near_me</span>
                                 </button>
                                 <button
                                     onClick={() => setActiveTool('draw')}
