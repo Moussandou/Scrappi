@@ -563,7 +563,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                                     <input
                                                         type="color"
                                                         value={activeColor}
-                                                        onChange={(e) => setActiveColor(e.target.value)}
+                                                        onChange={(e) => handleColorSelect(e.target.value)}
                                                         className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
                                                     />
                                                 </div>
