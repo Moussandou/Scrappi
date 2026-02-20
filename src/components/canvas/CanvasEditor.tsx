@@ -107,11 +107,24 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         if (isColorMenuOpen) document.addEventListener("mousedown", handleClickOutsideColor);
         else document.removeEventListener("mousedown", handleClickOutsideColor);
 
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.key === "Delete" || e.key === "Backspace") && !isEditingTitle) {
+                // Only delete if we are not editing a text element or input
+                const activeEl = document.activeElement;
+                if (activeEl?.tagName !== "INPUT" && activeEl?.tagName !== "TEXTAREA" && activeEl?.getAttribute("contenteditable") !== "true") {
+                    handleDelete();
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideZoom);
             document.removeEventListener("mousedown", handleClickOutsideColor);
+            window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isZoomMenuOpen, isColorMenuOpen]);
+    }, [isZoomMenuOpen, isColorMenuOpen, selectedIds, elements, isEditingTitle]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -174,6 +187,12 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         };
         setElements([...elements, newElement]);
         setSelectedIds([id]);
+    };
+
+    const handleDelete = () => {
+        if (selectedIds.length === 0) return;
+        setElements(elements.filter(el => !selectedIds.includes(el.id)));
+        setSelectedIds([]);
     };
 
     const handleColorSelect = (colorValue: string) => {
@@ -440,6 +459,13 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                     onClick={() => setActiveTool('eraser')}
                                     className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'eraser' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}>
                                     <span className="material-symbols-outlined">ink_eraser</span>
+                                </button>
+                                <div className="h-px w-6 bg-ink/10 self-center my-1"></div>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={selectedIds.length === 0}
+                                    className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${selectedIds.length > 0 ? 'text-red-500 hover:bg-red-50' : 'text-ink-light opacity-30 cursor-not-allowed'}`}>
+                                    <span className="material-symbols-outlined">delete</span>
                                 </button>
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
