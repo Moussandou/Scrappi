@@ -6,10 +6,11 @@ import { useState, useEffect } from "react";
 import { createScrapbook, getScrapbooks } from "@/infra/db/firestoreService";
 import { Scrapbook } from "@/domain/entities";
 import { useAuth } from "@/infra/auth/authContext";
+import Header from "@/ui/Header";
 
 export default function LibraryOverview() {
     const router = useRouter();
-    const { user, loading: authLoading, logout } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [scrapbooks, setScrapbooks] = useState<Scrapbook[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
@@ -34,11 +35,6 @@ export default function LibraryOverview() {
             fetchScrapbooks();
         }
     }, [user, authLoading, router]);
-
-    const handleLogout = async () => {
-        await logout();
-        router.push("/");
-    };
 
     const handleCreate = async () => {
         if (!user) return;
@@ -68,34 +64,7 @@ export default function LibraryOverview() {
         <div className="bg-paper text-ink min-h-screen relative overflow-x-hidden selection:bg-sage selection:text-white">
             <div className="paper-grain"></div>
 
-            <header className="sticky top-0 z-40 w-full transition-all duration-300 bg-paper/90 backdrop-blur-sm border-b border-paper-dark">
-                <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div className="flex h-20 items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <Link href="/" className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
-                                    <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>brush</span>
-                                </div>
-                                <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
-                            </Link>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            {user && (
-                                <div className="flex items-center gap-3 pr-4 border-r border-paper-dark">
-                                    <img src={user.photoURL || ""} alt="" className="size-8 rounded-full border border-black/5" />
-                                    <span className="text-xs font-medium text-ink-light hidden sm:block">{user.displayName}</span>
-                                </div>
-                            )}
-                            <button
-                                onClick={handleLogout}
-                                className="text-sm font-light text-ink-light hover:text-ink transition-colors"
-                            >
-                                Déconnexion
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <Header />
 
             <main className="py-24 relative overflow-hidden">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">

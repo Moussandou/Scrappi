@@ -1,62 +1,17 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/infra/auth/authContext";
+import Header from "@/ui/Header";
 
 export default function LandingPage() {
-  const { user, loading, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="bg-paper text-ink font-display overflow-x-hidden selection:bg-sage selection:text-white">
       <div className="paper-grain"></div>
 
       <div className="relative flex min-h-screen w-full flex-col group/design-root">
-        <header className="sticky top-0 z-40 w-full transition-all duration-300 bg-paper/90 backdrop-blur-sm border-b border-paper-dark">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="flex h-20 items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
-                  <span className="material-symbols-outlined text-[20px]">brush</span>
-                </div>
-                <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
-              </div>
-              <nav className="hidden md:flex items-center gap-10">
-                <Link className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="/library">Bibliothèque</Link>
-                <a className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="#">Fonctionnalités</a>
-                <a className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="#">Tarifs</a>
-              </nav>
-              <div className="flex items-center gap-4">
-                {!loading && (
-                  <>
-                    {user ? (
-                      <>
-                        <button
-                          onClick={() => logout()}
-                          className="hidden text-sm font-medium text-ink-light hover:text-ink md:block px-2"
-                        >
-                          Déconnexion
-                        </button>
-                        <Link href="/library" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
-                          Ouvrir l&apos;Atelier
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/login" className="hidden text-sm font-medium text-ink-light hover:text-ink md:block">
-                          Connexion
-                        </Link>
-                        <Link href="/login" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
-                          Créer gratuitement
-                        </Link>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
+        <Header />
 
         <main className="flex-grow">
           {/* Hero Section */}
