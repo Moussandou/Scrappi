@@ -24,12 +24,14 @@ export default function Header() {
     };
 
     return (
-        <header className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${scrolled
-                ? "py-3 bg-white/70 backdrop-blur-md shadow-lg border-black/5"
-                : "py-5 bg-paper/90 backdrop-blur-sm border-paper-dark"
-            } border-b`}>
-            <div className={`mx-auto transition-all duration-500 ${scrolled ? "max-w-5xl px-4 rounded-full border border-black/5 bg-white/40 shadow-sm" : "max-w-7xl px-6 lg:px-8"}`}>
-                <div className={`flex items-center justify-between transition-all duration-500 ${scrolled ? "h-14 px-6" : "h-20"}`}>
+        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${scrolled ? "py-4" : "py-0"
+            }`}>
+            <div className={`mx-auto transition-all duration-500 ease-in-out ${scrolled
+                    ? "max-w-5xl px-4 rounded-full border border-black/5 bg-white/70 backdrop-blur-md shadow-lg"
+                    : "max-w-full bg-paper/90 backdrop-blur-sm border-b border-paper-dark"
+                }`}>
+                <div className={`mx-auto max-w-7xl px-6 lg:px-8 flex items-center justify-between transition-all duration-500 ${scrolled ? "h-14" : "h-20"
+                    }`}>
                     <div className="flex items-center gap-6">
                         <Link href="/" className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
