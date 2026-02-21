@@ -369,8 +369,8 @@ export default function LandingPage() {
                 <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Ressources</h3>
                 <div className="flex flex-col gap-2">
                   <a href="https://moussandou.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">Portfolio</a>
-                  <Link href="#" className="text-sm text-ink-light hover:text-sage transition-colors">Mentions Légales</Link>
-                  <Link href="#" className="text-sm text-ink-light hover:text-sage transition-colors">Confidentialité</Link>
+                  <Link href="/legal#mentions" className="text-sm text-ink-light hover:text-sage transition-colors">Mentions Légales</Link>
+                  <Link href="/legal#privacy" className="text-sm text-ink-light hover:text-sage transition-colors">Confidentialité</Link>
                 </div>
               </div>
             </div>
