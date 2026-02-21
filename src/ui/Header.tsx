@@ -59,9 +59,6 @@ export default function Header({ showNav = true }: HeaderProps) {
                                     </>
                                 ) : (
                                     <>
-                                        <Link href="/login" className="hidden text-sm font-medium text-ink-light hover:text-ink md:block">
-                                            Connexion
-                                        </Link>
                                         <Link href="/login" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
                                             Créer gratuitement
                                         </Link>
