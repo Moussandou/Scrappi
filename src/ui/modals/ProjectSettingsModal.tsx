@@ -9,7 +9,7 @@ import { BookBinder } from '@/ui/components/BookBinder';
 export interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number }) => void;
+    onConfirm: (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number; coverZoom?: number; coverX?: number; coverY?: number }) => void;
     initialData?: Scrapbook;
     title: string;
 }
@@ -28,6 +28,9 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
     const [selectedColor, setSelectedColor] = useState(initialData?.binderColor || BINDER_COLORS[0].value);
     const [binderGrain, setBinderGrain] = useState(initialData?.binderGrain ?? 0.1);
     const [coverUrl, setCoverUrl] = useState(initialData?.coverImage || "");
+    const [coverZoom, setCoverZoom] = useState(initialData?.coverZoom ?? 1);
+    const [coverX, setCoverX] = useState(initialData?.coverX ?? 50);
+    const [coverY, setCoverY] = useState(initialData?.coverY ?? 50);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +40,9 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             setSelectedColor(initialData?.binderColor || BINDER_COLORS[0].value);
             setBinderGrain(initialData?.binderGrain ?? 0.1);
             setCoverUrl(initialData?.coverImage || "");
+            setCoverZoom(initialData?.coverZoom ?? 1);
+            setCoverX(initialData?.coverX ?? 50);
+            setCoverY(initialData?.coverY ?? 50);
         }
     }, [isOpen, initialData]);
 
@@ -67,7 +73,10 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             title: projectTitle,
             binderColor: selectedColor,
             binderGrain: binderGrain,
-            coverImage: coverUrl || undefined
+            coverImage: coverUrl || undefined,
+            coverZoom: coverZoom,
+            coverX: coverX,
+            coverY: coverY
         });
     };
 
@@ -188,6 +197,53 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                 className="hidden"
                             />
                         </div>
+
+                        {/* Image Repositioning Controls (Visible only if cover image exists) */}
+                        {coverUrl && (
+                            <div className="space-y-4 p-4 bg-sage/5 rounded-2xl border border-sage/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <label className="text-[10px] font-bold text-ink-light uppercase tracking-widest ml-1">Ajustement de l&apos;image</label>
+
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
+                                        <span>Zoom</span>
+                                        <span>{Math.round(coverZoom * 100)}%</span>
+                                    </div>
+                                    <input
+                                        type="range" min="1" max="3" step="0.05"
+                                        value={coverZoom}
+                                        onChange={(e) => setCoverZoom(parseFloat(e.target.value))}
+                                        className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
+                                            <span>Position X</span>
+                                            <span>{Math.round(coverX)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="100" step="1"
+                                            value={coverX}
+                                            onChange={(e) => setCoverX(parseInt(e.target.value))}
+                                            className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
+                                            <span>Position Y</span>
+                                            <span>{Math.round(coverY)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="100" step="1"
+                                            value={coverY}
+                                            onChange={(e) => setCoverY(parseInt(e.target.value))}
+                                            className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-12 flex gap-4 shrink-0">
@@ -222,7 +278,10 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                     title: projectTitle,
                                     binderColor: selectedColor,
                                     binderGrain: binderGrain,
-                                    coverImage: coverUrl || undefined
+                                    coverImage: coverUrl || undefined,
+                                    coverZoom: coverZoom,
+                                    coverX: coverX,
+                                    coverY: coverY
                                 }}
                                 showDetails={true}
                                 interactive={false}

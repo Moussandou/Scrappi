@@ -98,9 +98,17 @@ export const BookBinder: React.FC<BookBinderProps> = ({
 
                     {/* Cover Image if any */}
                     {scrapbook.coverImage && (
-                        <div className="absolute inset-0 z-0">
+                        <div className="absolute inset-0 z-0 overflow-hidden">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={scrapbook.coverImage} alt="Cover" className="w-full h-full object-cover opacity-60 mix-blend-multiply" />
+                            <img
+                                src={scrapbook.coverImage}
+                                alt="Cover"
+                                className="w-full h-full object-cover opacity-60 mix-blend-multiply transition-transform duration-300"
+                                style={{
+                                    objectPosition: `${scrapbook.coverX ?? 50}% ${scrapbook.coverY ?? 50}%`,
+                                    transform: `scale(${scrapbook.coverZoom ?? 1})`
+                                }}
+                            />
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
                         </div>
                     )}
