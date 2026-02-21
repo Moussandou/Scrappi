@@ -2,13 +2,15 @@ import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, se
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
-export const createScrapbook = async (title: string, userId: string): Promise<Scrapbook> => {
+export const createScrapbook = async (title: string, userId: string, binderColor?: string, coverImage?: string): Promise<Scrapbook> => {
     const newDocRef = doc(collection(db, "scrapbooks"));
     const now = Timestamp.now();
 
     const scrapbookData = {
         title,
         userId,
+        binderColor: binderColor || "#e8e4dc",
+        coverImage: coverImage || null,
         createdAt: now,
         updatedAt: now,
     };
@@ -18,6 +20,8 @@ export const createScrapbook = async (title: string, userId: string): Promise<Sc
     return {
         id: newDocRef.id,
         title,
+        binderColor: scrapbookData.binderColor,
+        coverImage: scrapbookData.coverImage || undefined,
         createdAt: now.toDate().toISOString(),
         updatedAt: now.toDate().toISOString(),
     };
@@ -37,6 +41,7 @@ export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
             id: doc.id,
             title: data.title,
             coverImage: data.coverImage,
+            binderColor: data.binderColor,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
         };
@@ -53,6 +58,7 @@ export const getScrapbook = async (id: string): Promise<Scrapbook | null> => {
             id: docSnap.id,
             title: data.title,
             coverImage: data.coverImage,
+            binderColor: data.binderColor,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
         };

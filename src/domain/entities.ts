@@ -8,6 +8,7 @@ export interface Scrapbook {
     id: string;
     title: string;
     coverImage?: string;
+    binderColor?: string;
     createdAt: string;
     updatedAt: string;
 }
