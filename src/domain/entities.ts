@@ -9,6 +9,7 @@ export interface Scrapbook {
     title: string;
     coverImage?: string;
     binderColor?: string;
+    binderGrain?: number;
     createdAt: string;
     updatedAt: string;
 }

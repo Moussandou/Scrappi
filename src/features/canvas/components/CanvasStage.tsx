@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { CanvasElement } from "@/domain/entities";
-import { RenderElement } from "./RenderElement";
+import { RenderElement } from "./ElementRenderer";
 
 interface InfiniteCanvasProps {
     elements: CanvasElement[];

@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "@/ui/Header";
+import MainHeader from "@/ui/layout/MainHeader";
 import Link from "next/link";
 
 export default function LegalPage() {
@@ -8,7 +8,7 @@ export default function LegalPage() {
         <div className="bg-paper text-ink min-h-screen relative overflow-x-hidden selection:bg-sage selection:text-white">
             <div className="paper-grain opacity-50"></div>
 
-            <Header />
+            <MainHeader />
 
             <main className="pt-32 pb-24 relative z-10">
                 <div className="mx-auto max-w-3xl px-6 lg:px-8">

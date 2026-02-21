@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { createScrapbook, getScrapbooks, updateScrapbook } from "@/infra/db/firestoreService";
 import { Scrapbook } from "@/domain/entities";
 import { useAuth } from "@/infra/auth/authContext";
-import Header from "@/ui/Header";
-import ProjectModal from "@/ui/ProjectModal";
+import MainHeader from "@/ui/layout/MainHeader";
+import ProjectSettingsModal from "@/ui/modals/ProjectSettingsModal";
 
 export default function LibraryOverview() {
     const router = useRouter();
@@ -19,6 +19,8 @@ export default function LibraryOverview() {
         mode: "create" | "edit";
         initialData?: Scrapbook;
     }>({ isOpen: false, mode: "create" });
+    const [creating, setCreating] = useState(false);
+
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -51,44 +53,38 @@ export default function LibraryOverview() {
         setModalConfig({ isOpen: true, mode: "edit", initialData: scrapbook });
     };
 
-    const handleConfirmModal = async (data: { title: string; binderColor: string; coverImage?: string }) => {
+    const handleConfirmModal = async (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number }) => {
         if (!user) return;
-
+        setCreating(true);
         try {
             if (modalConfig.mode === "create") {
-                const newScrapbook = await createScrapbook(data.title, user.uid, data.binderColor, data.coverImage);
-                router.push(`/project/${newScrapbook.id}`);
+                const newId = await createScrapbook(user.uid, data.title, data.binderColor, data.coverImage, data.binderGrain);
+                router.push(`/project/${newId}`);
             } else if (modalConfig.mode === "edit" && modalConfig.initialData) {
-                await updateScrapbook(modalConfig.initialData.id, {
-                    title: data.title,
-                    binderColor: data.binderColor,
-                    coverImage: data.coverImage
-                });
-                // Refresh list locally
-                setScrapbooks(prev => prev.map(s =>
-                    s.id === modalConfig.initialData?.id
-                        ? { ...s, ...data }
-                        : s
-                ));
-                setModalConfig({ ...modalConfig, isOpen: false });
+                await updateScrapbook(modalConfig.initialData.id ?? "", data);
+                setScrapbooks(prev => prev.map(s => s.id === modalConfig.initialData?.id ? { ...s, ...data } : s));
             }
+            setModalConfig({ ...modalConfig, isOpen: false });
         } catch (error) {
-            console.error("Error saving scrapbook:", error);
-            alert("Erreur lors de l'enregistrement du classeur.");
+            console.error("Erreur", error);
+            alert("Une erreur est survenue.");
+        } finally {
+            setCreating(false);
         }
     };
 
+
     const getBinderStyle = (scrapbook: Scrapbook) => {
         const color = scrapbook.binderColor || "#e8e4dc";
-        // Calculate a darker version for the border-l (simpler: use black/20 overlay in JSX)
         return { backgroundColor: color };
     };
+
 
     return (
         <div className="bg-paper text-ink min-h-screen relative overflow-x-hidden selection:bg-sage selection:text-white">
             <div className="paper-grain"></div>
 
-            <Header />
+            <MainHeader />
 
             <main className="py-24 relative overflow-hidden">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -124,10 +120,14 @@ export default function LibraryOverview() {
                                                 style={binderStyle}
                                             >
                                                 {/* Cover Texture */}
-                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay"></div>
+                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay z-10"></div>
+
+                                                {/* Grain Texture */}
+                                                <div className="absolute inset-0 paper-grain mix-blend-overlay pointer-events-none z-10" style={{ opacity: scrapbook.binderGrain ?? 0.1 }}></div>
 
                                                 {/* Spine shadow */}
                                                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
+
 
                                                 {/* Cover Image if any */}
                                                 {scrapbook.coverImage && (
@@ -164,12 +164,12 @@ export default function LibraryOverview() {
                 </div>
             </main>
 
-            <ProjectModal
+            <ProjectSettingsModal
+                title={modalConfig.mode === "create" ? "Nouveau classeur" : "Paramètres du classeur"}
                 isOpen={modalConfig.isOpen}
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 onConfirm={handleConfirmModal}
-                initialData={modalConfig.initialData}
-                title={modalConfig.mode === "create" ? "Nouveau Classeur" : "Paramètres du Classeur"}
+                initialData={modalConfig.mode === "edit" ? modalConfig.initialData : undefined}
             />
         </div>
     );

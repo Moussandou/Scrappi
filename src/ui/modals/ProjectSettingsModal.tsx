@@ -7,7 +7,7 @@ import { Scrapbook } from "@/domain/entities";
 interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { title: string; binderColor: string; coverImage?: string }) => void;
+    onConfirm: (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number }) => void;
     initialData?: Scrapbook;
     title: string;
 }
@@ -24,6 +24,7 @@ const BINDER_COLORS = [
 export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, title }: ProjectModalProps) {
     const [projectTitle, setProjectTitle] = useState(initialData?.title || "");
     const [selectedColor, setSelectedColor] = useState(initialData?.binderColor || BINDER_COLORS[0].value);
+    const [binderGrain, setBinderGrain] = useState(initialData?.binderGrain ?? 0.1);
     const [coverUrl, setCoverUrl] = useState(initialData?.coverImage || "");
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +33,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
         if (isOpen) {
             setProjectTitle(initialData?.title || "");
             setSelectedColor(initialData?.binderColor || BINDER_COLORS[0].value);
+            setBinderGrain(initialData?.binderGrain ?? 0.1);
             setCoverUrl(initialData?.coverImage || "");
         }
     }, [isOpen, initialData]);
@@ -62,6 +64,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
         onConfirm({
             title: projectTitle,
             binderColor: selectedColor,
+            binderGrain: binderGrain,
             coverImage: coverUrl || undefined
         });
     };
@@ -70,18 +73,20 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
 
-            <div className="relative w-full max-w-lg bg-paper rounded-[32px] shadow-2xl overflow-hidden border border-paper-dark animate-in zoom-in-95 fade-in duration-300">
+            <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row bg-paper rounded-[32px] shadow-2xl overflow-hidden border border-paper-dark animate-in zoom-in-95 fade-in duration-300">
                 <div className="paper-grain opacity-50"></div>
 
-                <div className="p-8 relative z-10">
+                {/* Left Side: Options (Scrollable) */}
+                <div className="p-8 relative z-10 flex-1 overflow-y-auto custom-scrollbar flex flex-col min-w-[320px]">
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="font-serif text-3xl font-bold text-ink">{title}</h2>
-                        <button onClick={onClose} className="size-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors">
+                        {/* Close button inside options for mobile, hidden on desktop since we have one absolute or just keep it */}
+                        <button onClick={onClose} className="md:hidden size-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
 
-                    <div className="space-y-8">
+                    <div className="space-y-8 flex-1">
                         {/* Title Input */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-ink-light uppercase tracking-widest ml-1">Nom du classeur</label>
@@ -113,7 +118,42 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                         )}
                                     </button>
                                 ))}
+                                {/* Custom Color Picker */}
+                                <div className={`relative size-12 rounded-xl transition-all border-2 flex items-center justify-center overflow-hidden cursor-pointer ${!BINDER_COLORS.some(c => c.value === selectedColor) ? 'border-sage scale-110 shadow-lg' : 'border-transparent shadow-sm'}`} title="Couleur personnalisée" style={{ backgroundColor: !BINDER_COLORS.some(c => c.value === selectedColor) ? selectedColor : '#ffffff' }}>
+                                    <input
+                                        type="color"
+                                        value={selectedColor}
+                                        onChange={(e) => setSelectedColor(e.target.value)}
+                                        className="absolute inset-[-10px] w-[60px] h-[60px] cursor-pointer opacity-0"
+                                    />
+                                    {/* Icon visible only if no custom color selected yet */}
+                                    {BINDER_COLORS.some(c => c.value === selectedColor) && (
+                                        <span className="material-symbols-outlined text-ink/40 pointer-events-none z-10">palette</span>
+                                    )}
+                                    {!BINDER_COLORS.some(c => c.value === selectedColor) && (
+                                        <span className="absolute inset-0 flex items-center justify-center text-sage pointer-events-none z-10">
+                                            <span className="material-symbols-outlined text-[20px] bg-white rounded-full">check_circle</span>
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Grain Selection */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="text-[10px] font-bold text-ink-light uppercase tracking-widest">Texture de la couverture (Grain)</label>
+                                <span className="text-xs text-ink-light font-bold">{Math.round(binderGrain * 100)}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={binderGrain}
+                                onChange={(e) => setBinderGrain(parseFloat(e.target.value))}
+                                className="w-full h-2 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
+                            />
                         </div>
 
                         {/* Cover Image */}
@@ -148,7 +188,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                         </div>
                     </div>
 
-                    <div className="mt-12 flex gap-4">
+                    <div className="mt-12 flex gap-4 shrink-0">
                         <button
                             onClick={onClose}
                             className="flex-1 py-4 rounded-2xl border border-black/5 font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-widest text-xs"
@@ -162,6 +202,42 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                         >
                             Confirmer
                         </button>
+                    </div>
+                </div>
+
+                {/* Right Side: Live Preview */}
+                <div className="relative z-10 hidden md:flex w-1/2 bg-paper-dark/30 border-l border-paper-dark flex-col items-center justify-center p-12">
+                    <button onClick={onClose} className="absolute top-6 right-6 size-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+
+                    <div className="w-full max-w-[280px]">
+                        <p className="text-[10px] font-bold text-ink-light uppercase tracking-widest text-center mb-6">Aperçu du classeur</p>
+
+                        <div className="relative aspect-[3/4] rounded-r-2xl rounded-l-sm shadow-xl border-l-[12px] border-l-black/20 overflow-hidden mx-auto transition-all duration-300" style={{ backgroundColor: selectedColor }}>
+                            {/* Leather Texture */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay z-10"></div>
+
+                            {/* Grain Texture */}
+                            <div className="absolute inset-0 paper-grain mix-blend-overlay pointer-events-none z-10 transition-opacity duration-300" style={{ opacity: binderGrain }}></div>
+
+                            {/* Spine shadow */}
+                            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
+
+                            {/* Cover Image */}
+                            {coverUrl && (
+                                <div className="absolute inset-0 z-0">
+                                    <img src={coverUrl} alt="Cover preview" className="w-full h-full object-cover opacity-60 mix-blend-multiply" />
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
+                                </div>
+                            )}
+
+                            {/* Title Plate */}
+                            <div className={`absolute top-12 left-1/2 -translate-x-1/2 ${selectedColor === '#1a1e26' || selectedColor === '#3a4a3a' ? 'bg-white text-ink' : 'bg-white/95 text-ink'} px-4 py-3 shadow-sm border border-black/5 rotate-1 min-w-[140px] max-w-[90%] text-center z-20`}>
+                                <h3 className="font-serif text-lg font-semibold truncate">{projectTitle || "Votre Titre"}</h3>
+                                <p className="text-[8px] text-ink-light mt-1 font-mono uppercase tracking-widest opacity-60">Prévisualisation</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

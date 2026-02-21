@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/infra/auth/authContext";
-import Header from "@/ui/Header";
+import MainHeader from "@/ui/layout/MainHeader";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -13,7 +13,7 @@ export default function LandingPage() {
       <div className="paper-grain"></div>
 
       <div className="relative flex min-h-screen w-full flex-col group/design-root">
-        <Header />
+        <MainHeader />
 
         <main className="flex-grow">
           {/* Hero Section */}

@@ -4,7 +4,7 @@ import { useAuth } from "@/infra/auth/authContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Header from "@/ui/Header";
+import MainHeader from "@/ui/layout/MainHeader";
 
 export default function LoginPage() {
     const { user, loginWithGoogle } = useAuth();
@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="bg-paper min-h-screen relative flex flex-col selection:bg-sage selection:text-white overflow-hidden">
             <div className="paper-grain opacity-50"></div>
 
-            <Header />
+            <MainHeader />
 
             <div className="flex-grow flex flex-col items-center justify-center p-6 pb-20">
 
