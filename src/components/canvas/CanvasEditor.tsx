@@ -2,15 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { CanvasElement, Scrapbook } from "@/domain/entities";
 import { getScrapbook, getElements, saveElements, updateScrapbook } from "@/infra/db/firestoreService";
 import { uploadImage } from "@/infra/db/storageService";
+import { useAuth } from "@/infra/auth/authContext";
 
 const Canvas = dynamic(() => import("./InfiniteCanvas"), {
     ssr: false,
 });
 
 export default function CanvasEditor({ projectId }: { projectId: string }) {
+    const router = useRouter();
+    const { user, loading: authLoading, logout } = useAuth();
     const [history, setHistory] = useState<CanvasElement[][]>([[]]);
     const [historyStep, setHistoryStep] = useState(0);
     const elements = history[historyStep] || [];
@@ -27,6 +31,13 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
         setHistory(newHistory);
         setHistoryStep(newHistory.length - 1);
     };
+
+    // Auth protection
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push("/login");
+        }
+    }, [user, authLoading, router]);
 
     const handleUndo = () => {
         if (historyStep > 0) {
@@ -194,7 +205,9 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await saveElements(projectId, elements);
+            if (user) {
+                await saveElements(projectId, elements, user.uid);
+            }
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
@@ -454,6 +467,18 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 )}
                                 <p className="text-[10px] uppercase tracking-widest text-ink-light font-bold mt-0.5 opacity-60">Scrappi • v1.0</p>
                             </div>
+
+                            <div className="h-8 w-px bg-ink/10"></div>
+
+                            <button
+                                onClick={async () => {
+                                    await logout();
+                                    router.push("/");
+                                }}
+                                className="text-[10px] uppercase tracking-widest text-ink-light font-bold hover:text-ink transition-colors px-2"
+                            >
+                                Déconnexion
+                            </button>
 
                             <div className="h-8 w-px bg-ink/10"></div>
 

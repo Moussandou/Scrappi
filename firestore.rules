@@ -1,20 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /scrapbooks/{document} {
-      // Allow public read for MVP
-      allow read: if true;
-      // Basic spam prevention: only allow creation if the title is relatively short
-      allow create, update: if request.resource.data.title.size() > 0 
-                            && request.resource.data.title.size() < 100;
-      allow delete: if true;
+    // Helper to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
     }
     
-    match /elements/{document} {
-      // Allow public read for MVP
-      allow read: if true;
-      // Allow writes to elements
-      allow write: if true;
+    // Helper to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    match /scrapbooks/{id} {
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isSignedIn() && isOwner(resource.data.userId) 
+                    && request.resource.data.title.size() < 100;
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+    
+    match /elements/{id} {
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow write: if isSignedIn() && isOwner(request.resource.data.userId);
     }
   }
 }

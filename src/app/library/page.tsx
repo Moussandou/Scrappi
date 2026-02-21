@@ -5,31 +5,46 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createScrapbook, getScrapbooks } from "@/infra/db/firestoreService";
 import { Scrapbook } from "@/domain/entities";
+import { useAuth } from "@/infra/auth/authContext";
 
 export default function LibraryOverview() {
     const router = useRouter();
+    const { user, loading: authLoading, logout } = useAuth();
     const [scrapbooks, setScrapbooks] = useState<Scrapbook[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
-        async function fetchScrapbooks() {
-            try {
-                const data = await getScrapbooks();
-                setScrapbooks(data);
-            } catch (error) {
-                console.error("Failed to fetch scrapbooks", error);
-            } finally {
-                setLoading(false);
-            }
+        if (!authLoading && !user) {
+            router.push("/login");
+            return;
         }
-        fetchScrapbooks();
-    }, []);
+
+        if (user) {
+            async function fetchScrapbooks() {
+                try {
+                    const data = await getScrapbooks(user!.uid);
+                    setScrapbooks(data);
+                } catch (error) {
+                    console.error("Failed to fetch scrapbooks", error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+            fetchScrapbooks();
+        }
+    }, [user, authLoading, router]);
+
+    const handleLogout = async () => {
+        await logout();
+        router.push("/");
+    };
 
     const handleCreate = async () => {
+        if (!user) return;
         setCreating(true);
         try {
-            const newScrapbook = await createScrapbook("Nouveau Classeur");
+            const newScrapbook = await createScrapbook("Nouveau Classeur", user.uid);
             router.push(`/project/${newScrapbook.id}`);
         } catch (error) {
             console.error("Error creating scrapbook:", error);
@@ -56,12 +71,28 @@ export default function LibraryOverview() {
             <header className="sticky top-0 z-40 w-full transition-all duration-300 bg-paper/90 backdrop-blur-sm border-b border-paper-dark">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-between">
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
-                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>brush</span>
-                            </div>
-                            <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
-                        </Link>
+                        <div className="flex items-center gap-6">
+                            <Link href="/" className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
+                                    <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>brush</span>
+                                </div>
+                                <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
+                            </Link>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {user && (
+                                <div className="flex items-center gap-3 pr-4 border-r border-paper-dark">
+                                    <img src={user.photoURL || ""} alt="" className="size-8 rounded-full border border-black/5" />
+                                    <span className="text-xs font-medium text-ink-light hidden sm:block">{user.displayName}</span>
+                                </div>
+                            )}
+                            <button
+                                onClick={handleLogout}
+                                className="text-sm font-light text-ink-light hover:text-ink transition-colors"
+                            >
+                                Déconnexion
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>

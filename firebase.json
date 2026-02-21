@@ -7,5 +7,14 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Scrappi",
+        "supportEmail": "moussandou.m@gmail.com"
+      }
+    }
   }
 }

@@ -1,13 +1,14 @@
-import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, where } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
-export const createScrapbook = async (title: string): Promise<Scrapbook> => {
+export const createScrapbook = async (title: string, userId: string): Promise<Scrapbook> => {
     const newDocRef = doc(collection(db, "scrapbooks"));
     const now = Timestamp.now();
 
     const scrapbookData = {
         title,
+        userId,
         createdAt: now,
         updatedAt: now,
     };
@@ -22,8 +23,12 @@ export const createScrapbook = async (title: string): Promise<Scrapbook> => {
     };
 };
 
-export const getScrapbooks = async (): Promise<Scrapbook[]> => {
-    const q = query(collection(db, "scrapbooks"), orderBy("updatedAt", "desc"));
+export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
+    const q = query(
+        collection(db, "scrapbooks"),
+        where("userId", "==", userId),
+        orderBy("updatedAt", "desc")
+    );
     const querySnapshot = await getDocs(q);
 
     return querySnapshot.docs.map(doc => {
@@ -70,7 +75,7 @@ export const updateScrapbook = async (id: string, partial: Partial<Scrapbook>): 
     await updateDoc(docRef, updateData);
 };
 
-export const saveElements = async (scrapbookId: string, elements: CanvasElement[]) => {
+export const saveElements = async (scrapbookId: string, elements: CanvasElement[], userId: string) => {
     const elementsRef = doc(db, "elements", scrapbookId);
     // We'll store all elements of a scrapbook in a single document for simplicity in V1
     // If the canvas gets huge, we might need a subcollection `scrapbooks/{id}/elements` instead.
@@ -89,6 +94,7 @@ export const saveElements = async (scrapbookId: string, elements: CanvasElement[
 
     await setDoc(elementsRef, {
         elements: sanitizedElements,
+        userId,
         updatedAt: serverTimestamp(),
     });
 };
