@@ -341,9 +341,46 @@ export default function LandingPage() {
           </section>
         </main>
 
-        <footer className="bg-paper border-t border-paper-dark">
-          <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8 text-center">
-            <p className="text-xs leading-5 text-ink-light">© 2026 Scrappi Inc. Tous droits réservés.</p>
+        <footer className="bg-paper border-t border-paper-dark pt-16 pb-8">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pb-12">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded bg-sage text-white shadow-sm">
+                    <span className="material-symbols-outlined text-[14px]">brush</span>
+                  </div>
+                  <span className="font-serif text-lg font-semibold text-ink">Scrappi</span>
+                </div>
+                <p className="text-sm text-ink-light font-light leading-relaxed">
+                  Le sanctuaire numérique pour votre processus créatif. Capturez l&apos;imprévu, cultivez l&apos;inspiration.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Réseaux</h3>
+                <div className="flex flex-col gap-2">
+                  <a href="https://github.com/Moussandou" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">GitHub</a>
+                  <a href="https://www.instagram.com/takaxdev/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">Instagram</a>
+                  <a href="https://www.linkedin.com/in/moussandou/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">LinkedIn</a>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Ressources</h3>
+                <div className="flex flex-col gap-2">
+                  <a href="https://moussandou.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">Portfolio</a>
+                  <Link href="#" className="text-sm text-ink-light hover:text-sage transition-colors">Mentions Légales</Link>
+                  <Link href="#" className="text-sm text-ink-light hover:text-sage transition-colors">Confidentialité</Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-paper-dark pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-[10px] uppercase tracking-widest text-ink-light">© 2026 Scrappi Inc. par Moussandou. Tous droits réservés.</p>
+              <div className="flex gap-6">
+                <span className="text-[10px] text-ink-light/50 italic">Fait avec amour et papier numérique.</span>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
