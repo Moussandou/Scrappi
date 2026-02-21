@@ -82,6 +82,13 @@ export const updateScrapbook = async (id: string, partial: Partial<Scrapbook>): 
     // Remove id from updateData to avoid writing it back
     delete updateData.id;
 
+    // Firestore updateDoc does not support undefined values. Filter them out.
+    Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+            delete updateData[key];
+        }
+    });
+
     await updateDoc(docRef, updateData);
 };
 

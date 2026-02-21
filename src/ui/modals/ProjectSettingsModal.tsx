@@ -219,10 +219,25 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay z-10"></div>
 
                             {/* Grain Texture */}
-                            <div className="absolute inset-0 paper-grain mix-blend-overlay pointer-events-none z-10 transition-opacity duration-300" style={{ opacity: binderGrain }}></div>
+                            <div className="absolute inset-0 binder-grain mix-blend-overlay pointer-events-none z-10 transition-opacity duration-300" style={{ opacity: binderGrain }}></div>
 
                             {/* Spine shadow */}
                             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
+
+                            {/* Metal Rings */}
+                            <div className="absolute left-0 top-[12%] bottom-[12%] flex flex-col justify-between py-4 z-30 pointer-events-none">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="flex flex-col gap-[2px]">
+                                        <div className="w-5 h-1.5 bg-gradient-to-r from-[#9ca3af] via-[#f3f4f6] to-[#6b7280] shadow-[2px_2px_3px_rgba(0,0,0,0.4)] rounded-r-sm border border-[#4b5563]/30"></div>
+                                        <div className="w-5 h-1.5 bg-gradient-to-r from-[#9ca3af] via-[#f3f4f6] to-[#6b7280] shadow-[2px_2px_3px_rgba(0,0,0,0.4)] rounded-r-sm border border-[#4b5563]/30"></div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Elastic Band */}
+                            <div className="absolute right-4 top-0 bottom-0 w-3 bg-[#1a1e26] shadow-[inset_1px_0_2px_rgba(255,255,255,0.2),-2px_0_5px_rgba(0,0,0,0.5)] z-40">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/woven-light.png')] opacity-30 mix-blend-overlay"></div>
+                            </div>
 
                             {/* Cover Image */}
                             {coverUrl && (
