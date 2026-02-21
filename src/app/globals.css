@@ -169,3 +169,95 @@ body {
 .crayon-drawing {
   filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.05));
 }
+
+/* 3D Binder CSS */
+.book-container {
+  perspective: 2000px;
+}
+
+.book {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  backface-visibility: visible;
+}
+
+/* Base click-to-open animation */
+.book.open {
+  transform: rotateY(-15deg) rotateX(2deg) scale3d(1.05, 1.05, 1.05);
+}
+
+.book .front,
+.book .back,
+.book .page {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s ease;
+  transform-origin: left center;
+}
+
+/* Z-indexing when closed using translateZ to perfectly hide pages inside */
+.book .back {
+  transform: translateZ(-6px);
+}
+
+.book .page6 {
+  transform: translateZ(-5px);
+}
+
+.book .page5 {
+  transform: translateZ(-4px);
+}
+
+.book .page4 {
+  transform: translateZ(-3px);
+}
+
+.book .page3 {
+  transform: translateZ(-2px);
+}
+
+.book .page2 {
+  transform: translateZ(-1px);
+}
+
+.book .page1 {
+  transform: translateZ(0px);
+}
+
+.book .front {
+  transform: translateZ(2px);
+}
+
+/* Front Cover swings open */
+.book.open .front {
+  transform: rotateY(-160deg) translateZ(2px);
+  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Pages fan out slightly but STAY ON THE RIGHT SIDE so page1 is readable */
+.book.open .page1 {
+  transform: rotateY(-25deg) translateZ(1px);
+}
+
+.book.open .page2 {
+  transform: rotateY(-20deg) translateZ(0px);
+}
+
+.book.open .page3 {
+  transform: rotateY(-15deg) translateZ(-1px);
+}
+
+.book.open .page4 {
+  transform: rotateY(-10deg) translateZ(-2px);
+}
+
+.book.open .page5 {
+  transform: rotateY(-5deg) translateZ(-3px);
+}
+
+.book.open .page6 {
+  transform: rotateY(0deg) translateZ(-4px);
+}
+
+.book.open .back {
+  transform: rotateY(0deg) translateZ(-6px);
+}

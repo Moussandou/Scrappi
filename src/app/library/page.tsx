@@ -8,6 +8,7 @@ import { Scrapbook } from "@/domain/entities";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
 import ProjectSettingsModal from "@/ui/modals/ProjectSettingsModal";
+import { BookBinder } from "@/ui/components/BookBinder";
 
 export default function LibraryOverview() {
     const router = useRouter();
@@ -113,60 +114,19 @@ export default function LibraryOverview() {
                                 const isDark = scrapbook.binderColor === "#1a1e26" || scrapbook.binderColor === "#3a4a3a";
 
                                 return (
-                                    <div key={scrapbook.id} className="relative group">
-                                        <Link href={`/project/${scrapbook.id}`}>
-                                            <div
-                                                className={`relative aspect-[3/4] rounded-r-2xl rounded-l-sm shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-l-[12px] border-l-black/20 overflow-hidden`}
-                                                style={binderStyle}
-                                            >
-                                                {/* Cover Texture */}
-                                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay z-10"></div>
-
-                                                {/* Grain Texture */}
-                                                <div className="absolute inset-0 binder-grain mix-blend-overlay pointer-events-none z-10" style={{ opacity: scrapbook.binderGrain ?? 0.1 }}></div>
-
-                                                {/* Spine shadow */}
-                                                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
-
-                                                {/* Metal Rings */}
-                                                <div className="absolute left-0 top-[12%] bottom-[12%] flex flex-col justify-between py-4 z-30 pointer-events-none">
-                                                    {[1, 2, 3, 4].map(i => (
-                                                        <div key={i} className="flex flex-col gap-[2px]">
-                                                            <div className="w-5 h-1.5 bg-gradient-to-r from-[#9ca3af] via-[#f3f4f6] to-[#6b7280] shadow-[2px_2px_3px_rgba(0,0,0,0.4)] rounded-r-sm border border-[#4b5563]/30"></div>
-                                                            <div className="w-5 h-1.5 bg-gradient-to-r from-[#9ca3af] via-[#f3f4f6] to-[#6b7280] shadow-[2px_2px_3px_rgba(0,0,0,0.4)] rounded-r-sm border border-[#4b5563]/30"></div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Elastic Band */}
-                                                <div className="absolute right-4 top-0 bottom-0 w-3 bg-[#1a1e26] shadow-[inset_1px_0_2px_rgba(255,255,255,0.2),-2px_0_5px_rgba(0,0,0,0.5)] z-40">
-                                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/woven-light.png')] opacity-30 mix-blend-overlay"></div>
-                                                </div>
-
-
-                                                {/* Cover Image if any */}
-                                                {scrapbook.coverImage && (
-                                                    <div className="absolute inset-0 z-0">
-                                                        <img src={scrapbook.coverImage} alt="" className="w-full h-full object-cover opacity-60 mix-blend-multiply" />
-                                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
-                                                    </div>
-                                                )}
-
-                                                <div className={`absolute top-12 left-1/2 -translate-x-1/2 ${isDark ? 'bg-white text-ink' : 'bg-white/95 text-ink'} px-4 py-3 shadow-sm border border-black/5 rotate-1 min-w-[140px] text-center z-20`}>
-                                                    <h3 className="font-serif text-lg font-semibold truncate">{scrapbook.title}</h3>
-                                                    <p className="text-[10px] text-ink-light mt-1 font-mono uppercase tracking-widest opacity-60">{new Date(scrapbook.createdAt).toLocaleDateString()}</p>
-                                                </div>
-
-                                                <div className="absolute bottom-0 w-full h-1/2 flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30 pointer-events-none">
-                                                    <span className="bg-sage text-white px-6 py-2 rounded-full text-sm font-medium shadow-md">Ouvrir</span>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                    <div key={scrapbook.id} className="relative group/wrapper w-full aspect-[3/4]">
+                                        <BookBinder
+                                            scrapbook={scrapbook}
+                                            interactive={true}
+                                            showDetails={true}
+                                            onOpenStart={() => router.prefetch(`/project/${scrapbook.id}`)}
+                                            onClick={() => router.push(`/project/${scrapbook.id}`)}
+                                        />
 
                                         {/* Edit Button */}
                                         <button
                                             onClick={(e) => handleOpenEdit(e, scrapbook)}
-                                            className="absolute top-2 right-2 size-8 rounded-full bg-white/80 backdrop-blur-md border border-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-ink-light hover:text-sage z-40"
+                                            className="absolute top-2 right-2 size-8 rounded-full bg-white/80 backdrop-blur-md border border-black/5 opacity-0 group-hover/wrapper:opacity-100 transition-opacity flex items-center justify-center text-ink-light hover:text-sage z-50 shadow-sm"
                                             title="Modifier les paramètres"
                                         >
                                             <span className="material-symbols-outlined text-[18px]">settings</span>

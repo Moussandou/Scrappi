@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, where } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, where, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
@@ -91,6 +91,15 @@ export const updateScrapbook = async (id: string, partial: Partial<Scrapbook>): 
 
     await updateDoc(docRef, updateData);
 };
+
+export const deleteScrapbook = async (id: string): Promise<void> => {
+    // Delete the scrapbook metadata
+    await deleteDoc(doc(db, "scrapbooks", id));
+
+    // Delete the elements associated with this scrapbook
+    await deleteDoc(doc(db, "elements", id));
+};
+
 
 export const saveElements = async (scrapbookId: string, elements: CanvasElement[], userId: string) => {
     const elementsRef = doc(db, "elements", scrapbookId);
