@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/infra/auth/authContext";
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+
   return (
     <div className="bg-paper text-ink font-display overflow-x-hidden selection:bg-sage selection:text-white">
       <div className="paper-grain"></div>
@@ -22,10 +27,29 @@ export default function LandingPage() {
                 <a className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="#">Tarifs</a>
               </nav>
               <div className="flex items-center gap-4">
-                <a className="hidden text-sm font-medium text-ink-light hover:text-ink md:block" href="#">Connexion</a>
-                <Link href="/library" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
-                  Créer gratuitement
-                </Link>
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        <Link href="/library" className="hidden text-sm font-medium text-ink-light hover:text-ink md:block">
+                          Mon Espace
+                        </Link>
+                        <Link href="/library" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
+                          Ouvrir l&apos;Atelier
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/login" className="hidden text-sm font-medium text-ink-light hover:text-ink md:block">
+                          Connexion
+                        </Link>
+                        <Link href="/login" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
+                          Créer gratuitement
+                        </Link>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -49,8 +73,11 @@ export default function LandingPage() {
                     Redécouvrez le plaisir tactile du papier dans un espace numérique sans limites. Créez des moodboards, journaux et collages avec une âme analogique.
                   </p>
                   <div className="mt-10 flex items-center justify-center lg:justify-start gap-x-6">
-                    <Link href="/library" className="rounded-full bg-sage px-8 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 hover:-translate-y-0.5 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage">
-                      Commencer à créer
+                    <Link
+                      href={user ? "/library" : "/login"}
+                      className="rounded-full bg-sage px-8 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 hover:-translate-y-0.5 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage"
+                    >
+                      {user ? "Ouvrir l'Atelier" : "Commencer à créer"}
                     </Link>
                     <a className="text-sm font-semibold leading-6 text-ink flex items-center gap-1 group" href="#features">
                       Voir la galerie <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
@@ -321,7 +348,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
               <span className="material-symbols-outlined text-4xl text-sage mb-6">format_quote</span>
               <blockquote className="text-2xl font-serif italic text-ink max-w-3xl mx-auto leading-relaxed">
-                {"\"Atelier est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle.\""}
+                {"\"Scrappi est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle.\""}
               </blockquote>
               <div className="mt-8 flex items-center justify-center gap-4">
                 <div className="h-12 w-12 rounded-full overflow-hidden border border-sage/50">
@@ -341,13 +368,14 @@ export default function LandingPage() {
               <div className="mx-auto max-w-2xl text-center">
                 <h2 className="text-3xl font-serif font-medium tracking-tight text-ink sm:text-4xl">Prêt à commencer votre carnet ?</h2>
                 <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-ink-light font-light">
-                  Rejoignez des créatifs qui trouvent leur flow dans Atelier. Démarrez dès maintenant avec un projet gratuit.
+                  Rejoignez des créatifs qui trouvent leur flow dans Scrappi. Démarrez dès maintenant avec un projet gratuit.
                 </p>
-                <div className="mt-10 flex items-center justify-center gap-x-6">
-                  <Link href="/library" className="rounded-full bg-sage px-8 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage transition-all hover:-translate-y-1">
-                    Créer gratuitement
-                  </Link>
-                </div>
+                <Link
+                  href={user ? "/library" : "/login"}
+                  className="rounded-full bg-sage px-8 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage transition-all hover:-translate-y-1"
+                >
+                  {user ? "Accéder à mon atelier" : "Créer gratuitement"}
+                </Link>
               </div>
             </div>
           </section>
@@ -355,7 +383,7 @@ export default function LandingPage() {
 
         <footer className="bg-paper border-t border-paper-dark">
           <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8 text-center">
-            <p className="text-xs leading-5 text-ink-light">© 2026 Atelier / Scrappi Inc. Tous droits réservés.</p>
+            <p className="text-xs leading-5 text-ink-light">© 2026 Scrappi Inc. Tous droits réservés.</p>
           </div>
         </footer>
       </div>

@@ -110,7 +110,7 @@ export default function LoginPage() {
 
                 <div className="mt-8 text-center">
                     <p className="text-ink-light text-sm font-light">
-                        En continuant, vous rejoignez l&apos;Atelier Scrappi.
+                        En continuant, vous rejoignez Scrappi.
                         <br />
                         <Link href="/" className="text-sage font-medium mt-2 inline-block hover:underline">
                             Retour à l&apos;accueil
