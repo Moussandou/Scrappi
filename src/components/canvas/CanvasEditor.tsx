@@ -443,6 +443,16 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                 <div className="pt-6 px-8 flex justify-center">
                     <header className="pointer-events-auto flex items-center gap-6 bg-white/80 backdrop-blur-md px-6 py-2.5 rounded-2xl border border-black/5 shadow-soft max-w-fit transition-all hover:bg-white">
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => router.push("/library")}
+                                className="size-10 rounded-xl flex items-center justify-center text-ink-light hover:text-sage hover:bg-sage/5 transition-all group/back"
+                                title="Retour à la bibliothèque"
+                            >
+                                <span className="material-symbols-outlined text-[24px] group-hover/back:-translate-x-1 transition-transform">arrow_back</span>
+                            </button>
+
+                            <div className="h-8 w-px bg-ink/10"></div>
+
                             <div className="flex flex-col min-w-[120px]">
                                 {isEditingTitle ? (
                                     <input
@@ -531,8 +541,18 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                 <span className="material-symbols-outlined text-[16px]">{saveSuccess ? 'check' : 'save'}</span>
                                 {saving ? "..." : saveSuccess ? "Ok" : "Sauver"}
                             </button>
-                            <div className="size-9 rounded-full bg-white backdrop-blur-md p-0.5 border border-black/5 shadow-soft shrink-0">
-                                <div className="w-full h-full rounded-full bg-cover bg-center ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer" style={{ backgroundImage: "url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix')" }}></div>
+                            <div className="size-9 rounded-full bg-white backdrop-blur-md p-0.5 border border-black/5 shadow-soft shrink-0 overflow-hidden">
+                                {user?.photoURL ? (
+                                    <img
+                                        src={user.photoURL}
+                                        alt={user.displayName || "User"}
+                                        className="w-full h-full rounded-full object-cover ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full rounded-full bg-sage/20 flex items-center justify-center text-sage font-bold text-xs ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer">
+                                        {user?.displayName?.charAt(0) || "U"}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </header>
