@@ -9,7 +9,7 @@ export default function LandingPage() {
   const { user } = useAuth();
 
   return (
-    <div className="bg-paper text-ink font-display overflow-x-hidden selection:bg-sage selection:text-white">
+    <div className="bg-paper text-ink font-display selection:bg-sage selection:text-white">
       <div className="paper-grain"></div>
 
       <div className="relative flex min-h-screen w-full flex-col group/design-root">

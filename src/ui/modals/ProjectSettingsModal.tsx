@@ -93,12 +93,9 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
 
         const { width, height } = containerRef.current.getBoundingClientRect();
 
-        // Sensibility adjustment based on zoom
-        // When zoomed in, movements should be finer/responsive
-        const moveScale = 1 / coverZoom;
-
-        const newX = dragStartPos.current.coverX - (deltaX / width * 100 * moveScale);
-        const newY = dragStartPos.current.coverY - (deltaY / height * 100 * moveScale);
+        // Sticker movement logic: X and Y are literal percentages of the cover
+        const newX = dragStartPos.current.coverX + (deltaX / width * 100);
+        const newY = dragStartPos.current.coverY + (deltaY / height * 100);
 
         setCoverX(Math.max(0, Math.min(100, newX)));
         setCoverY(Math.max(0, Math.min(100, newY)));
@@ -246,17 +243,23 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             >
                                 {coverUrl ? (
                                     <>
-                                        <img
-                                            src={coverUrl}
-                                            alt="Cover preview"
-                                            className="w-full h-full object-cover pointer-events-none transition-transform duration-100"
+                                        <div
+                                            className="absolute shadow-lg border border-black/5 bg-white p-0.5 transition-all duration-100"
                                             style={{
-                                                objectPosition: `${coverX}% ${coverY}%`,
-                                                transform: `scale(${coverZoom})`
+                                                left: `${coverX}%`,
+                                                top: `${coverY}%`,
+                                                width: `${coverZoom * 80}%`,
+                                                transform: 'translate(-50%, -50%) rotate(-1deg)',
                                             }}
-                                        />
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
-                                            <span className="material-symbols-outlined text-4xl">drag_pan</span>
+                                        >
+                                            <img
+                                                src={coverUrl}
+                                                alt="Cover preview"
+                                                className="w-full h-auto block pointer-events-none rounded-[1px]"
+                                            />
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                                            <span className="material-symbols-outlined text-4xl drop-shadow-md">drag_pan</span>
                                         </div>
 
                                         {/* Action Buttons Overlay */}
