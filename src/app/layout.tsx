@@ -23,7 +23,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Atelier - Creative Canvas",
+  title: "Scrappi - Creative Canvas",
   description: "Create an infinite visual scrapbook",
 };
 

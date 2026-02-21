@@ -14,7 +14,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
                   <span className="material-symbols-outlined text-[20px]">brush</span>
                 </div>
-                <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Atelier</span>
+                <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
               </div>
               <nav className="hidden md:flex items-center gap-10">
                 <Link className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="/library">Bibliothèque</Link>
@@ -42,7 +42,7 @@ export default function LandingPage() {
                     Bêta publique ouverte
                   </div>
                   <h1 className="font-serif text-5xl font-medium tracking-tight text-ink sm:text-7xl mb-6 leading-[1.1]">
-                    Atelier : Votre <br />
+                    Scrappi : Votre <br />
                     <span className="italic text-sage">Carnet Créatif Infini</span>
                   </h1>
                   <p className="mt-6 text-lg leading-8 text-ink-light font-light max-w-lg mx-auto lg:mx-0">

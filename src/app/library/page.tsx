@@ -60,7 +60,7 @@ export default function LibraryOverview() {
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
                                 <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>brush</span>
                             </div>
-                            <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Atelier</span>
+                            <span className="font-serif text-2xl font-semibold tracking-tight text-ink">Scrappi</span>
                         </Link>
                     </div>
                 </div>

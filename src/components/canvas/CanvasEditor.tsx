@@ -452,7 +452,7 @@ export default function CanvasEditor({ projectId }: { projectId: string }) {
                                         <span className="material-symbols-outlined text-[16px] opacity-0 group-hover/title:opacity-40">edit</span>
                                     </h1>
                                 )}
-                                <p className="text-[10px] uppercase tracking-widest text-ink-light font-bold mt-0.5 opacity-60">Atelier • v1.0</p>
+                                <p className="text-[10px] uppercase tracking-widest text-ink-light font-bold mt-0.5 opacity-60">Scrappi • v1.0</p>
                             </div>
 
                             <div className="h-8 w-px bg-ink/10"></div>
