@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="bg-paper min-h-screen relative flex flex-col selection:bg-sage selection:text-white overflow-hidden">
             <div className="paper-grain opacity-50"></div>
 
-            <Header showNav={false} />
+            <Header />
 
             <div className="flex-grow flex flex-col items-center justify-center p-6 pb-20">
 

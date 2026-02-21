@@ -4,11 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/infra/auth/authContext";
 import { useRouter } from "next/navigation";
 
-interface HeaderProps {
-    showNav?: boolean;
-}
-
-export default function Header({ showNav = true }: HeaderProps) {
+export default function Header() {
     const { user, loading, logout } = useAuth();
     const router = useRouter();
 
@@ -30,13 +26,7 @@ export default function Header({ showNav = true }: HeaderProps) {
                         </Link>
                     </div>
 
-                    {showNav && (
-                        <nav className="hidden md:flex items-center gap-10">
-                            <Link className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="/library">Bibliothèque</Link>
-                            <a className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="/#features">Fonctionnalités</a>
-                            <a className="text-sm font-light text-ink-light hover:text-sage transition-colors" href="#">Tarifs</a>
-                        </nav>
-                    )}
+
 
                     <div className="flex items-center gap-4">
                         {!loading && (
