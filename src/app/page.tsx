@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAuth } from "@/infra/auth/authContext";
 
 export default function LandingPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   return (
     <div className="bg-paper text-ink font-display overflow-x-hidden selection:bg-sage selection:text-white">
@@ -31,9 +31,12 @@ export default function LandingPage() {
                   <>
                     {user ? (
                       <>
-                        <Link href="/library" className="hidden text-sm font-medium text-ink-light hover:text-ink md:block">
-                          Mon Espace
-                        </Link>
+                        <button
+                          onClick={() => logout()}
+                          className="hidden text-sm font-medium text-ink-light hover:text-ink md:block px-2"
+                        >
+                          Déconnexion
+                        </button>
                         <Link href="/library" className="flex items-center justify-center rounded-full bg-sage px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:bg-opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2">
                           Ouvrir l&apos;Atelier
                         </Link>
