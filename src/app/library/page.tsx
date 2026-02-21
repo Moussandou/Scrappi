@@ -54,16 +54,37 @@ export default function LibraryOverview() {
         setModalConfig({ isOpen: true, mode: "edit", initialData: scrapbook });
     };
 
-    const handleConfirmModal = async (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number }) => {
+    const handleConfirmModal = async (data: {
+        title: string;
+        binderColor: string;
+        coverImage?: string | null;
+        binderGrain?: number;
+        coverZoom?: number;
+        coverX?: number;
+        coverY?: number;
+        showPreview?: boolean;
+    }) => {
         if (!user) return;
         setCreating(true);
         try {
             if (modalConfig.mode === "create") {
-                const newId = await createScrapbook(user.uid, data.title, data.binderColor, data.coverImage, data.binderGrain);
+                const newId = await createScrapbook(
+                    user.uid,
+                    data.title,
+                    data.binderColor,
+                    data.coverImage || undefined,
+                    data.binderGrain,
+                    data.coverZoom,
+                    data.coverX,
+                    data.coverY,
+                    data.showPreview
+                );
                 router.push(`/project/${newId}`);
             } else if (modalConfig.mode === "edit" && modalConfig.initialData) {
-                await updateScrapbook(modalConfig.initialData.id ?? "", data);
-                setScrapbooks(prev => prev.map(s => s.id === modalConfig.initialData?.id ? { ...s, ...data } : s));
+                // Ensure null coverImage is handled for deletion
+                const updateData = { ...data, coverImage: data.coverImage === "" ? null : data.coverImage };
+                await updateScrapbook(modalConfig.initialData.id ?? "", updateData as any);
+                setScrapbooks(prev => prev.map(s => s.id === modalConfig.initialData?.id ? { ...s, ...updateData } as Scrapbook : s));
             }
             setModalConfig({ ...modalConfig, isOpen: false });
         } catch (error) {

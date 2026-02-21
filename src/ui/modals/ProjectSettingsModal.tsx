@@ -9,7 +9,7 @@ import { BookBinder } from '@/ui/components/BookBinder';
 export interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { title: string; binderColor: string; coverImage?: string; binderGrain?: number; coverZoom?: number; coverX?: number; coverY?: number }) => void;
+    onConfirm: (data: { title: string; binderColor: string; coverImage?: string | null; binderGrain?: number; coverZoom?: number; coverX?: number; coverY?: number; showPreview?: boolean }) => void;
     initialData?: Scrapbook;
     title: string;
 }
@@ -31,7 +31,11 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
     const [coverZoom, setCoverZoom] = useState(initialData?.coverZoom ?? 1);
     const [coverX, setCoverX] = useState(initialData?.coverX ?? 50);
     const [coverY, setCoverY] = useState(initialData?.coverY ?? 50);
+    const [showPreview, setShowPreview] = useState(initialData?.showPreview ?? true);
     const [uploading, setUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartPos = useRef({ x: 0, y: 0, coverX: 50, coverY: 50 });
+    const containerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -43,6 +47,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             setCoverZoom(initialData?.coverZoom ?? 1);
             setCoverX(initialData?.coverX ?? 50);
             setCoverY(initialData?.coverY ?? 50);
+            setShowPreview(initialData?.showPreview ?? true);
         }
     }, [isOpen, initialData]);
 
@@ -56,12 +61,51 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
         try {
             const url = await uploadImage(file, "covers");
             setCoverUrl(url);
+            // Reset position on new image
+            setCoverX(50);
+            setCoverY(50);
+            setCoverZoom(1);
         } catch (error) {
             console.error("Upload failed", error);
             alert("Erreur lors de l'upload de l'image.");
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!coverUrl) return;
+        setIsDragging(true);
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        dragStartPos.current = { x: clientX, y: clientY, coverX, coverY };
+    };
+
+    const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDragging || !containerRef.current) return;
+        e.preventDefault();
+
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        const deltaX = clientX - dragStartPos.current.x;
+        const deltaY = clientY - dragStartPos.current.y;
+
+        const { width, height } = containerRef.current.getBoundingClientRect();
+
+        // Sensibility adjustment based on zoom
+        // When zoomed in, movements should be finer/responsive
+        const moveScale = 1 / coverZoom;
+
+        const newX = dragStartPos.current.coverX - (deltaX / width * 100 * moveScale);
+        const newY = dragStartPos.current.coverY - (deltaY / height * 100 * moveScale);
+
+        setCoverX(Math.max(0, Math.min(100, newX)));
+        setCoverY(Math.max(0, Math.min(100, newY)));
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false);
     };
 
     const handleConfirm = () => {
@@ -73,10 +117,11 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             title: projectTitle,
             binderColor: selectedColor,
             binderGrain: binderGrain,
-            coverImage: coverUrl || undefined,
+            coverImage: coverUrl || null,
             coverZoom: coverZoom,
             coverX: coverX,
-            coverY: coverY
+            coverY: coverY,
+            showPreview: showPreview
         });
     };
 
@@ -150,6 +195,24 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             </div>
                         </div>
 
+                        {/* Options Section Title */}
+                        <div className="pt-2 border-t border-black/5">
+                            <label className="text-[10px] font-bold text-ink-light uppercase tracking-widest ml-1">Paramètres avancés</label>
+
+                            <div className="mt-4 flex items-center justify-between p-4 bg-sage/5 rounded-2xl border border-sage/10">
+                                <div className="space-y-0.5">
+                                    <p className="text-sm font-bold text-ink">Aperçu dynamique</p>
+                                    <p className="text-[10px] text-ink-light leading-relaxed">Affiche vos dessins à l&apos;intérieur du classeur</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${showPreview ? 'bg-sage' : 'bg-sage/20'}`}
+                                >
+                                    <div className={`absolute top-1 left-1 size-4 bg-white rounded-full transition-transform duration-200 ${showPreview ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Grain Selection */}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center ml-1">
@@ -171,22 +234,63 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold text-ink-light uppercase tracking-widest ml-1">Image de couverture (Optionnel)</label>
                             <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className="relative aspect-video w-full rounded-2xl border-2 border-dashed border-sage/20 bg-sage/5 hover:bg-sage/10 transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center group"
+                                ref={containerRef}
+                                onMouseDown={handleDragStart}
+                                onMouseMove={handleDragMove}
+                                onMouseUp={handleDragEnd}
+                                onMouseLeave={handleDragEnd}
+                                onTouchStart={handleDragStart}
+                                onTouchMove={handleDragMove}
+                                onTouchEnd={handleDragEnd}
+                                className={`relative aspect-[3/4] w-full max-w-[240px] mx-auto rounded-2xl border-2 border-dashed border-sage/20 bg-sage/5 hover:bg-sage/10 transition-all cursor-${isDragging ? 'grabbing' : coverUrl ? 'grab' : 'pointer'} overflow-hidden flex flex-col items-center justify-center group select-none`}
                             >
                                 {coverUrl ? (
                                     <>
-                                        <img src={coverUrl} alt="Cover preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center flex-col gap-2 text-white">
-                                            <span className="material-symbols-outlined text-3xl">add_a_photo</span>
-                                            <span className="text-xs font-medium">Changer l&apos;image</span>
+                                        <img
+                                            src={coverUrl}
+                                            alt="Cover preview"
+                                            className="w-full h-full object-cover pointer-events-none transition-transform duration-100"
+                                            style={{
+                                                objectPosition: `${coverX}% ${coverY}%`,
+                                                transform: `scale(${coverZoom})`
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                                            <span className="material-symbols-outlined text-4xl">drag_pan</span>
+                                        </div>
+
+                                        {/* Action Buttons Overlay */}
+                                        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    fileInputRef.current?.click();
+                                                }}
+                                                className="size-8 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-ink transition-all z-20"
+                                                title="Changer l'image"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setCoverUrl("");
+                                                }}
+                                                className="size-8 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-ink transition-all z-20"
+                                                title="Retirer l'image"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">close</span>
+                                            </button>
                                         </div>
                                     </>
                                 ) : (
-                                    <>
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full h-full flex flex-col items-center justify-center"
+                                    >
                                         <span className="material-symbols-outlined text-3xl text-sage/40 mb-2">{uploading ? "hourglass_empty" : "add_a_photo"}</span>
                                         <span className="text-xs text-ink-light font-medium">{uploading ? "Upload en cours..." : "Ajouter une image"}</span>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                             <input
@@ -205,42 +309,19 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
 
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
-                                        <span>Zoom</span>
+                                        <span>Taille de la photo</span>
                                         <span>{Math.round(coverZoom * 100)}%</span>
                                     </div>
                                     <input
-                                        type="range" min="1" max="3" step="0.05"
+                                        type="range" min="0.1" max="2" step="0.05"
                                         value={coverZoom}
                                         onChange={(e) => setCoverZoom(parseFloat(e.target.value))}
                                         className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
-                                            <span>Position X</span>
-                                            <span>{Math.round(coverX)}%</span>
-                                        </div>
-                                        <input
-                                            type="range" min="0" max="100" step="1"
-                                            value={coverX}
-                                            onChange={(e) => setCoverX(parseInt(e.target.value))}
-                                            className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
-                                        />
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between text-[10px] text-ink-light/60 font-bold uppercase">
-                                            <span>Position Y</span>
-                                            <span>{Math.round(coverY)}%</span>
-                                        </div>
-                                        <input
-                                            type="range" min="0" max="100" step="1"
-                                            value={coverY}
-                                            onChange={(e) => setCoverY(parseInt(e.target.value))}
-                                            className="w-full h-1.5 bg-sage/20 rounded-lg appearance-none cursor-pointer accent-sage"
-                                        />
-                                    </div>
+                                <div className="pt-2">
+                                    <p className="text-[10px] text-ink-light/40 italic text-center">Astuce : Vous pouvez faire glisser l&apos;image ci-dessus pour la cadrer.</p>
                                 </div>
                             </div>
                         )}
@@ -281,7 +362,8 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                     coverImage: coverUrl || undefined,
                                     coverZoom: coverZoom,
                                     coverX: coverX,
-                                    coverY: coverY
+                                    coverY: coverY,
+                                    showPreview: showPreview
                                 }}
                                 showDetails={true}
                                 interactive={false}

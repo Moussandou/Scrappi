@@ -51,15 +51,23 @@ export const BookBinder: React.FC<BookBinderProps> = ({
             >
                 {/* Back Cover */}
                 <div className="back absolute inset-0 rounded-r-2xl rounded-l-sm shadow-xl overflow-hidden" style={{ backgroundColor: binderColor }}>
-                    <div className="absolute inset-0 binder-grain mix-blend-multiply pointer-events-none" style={{ opacity: binderGrain }}></div>
+                    <div className="absolute inset-0 binder-grain mix-blend-overlay pointer-events-none" style={{ opacity: binderGrain }}></div>
                 </div>
 
                 {/* Page 1 (Top page when opened - contains Preview) */}
                 <div className="page page1 absolute top-[2%] bottom-[2%] left-1 right-2 bg-[#fdfcf9] border-y border-r border-black/5 rounded-r-md overflow-hidden flex flex-col items-center justify-center p-3">
-                    <div className="absolute inset-0 binder-grain mix-blend-multiply opacity-10 pointer-events-none z-0"></div>
+                    <div className="absolute inset-0 binder-grain mix-blend-overlay opacity-20 pointer-events-none z-0"></div>
 
                     <div className={`relative z-10 w-full h-full border-2 border-dashed border-sage/20 rounded-lg p-2 bg-sage/5 overflow-hidden transition-opacity duration-700 ${isOpen ? 'opacity-100 delay-100' : 'opacity-0'}`}>
-                        <MiniCanvasPreview scrapbookId={scrapbook.id!} isActive={isOpen} />
+                        {scrapbook.showPreview !== false && (
+                            <MiniCanvasPreview scrapbookId={scrapbook.id!} isActive={isOpen} />
+                        )}
+                        {scrapbook.showPreview === false && (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-sage/40">
+                                <span className="material-symbols-outlined text-4xl mb-2">auto_stories</span>
+                                <p className="text-[10px] font-medium font-serif italic text-center px-4">L&apos;aperçu est désactivé pour ce classeur</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -76,7 +84,7 @@ export const BookBinder: React.FC<BookBinderProps> = ({
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-10 mix-blend-overlay z-10"></div>
 
                     {/* Grain Texture */}
-                    <div className="absolute inset-0 binder-grain mix-blend-multiply pointer-events-none z-10 transition-opacity duration-300" style={{ opacity: binderGrain }}></div>
+                    <div className="absolute inset-0 binder-grain mix-blend-overlay pointer-events-none z-10 transition-opacity duration-300" style={{ opacity: binderGrain }}></div>
 
                     {/* Spine shadow */}
                     <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
@@ -96,20 +104,26 @@ export const BookBinder: React.FC<BookBinderProps> = ({
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/woven-light.png')] opacity-30 mix-blend-overlay"></div>
                     </div>
 
-                    {/* Cover Image if any */}
+                    {/* Cover Image (Sticker/Photo Style) if any */}
                     {scrapbook.coverImage && (
-                        <div className="absolute inset-0 z-0 overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={scrapbook.coverImage}
-                                alt="Cover"
-                                className="w-full h-full object-cover opacity-60 mix-blend-multiply transition-transform duration-300"
-                                style={{
-                                    objectPosition: `${scrapbook.coverX ?? 50}% ${scrapbook.coverY ?? 50}%`,
-                                    transform: `scale(${scrapbook.coverZoom ?? 1})`
-                                }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
+                        <div
+                            className="absolute z-20 transition-all duration-300 pointer-events-none"
+                            style={{
+                                left: `${scrapbook.coverX ?? 50}%`,
+                                top: `${scrapbook.coverY ?? 50}%`,
+                                width: `${(scrapbook.coverZoom ?? 1) * 80}%`, // Zoom 1 = 80% of width
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                        >
+                            <div className="relative p-1 bg-white shadow-xl rounded-sm border border-black/5 rotate-[-1deg]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={scrapbook.coverImage}
+                                    alt="Cover Photo"
+                                    className="w-full h-auto block rounded-sm opacity-90 mix-blend-multiply"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-black/5 to-transparent pointer-events-none"></div>
+                            </div>
                         </div>
                     )}
 

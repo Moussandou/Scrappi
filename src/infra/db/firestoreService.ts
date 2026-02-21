@@ -2,7 +2,17 @@ import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, se
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
-export const createScrapbook = async (title: string, userId: string, binderColor?: string, coverImage?: string, binderGrain?: number): Promise<Scrapbook> => {
+export const createScrapbook = async (
+    userId: string,
+    title: string,
+    binderColor?: string,
+    coverImage?: string,
+    binderGrain?: number,
+    coverZoom?: number,
+    coverX?: number,
+    coverY?: number,
+    showPreview?: boolean
+): Promise<Scrapbook> => {
     const newDocRef = doc(collection(db, "scrapbooks"));
     const now = Timestamp.now();
 
@@ -12,6 +22,10 @@ export const createScrapbook = async (title: string, userId: string, binderColor
         binderColor: binderColor || "#e8e4dc",
         binderGrain: binderGrain !== undefined ? binderGrain : 0.1,
         coverImage: coverImage || null,
+        coverZoom: coverZoom ?? 1,
+        coverX: coverX ?? 50,
+        coverY: coverY ?? 50,
+        showPreview: showPreview ?? true,
         createdAt: now,
         updatedAt: now,
     };
@@ -24,6 +38,10 @@ export const createScrapbook = async (title: string, userId: string, binderColor
         binderColor: scrapbookData.binderColor,
         binderGrain: scrapbookData.binderGrain,
         coverImage: scrapbookData.coverImage || undefined,
+        coverZoom: scrapbookData.coverZoom,
+        coverX: scrapbookData.coverX,
+        coverY: scrapbookData.coverY,
+        showPreview: scrapbookData.showPreview,
         createdAt: now.toDate().toISOString(),
         updatedAt: now.toDate().toISOString(),
     };
@@ -43,6 +61,10 @@ export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
             id: doc.id,
             title: data.title,
             coverImage: data.coverImage,
+            coverZoom: data.coverZoom ?? 1,
+            coverX: data.coverX ?? 50,
+            coverY: data.coverY ?? 50,
+            showPreview: data.showPreview ?? true,
             binderColor: data.binderColor,
             binderGrain: data.binderGrain,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
@@ -61,6 +83,10 @@ export const getScrapbook = async (id: string): Promise<Scrapbook | null> => {
             id: docSnap.id,
             title: data.title,
             coverImage: data.coverImage,
+            coverZoom: data.coverZoom ?? 1,
+            coverX: data.coverX ?? 50,
+            coverY: data.coverY ?? 50,
+            showPreview: data.showPreview ?? true,
             binderColor: data.binderColor,
             binderGrain: data.binderGrain,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),

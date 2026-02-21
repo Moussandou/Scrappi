@@ -13,6 +13,7 @@ export interface Scrapbook {
     coverY?: number;
     binderColor?: string;
     binderGrain?: number;
+    showPreview?: boolean;
     createdAt: string;
     updatedAt: string;
 }
