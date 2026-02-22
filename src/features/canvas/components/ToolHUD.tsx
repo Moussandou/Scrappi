@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { CanvasElement } from "@/domain/entities";
-import { fetchHandwritingFonts, loadFont, GoogleFont } from "@/infra/fonts/googleFontsService";
+import { fetchHandwritingFonts, loadFont, loadFonts, GoogleFont } from "@/infra/fonts/googleFontsService";
 import { PaperType } from "./PaperSelector";
 import { TOOL_HUD_COLORS, DEFAULT_FONT } from "../constants";
+import { UseStorageModeReturn } from "../hooks/useStorageMode";
 
 interface ToolHUDProps {
     activeTool: 'select' | 'draw' | 'arrow' | 'eraser' | 'hand';
@@ -23,6 +24,7 @@ interface ToolHUDProps {
     onPaperTypeChange: (type: PaperType) => void;
     paperColor: string;
     onPaperColorChange: (color: string) => void;
+    storageMode: UseStorageModeReturn;
 }
 
 export default function ToolHUD({
@@ -41,13 +43,15 @@ export default function ToolHUD({
     paperType,
     onPaperTypeChange,
     paperColor,
-    onPaperColorChange
+    onPaperColorChange,
+    storageMode
 }: ToolHUDProps) {
     const [fontPickerOpen, setFontPickerOpen] = useState(false);
     const [fonts, setFonts] = useState<GoogleFont[]>([]);
     const [fontSearch, setFontSearch] = useState("");
     const [fontsLoading, setFontsLoading] = useState(false);
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        storage: true,
         paper: true,
         layers: true,
         color: true,
@@ -92,7 +96,10 @@ export default function ToolHUD({
     const showActions = selectedIds.length > 0 && activeTool === 'select';
     const showPaper = activeTool === 'select' && selectedIds.length === 0;
 
-    const showHUD = showColor || showThickness || showFont || showActions || showPaper || showVideo;
+    // Always show storage options when nothing is selected (part of project settings)
+    const showStorage = activeTool === 'select' && selectedIds.length === 0;
+
+    const showHUD = showColor || showThickness || showFont || showActions || showPaper || showVideo || showStorage;
     if (!showHUD) return null;
 
     let colorLabel = "Couleur";
@@ -109,7 +116,7 @@ export default function ToolHUD({
             setFonts(result);
             setFontsLoading(false);
             // Preload the first 20 fonts for preview
-            result.slice(0, 20).forEach(f => loadFont(f.family));
+            loadFonts(result.slice(0, 20).map(f => f.family));
         }
     };
 
@@ -137,7 +144,63 @@ export default function ToolHUD({
     );
 
     return (
-        <div className="flex flex-col gap-2.5 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl animate-in fade-in slide-in-from-left-4 duration-200 pointer-events-auto w-36 h-fit relative">
+        <div className="flex flex-col gap-2.5 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl animate-in fade-in slide-in-from-left-4 duration-200 pointer-events-auto w-36 h-fit relative max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
+
+            {showStorage && (
+                <div className="flex flex-col gap-2">
+                    <SectionHeader id="storage" label="Stockage" />
+                    {expandedSections.storage && (
+                        <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
+                             {/* Toggle Cloud / Local */}
+                             <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1">
+                                <button
+                                    onClick={() => storageMode.setMode("cloud")}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${storageMode.mode === 'cloud' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}
+                                >
+                                    Cloud
+                                </button>
+                                <button
+                                    onClick={() => storageMode.setMode("local")}
+                                    disabled={!storageMode.isLocalSupported}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${storageMode.mode === 'local' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink hover:bg-black/5'} ${!storageMode.isLocalSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={!storageMode.isLocalSupported ? "Non supporté par ce navigateur" : "Stockage local"}
+                                >
+                                    Local
+                                </button>
+                             </div>
+
+                             {/* Local Directory Info */}
+                             {storageMode.mode === 'local' && (
+                                <div className="flex flex-col gap-1.5 mt-1">
+                                    <div className="flex items-center justify-between px-1">
+                                        <span className="text-[9px] font-bold text-ink-light">Dossier lié</span>
+                                        <span className={`size-2 rounded-full ${storageMode.directoryReady ? 'bg-green-500' : 'bg-red-500'}`} title={storageMode.directoryReady ? "Connecté" : "Non connecté"} />
+                                    </div>
+                                    <button
+                                        onClick={() => storageMode.changeDirectory()}
+                                        className="w-full text-left px-2 py-1.5 bg-paper/50 hover:bg-paper border border-black/5 rounded-lg transition-colors flex items-center justify-between group relative"
+                                        title={storageMode.directoryName || "Aucun dossier"}
+                                    >
+                                        <span className="text-[10px] text-ink truncate flex-1 pr-4 block">
+                                            {storageMode.directoryName || "Choisir..."}
+                                        </span>
+                                        <span className="material-symbols-outlined text-[14px] text-ink-light group-hover:text-sage transition-all absolute right-2">
+                                            folder_open
+                                        </span>
+                                    </button>
+                                    {!storageMode.directoryReady && (
+                                        <p className="text-[9px] text-red-500 px-1 leading-tight">
+                                            Permission requise ou dossier manquant.
+                                        </p>
+                                    )}
+                                </div>
+                             )}
+                        </div>
+                    )}
+                    <div className="h-px w-full bg-ink/5 my-0.5" />
+                </div>
+            )}
+
             {showPaper && (
                 <div className="flex flex-col gap-2">
                     <SectionHeader id="paper" label="Papier" />
@@ -259,7 +322,7 @@ export default function ToolHUD({
 
             {showColor && (
                 <div className="flex flex-col gap-2">
-                    {showActions && <div className="h-px w-full bg-ink/5 my-0.5" />}
+                    {(showActions || showStorage || showPaper) && <div className="h-px w-full bg-ink/5 my-0.5" />}
                     <SectionHeader id="color" label={colorLabel} />
                     {expandedSections.color && (
                         <div className="grid grid-cols-3 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
@@ -291,7 +354,7 @@ export default function ToolHUD({
 
             {showThickness && (
                 <div className="flex flex-col gap-2">
-                    {(showActions || showColor) && <div className="h-px w-full bg-ink/5 my-0.5" />}
+                    {(showActions || showColor || showStorage || showPaper) && <div className="h-px w-full bg-ink/5 my-0.5" />}
                     <SectionHeader id="thickness" label={activeTool === 'eraser' || (selectedIds.length > 0 && selectedElements.every(el => el.type === 'eraser')) ? 'Gomme' : 'Taille'} />
                     {expandedSections.thickness && (
                         <div className="grid grid-cols-2 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
@@ -337,7 +400,7 @@ export default function ToolHUD({
                                         onChange={(e) => {
                                             setFontSearch(e.target.value);
                                             const matches = fonts.filter(f => f.family.toLowerCase().includes(e.target.value.toLowerCase()));
-                                            matches.slice(0, 15).forEach(f => loadFont(f.family));
+                                            loadFonts(matches.slice(0, 15).map(f => f.family));
                                         }}
                                         className="w-full px-2 py-1.5 text-xs border border-paper-dark rounded-xl bg-paper/30 outline-none focus:border-sage transition-colors"
                                         autoFocus
@@ -351,7 +414,7 @@ export default function ToolHUD({
                                                 const target = e.currentTarget;
                                                 const scrollRatio = target.scrollTop / (target.scrollHeight - target.clientHeight || 1);
                                                 const startIdx = Math.floor(scrollRatio * filteredFonts.length);
-                                                filteredFonts.slice(startIdx, startIdx + 15).forEach(f => loadFont(f.family));
+                                                loadFonts(filteredFonts.slice(startIdx, startIdx + 15).map(f => f.family));
                                             }}
                                         >
                                             {filteredFonts.map(font => (
@@ -372,6 +435,19 @@ export default function ToolHUD({
                     )}
                 </div>
             )}
+
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background-color: rgba(0,0,0,0.1);
+                    border-radius: 20px;
+                }
+            `}</style>
         </div>
     );
 }
