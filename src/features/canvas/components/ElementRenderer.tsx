@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, memo } from "react";
 import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
@@ -12,13 +12,13 @@ const DEFAULT_FONT = "Inter";
 interface ElementProps {
     element: CanvasElement;
     isSelected: boolean;
-    onSelect: () => void;
+    onSelect: (id: string) => void;
     onChange: (id: string, newProps: Partial<CanvasElement>) => void;
     isDraggable: boolean;
     onNodeRegister?: (id: string, node: any) => void;
 }
 
-export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
+export const RenderElement = memo(function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
     const isImageType = element.type === 'image' || element.type === 'sticker';
@@ -84,8 +84,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDblClick={handleDoubleClick}
                     onDblTap={handleDoubleClick}
                     onDragEnd={handleDragEnd}
@@ -154,7 +154,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <VideoElement
                     element={element}
                     isDraggable={isDraggable}
-                    onSelect={onSelect}
+                    onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
@@ -168,7 +168,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <GifElement
                     element={element}
                     isDraggable={isDraggable}
-                    onSelect={onSelect}
+                    onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
@@ -189,8 +189,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                 />
@@ -210,8 +210,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     hitStrokeWidth={20}
                     globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
@@ -232,8 +232,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     hitStrokeWidth={20}
                     pointerLength={10}
@@ -255,7 +255,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
             )}
         </Group>
     );
-}
+});
 
 // Sub-component to handle Video Lifecycle
 interface MediaElementProps {
