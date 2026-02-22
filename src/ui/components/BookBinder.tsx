@@ -136,9 +136,6 @@ export const BookBinder: React.FC<BookBinderProps> = ({
                                     {new Date(scrapbook.createdAt).toLocaleDateString()}
                                 </p>
                             )}
-                            {!scrapbook.createdAt && (
-                                <p className="text-[8px] text-ink-light mt-1 font-mono uppercase tracking-widest opacity-60">Prévisualisation</p>
-                            )}
                         </div>
                     )}
 

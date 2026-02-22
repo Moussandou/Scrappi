@@ -144,109 +144,122 @@ export default function LandingPage() {
               {renderMarqueeRow(true)}
             </div>
 
-            <div className="relative z-10 w-full max-w-7xl px-6 lg:px-8 flex flex-col md:flex-row items-center gap-12 md:gap-16 lg:gap-24">
-              {/* Text Context */}
-              <div className="flex-1 text-center md:text-left">
-                <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-4 bg-white/70 backdrop-blur-md inline-block px-4 py-1.5 rounded-full border border-white/40 shadow-sm">Organisation Visuelle</h2>
-                <div className="bg-white/70 backdrop-blur-md inline-block p-6 md:p-8 rounded-[2rem] border border-white/40 shadow-float">
-                  <p className="text-4xl lg:text-5xl font-serif font-medium tracking-tight text-ink">Une infinité<br />de classeurs <br /><span className="text-sage italic">sur-mesure</span>.</p>
-                  <p className="mt-6 text-lg leading-8 text-ink-light font-medium">
-                    {"Imaginez une bibliothèque sans fin. Organisez vos projets dans des carnets virtuels magnifiquement texturés. Personnalisez le vôtre !"}
-                  </p>
-                </div>
-              </div>
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 flex flex-col items-start gap-10">
+              <h2 className="text-sage font-medium tracking-wide text-sm uppercase bg-white/70 backdrop-blur-md inline-block px-4 py-1.5 rounded-full border border-white/40 shadow-sm">Organisation Visuelle</h2>
 
-              {/* Interactive Binder */}
-              <div className="flex-1 w-full flex flex-col items-center">
-                <div className="w-[200px] md:w-[260px] lg:w-[320px] aspect-[3/4] perspective-[2000px] transition-transform duration-500 hover:scale-[1.02] relative z-20">
-                  <BookBinder
-                    scrapbook={{
-                      id: "binder-test",
-                      title: galleryBinderTitle,
-                      binderColor: galleryBinderColor,
-                      binderGrain: galleryBinderGrain,
-                      coverImage: galleryBinderImage,
-                      coverZoom: 0.6,
-                      coverX: 50,
-                      coverY: 50,
-                      showPreview: false,
-                    }}
-                    onClick={() => {
-                      setGalleryBinderOpen(!galleryBinderOpen);
-                    }}
-                  />
-                  {/* Click indicator */}
-                  <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap flex items-center gap-1.5 font-serif text-sm bg-sage text-white px-5 py-2 rounded-full shadow-lg pointer-events-none transition-all duration-300 ${galleryBinderOpen ? 'translate-y-4 opacity-0 scale-90' : 'animate-bounce opacity-100 scale-100'}`}>
-                    <span className="material-symbols-outlined text-[18px]">touch_app</span>
-                    Cliquez pour ouvrir !
-                  </div>
-                </div>
-
-                {/* Local Controls for Binder */}
-                <div className="mt-20 w-full max-w-[340px] bg-white/95 backdrop-blur-xl rounded-[2rem] p-5 lg:p-6 border border-white shadow-float flex flex-col gap-5 z-20 relative">
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] uppercase font-bold tracking-widest px-4 py-1 rounded-full shadow-md whitespace-nowrap">Personnalisation (Démo)</span>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Titre du carnet</label>
-                    <input
-                      type="text"
-                      value={galleryBinderTitle}
-                      onChange={(e) => setGalleryBinderTitle(e.target.value)}
-                      className="w-full bg-paper/50 rounded-xl px-4 py-2.5 text-sm border border-paper-dark focus:border-sage focus:ring-1 focus:ring-sage text-ink font-serif transition-colors outline-none"
-                      maxLength={24}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Couleur</label>
-                    <div className="flex flex-wrap gap-2.5">
-                      {["#c7bca5", "#8c443e", "#2a3b4c", "#e8e4dc", "#6B8E6B", "#f4a261", "#264653"].map(color => (
-                        <button
-                          key={color}
-                          onClick={() => setGalleryBinderColor(color)}
-                          className={`w-7 h-7 rounded-full transition-all ${galleryBinderColor === color ? 'ring-2 ring-offset-2 ring-ink scale-110 shadow-sm' : 'hover:scale-110 shadow-sm hover:ring-2 hover:ring-offset-1 hover:ring-ink/20'}`}
-                          style={{ backgroundColor: color }}
-                          aria-label={`Couleur ${color}`}
-                        />
-                      ))}
+              <div className="w-full flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12 lg:gap-16 relative">
+                {/* Left Column: Text + Controls */}
+                <div className="flex-1 flex flex-col gap-8 text-center md:text-left">
+                  <div>
+                    <div className="bg-white/70 backdrop-blur-md inline-block px-6 py-5 md:px-8 md:py-6 rounded-2xl border border-white/40 shadow-float max-w-md">
+                      <p className="text-3xl lg:text-4xl font-serif font-medium tracking-tight text-ink leading-snug">Une infinité de classeurs <span className="text-sage italic">sur-mesure</span>.</p>
+                      <p className="mt-3 text-base leading-7 text-ink-light font-medium">
+                        {"Imaginez une bibliothèque sans fin. Organisez vos projets dans des carnets virtuels magnifiquement texturés. Personnalisez le vôtre !"}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Texture du papier</label>
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-[16px] text-ink-light opacity-40">texture</span>
+                  {/* Controls Panel */}
+                  <div className="w-full max-w-[380px] bg-white/95 backdrop-blur-xl rounded-[2rem] p-5 lg:p-6 border border-white shadow-float flex flex-col gap-4 z-20 relative mx-auto md:mx-0">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] uppercase font-bold tracking-widest px-4 py-1 rounded-full shadow-md whitespace-nowrap">Personnalisation (Démo)</span>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Titre du carnet</label>
                       <input
-                        type="range"
-                        min="0" max="0.5" step="0.05"
-                        value={galleryBinderGrain}
-                        onChange={(e) => setGalleryBinderGrain(parseFloat(e.target.value))}
-                        className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sage"
+                        type="text"
+                        value={galleryBinderTitle}
+                        onChange={(e) => setGalleryBinderTitle(e.target.value)}
+                        className="w-full bg-paper/50 rounded-xl px-4 py-2.5 text-sm border border-paper-dark focus:border-sage focus:ring-1 focus:ring-sage text-ink font-serif transition-colors outline-none"
+                        maxLength={24}
                       />
-                      <span className="material-symbols-outlined text-[16px] text-ink-light">texture</span>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Couleur</label>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["#c7bca5", "#8c443e", "#2a3b4c", "#e8e4dc", "#6B8E6B", "#f4a261", "#264653"].map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setGalleryBinderColor(color)}
+                            className={`w-7 h-7 rounded-full transition-all ${galleryBinderColor === color ? 'ring-2 ring-offset-2 ring-ink scale-110 shadow-sm' : 'hover:scale-110 shadow-sm hover:ring-2 hover:ring-offset-1 hover:ring-ink/20'}`}
+                            style={{ backgroundColor: color }}
+                            aria-label={`Couleur ${color}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Texture</label>
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-[16px] text-ink-light opacity-40">texture</span>
+                        <input
+                          type="range"
+                          min="0" max="0.5" step="0.05"
+                          value={galleryBinderGrain}
+                          onChange={(e) => setGalleryBinderGrain(parseFloat(e.target.value))}
+                          className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sage"
+                        />
+                        <span className="material-symbols-outlined text-[16px] text-ink-light">texture</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Couverture</label>
+                      <div className="flex gap-2.5">
+                        {[
+                          "",
+                          "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop",
+                          "https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=400&fit=crop",
+                          "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=400&fit=crop"
+                        ].map((img, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setGalleryBinderImage(img)}
+                            className={`w-11 h-11 rounded-xl overflow-hidden transition-all bg-paper-dark flex items-center justify-center ${galleryBinderImage === img ? 'ring-2 ring-sage scale-105 shadow-md' : 'hover:opacity-100 hover:scale-105 opacity-80 shadow-sm'}`}
+                          >
+                            {img ? <img src={img} alt="texture" className="w-full h-full object-cover" /> : <span className="material-symbols-outlined text-ink/30 text-[18px]">block</span>}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Image de couverture</label>
-                    <div className="flex gap-3">
-                      {[
-                        "", // none
-                        "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop",
-                        "https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=400&fit=crop",
-                        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=400&fit=crop"
-                      ].map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setGalleryBinderImage(img)}
-                          className={`w-12 h-12 rounded-xl overflow-hidden transition-all bg-paper-dark flex items-center justify-center ${galleryBinderImage === img ? 'ring-2 ring-sage scale-105 shadow-md' : 'hover:opacity-100 hover:scale-105 opacity-80 shadow-sm'}`}
-                        >
-                          {img ? <img src={img} alt="texture" className="w-full h-full object-cover" /> : <span className="material-symbols-outlined text-ink/30">block</span>}
-                        </button>
-                      ))}
+                {/* Hand-drawn dashed line linking controls to binder */}
+                <div className="hidden md:block absolute left-[45%] lg:left-[42%] top-[55%] w-[12%] lg:w-[18%] z-20 opacity-60 pointer-events-none">
+                  <svg viewBox="0 0 120 60" fill="none" className="w-full" stroke="#6B8E6B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M0,35 C40,35 70,15 110,30" strokeDasharray="6 4" />
+                    <path d="M100,23 L112,30 L102,38" />
+                  </svg>
+                </div>
+
+                {/* Right Column: Interactive Binder */}
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <div className="w-[260px] md:w-[320px] lg:w-[400px] aspect-[3/4] perspective-[2000px] transition-transform duration-500 hover:scale-[1.02] relative z-20">
+                    <BookBinder
+                      scrapbook={{
+                        id: "binder-test",
+                        title: galleryBinderTitle,
+                        binderColor: galleryBinderColor,
+                        binderGrain: galleryBinderGrain,
+                        coverImage: galleryBinderImage,
+                        coverZoom: 0.6,
+                        coverX: 50,
+                        coverY: 50,
+                        showPreview: false,
+                      }}
+                      showDetails
+                      onClick={() => {
+                        setGalleryBinderOpen(!galleryBinderOpen);
+                      }}
+                    />
+                    {/* Click indicator */}
+                    <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap flex items-center gap-1.5 font-serif text-sm bg-sage text-white px-5 py-2 rounded-full shadow-lg pointer-events-none transition-all duration-300 ${galleryBinderOpen ? 'translate-y-4 opacity-0 scale-90' : 'animate-bounce opacity-100 scale-100'}`}>
+                      <span className="material-symbols-outlined text-[18px]">touch_app</span>
+                      Cliquez pour ouvrir !
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>
