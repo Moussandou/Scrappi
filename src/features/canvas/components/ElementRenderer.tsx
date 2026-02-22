@@ -6,6 +6,7 @@ import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
 import { loadFont } from "@/infra/fonts/googleFontsService";
+import { isLocalRef, resolveLocalUrl } from "@/infra/storage/localStorageService";
 
 const DEFAULT_FONT = "Inter";
 
@@ -22,8 +23,21 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
     const isImageType = element.type === 'image' || element.type === 'sticker';
-    const [img] = useImage(isImageType ? element.content : '', isImageType ? 'anonymous' : undefined);
+    const [resolvedSrc, setResolvedSrc] = useState(isImageType && !isLocalRef(element.content) ? element.content : '');
+    const [img] = useImage(resolvedSrc, resolvedSrc ? 'anonymous' : undefined);
     const [isEditing, setIsEditing] = useState(false);
+
+    // Resolve local: URLs to blob URLs for image types
+    useEffect(() => {
+        if (!isImageType) return;
+        if (isLocalRef(element.content)) {
+            resolveLocalUrl(element.content)
+                .then(url => setResolvedSrc(url))
+                .catch(() => setResolvedSrc(''));
+        } else {
+            setResolvedSrc(element.content);
+        }
+    }, [element.content, isImageType]);
 
     // Register node for Transformer
     useEffect(() => {
@@ -280,23 +294,33 @@ function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEn
 
     useEffect(() => {
         const video = document.createElement('video');
-        video.src = element.content;
         video.crossOrigin = 'anonymous';
         video.playsInline = true;
+        let aborted = false;
 
         const handleCanPlay = () => {
-            setVideoElement(video);
+            if (!aborted) setVideoElement(video);
         };
         const handleError = (e: any) => {
             console.error("Video failed to load:", e);
         };
 
-        video.addEventListener('canplay', handleCanPlay);
-        video.addEventListener('error', handleError);
-        videoRef.current = video;
-        video.load();
+        const load = async () => {
+            const src = isLocalRef(element.content)
+                ? await resolveLocalUrl(element.content).catch(() => '')
+                : element.content;
+            if (aborted) return;
+            video.src = src;
+            video.addEventListener('canplay', handleCanPlay);
+            video.addEventListener('error', handleError);
+            videoRef.current = video;
+            video.load();
+        };
+
+        load();
 
         return () => {
+            aborted = true;
             video.removeEventListener('canplay', handleCanPlay);
             video.removeEventListener('error', handleError);
             video.pause();
@@ -360,11 +384,22 @@ function GifElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd,
     }, [onNodeRegister]);
 
     useEffect(() => {
+        let aborted = false;
         const img = new window.Image();
         img.crossOrigin = 'anonymous';
-        img.src = element.content;
-        img.onload = () => setGifImage(img);
-        img.onerror = (e) => console.error("GIF failed to load:", e);
+
+        const load = async () => {
+            const src = isLocalRef(element.content)
+                ? await resolveLocalUrl(element.content).catch(() => '')
+                : element.content;
+            if (aborted) return;
+            img.src = src;
+            img.onload = () => { if (!aborted) setGifImage(img); };
+            img.onerror = (e) => console.error("GIF failed to load:", e);
+        };
+
+        load();
+        return () => { aborted = true; };
     }, [element.content]);
 
     // Continuous redraw for GIF animation frames
