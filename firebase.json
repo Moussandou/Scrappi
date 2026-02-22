@@ -17,15 +17,13 @@
       }
     }
   },
-  "hosting": [
-    {
-      "site": "scrappi-app",
-      "source": ".",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ]
-    }
-  ]
+  "hosting": {
+    "site": "scrappi-app",
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
 }
