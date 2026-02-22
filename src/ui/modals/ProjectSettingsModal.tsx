@@ -230,20 +230,25 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             {/* View Option */}
                             <div className="space-y-4">
                                 <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Transparence</label>
-                                <button
-                                    onClick={() => setShowPreview(!showPreview)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${showPreview ? 'bg-sage/5 border-sage/20' : 'bg-white/50 border-black/5 hover:bg-white'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <span className={`material-symbols-outlined ${showPreview ? 'text-sage' : 'text-ink/20'}`}>
-                                            {showPreview ? 'visibility' : 'visibility_off'}
-                                        </span>
-                                        <span className="text-sm font-bold text-ink">Aperçu du contenu</span>
+                                <div className={`flex items-center justify-between p-5 rounded-3xl border transition-all ${showPreview ? 'bg-sage/5 border-sage/20' : 'bg-white/50 border-black/5'}`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${showPreview ? 'bg-sage/10 text-sage' : 'bg-black/5 text-ink/20'}`}>
+                                            <span className="material-symbols-outlined text-[20px]">
+                                                {showPreview ? 'visibility' : 'visibility_off'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-sm font-bold text-ink">Aperçu du contenu</span>
+                                            <span className="text-[10px] text-ink-light/60 font-serif italic">Entrevoir vos pages à travers la couverture</span>
+                                        </div>
                                     </div>
-                                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${showPreview ? 'bg-sage' : 'bg-ink/10'}`}>
-                                        <div className={`absolute top-0.5 left-0.5 size-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${showPreview ? 'translate-x-5' : 'translate-x-0'}`}></div>
-                                    </div>
-                                </button>
+                                    <button
+                                        onClick={() => setShowPreview(!showPreview)}
+                                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${showPreview ? 'bg-sage' : 'bg-ink/10'} shadow-inner`}
+                                    >
+                                        <div className={`absolute top-1 left-1 size-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${showPreview ? 'translate-x-[18px]' : 'translate-x-0'}`}></div>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -260,6 +265,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                     onTouchStart={handleDragStart}
                                     onTouchMove={handleDragMove}
                                     onTouchEnd={handleDragEnd}
+                                    onClick={() => !coverUrl && fileInputRef.current?.click()}
                                     className={`relative aspect-[3/4] w-full max-w-[200px] rounded-2xl border-2 border-dashed border-black/5 bg-white/50 hover:bg-white transition-all cursor-${isDragging ? 'grabbing' : coverUrl ? 'grab' : 'pointer'} overflow-hidden flex flex-col items-center justify-center group select-none shadow-sm`}
                                 >
                                     {coverUrl ? (
@@ -285,7 +291,6 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                         </>
                                     ) : (
                                         <div
-                                            onClick={() => fileInputRef.current?.click()}
                                             className="w-full h-full flex flex-col items-center justify-center px-4 text-center"
                                         >
                                             <div className="size-16 rounded-full bg-sage/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -302,21 +307,23 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
 
                                 <div className="flex-1 w-full space-y-6">
                                     <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="px-4 py-2.5 rounded-xl bg-white border border-black/5 text-xs font-bold text-ink hover:bg-sage hover:text-white hover:border-sage transition-all flex items-center gap-2 shadow-sm"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px]">upload</span>
-                                            {coverUrl ? "Changer l'image" : "Choisir une image"}
-                                        </button>
                                         {coverUrl && (
-                                            <button
-                                                onClick={() => setCoverUrl("")}
-                                                className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center gap-2 shadow-sm"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                Supprimer
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="px-4 py-2.5 rounded-xl bg-white border border-black/5 text-xs font-bold text-ink hover:bg-sage hover:text-white hover:border-sage transition-all flex items-center gap-2 shadow-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">upload</span>
+                                                    Changer l'image
+                                                </button>
+                                                <button
+                                                    onClick={() => setCoverUrl("")}
+                                                    className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center gap-2 shadow-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                    Supprimer
+                                                </button>
+                                            </>
                                         )}
                                     </div>
 

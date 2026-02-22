@@ -24,6 +24,23 @@ export default function LibraryOverview() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<"recent" | "oldest" | "alphabetical">("recent");
     const [error, setError] = useState<string | null>(null);
+    const [isSortOpen, setIsSortOpen] = useState(false);
+
+    const sortOptions = [
+        { label: "Nouveaux", value: "recent" as const },
+        { label: "Anciens", value: "oldest" as const },
+        { label: "Alphabétique", value: "alphabetical" as const },
+    ];
+
+    const currentSortLabel = sortOptions.find(o => o.value === sortBy)?.label || "Trier";
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (isSortOpen) setIsSortOpen(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isSortOpen]);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -144,20 +161,36 @@ export default function LibraryOverview() {
                                     placeholder="Rechercher..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-white border border-paper-dark rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-paper-dark rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage transition-all shadow-sm"
                                 />
                             </div>
-                            <div className="relative w-full sm:w-48">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value as any)}
-                                    className="w-full pl-4 pr-10 py-2 bg-white border border-paper-dark rounded-full text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage transition-all shadow-sm cursor-pointer"
+                            <div className="relative w-full sm:w-48" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    onClick={() => setIsSortOpen(!isSortOpen)}
+                                    className="w-full flex items-center justify-between px-5 py-2.5 bg-white border border-paper-dark rounded-full text-sm hover:border-sage transition-all shadow-sm group"
                                 >
-                                    <option value="recent">Nouveaux</option>
-                                    <option value="oldest">Anciens</option>
-                                    <option value="alphabetical">Alphabétique</option>
-                                </select>
-                                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-ink-light pointer-events-none">expand_more</span>
+                                    <span className="text-ink font-medium">{currentSortLabel}</span>
+                                    <span className={`material-symbols-outlined text-ink-light transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                                </button>
+
+                                {isSortOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-paper-dark rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="paper-grain opacity-20 pointer-events-none"></div>
+                                        {sortOptions.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => {
+                                                    setSortBy(option.value);
+                                                    setIsSortOpen(false);
+                                                }}
+                                                className={`w-full text-left px-5 py-3 text-sm transition-colors flex items-center justify-between group/item ${sortBy === option.value ? 'bg-sage/5 text-sage font-bold' : 'text-ink-light hover:bg-black/5 hover:text-ink'}`}
+                                            >
+                                                {option.label}
+                                                {sortBy === option.value && <span className="material-symbols-outlined text-[16px]">check</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
