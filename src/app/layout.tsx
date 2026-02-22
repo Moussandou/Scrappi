@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Caveat, Work_Sans, Playfair_Display } from "next/font/google";
+import {
+  Plus_Jakarta_Sans,
+  Caveat,
+  Work_Sans,
+  Playfair_Display,
+  Dancing_Script,
+  Indie_Flower,
+  Pacifico,
+  Satisfy
+} from "next/font/google";
+
 import "./globals.css";
 import { AuthProvider } from "@/infra/auth/authContext";
 
@@ -10,6 +20,29 @@ const jakarta = Plus_Jakarta_Sans({
 
 const caveat = Caveat({
   variable: "--font-hand",
+  subsets: ["latin"],
+});
+
+const dancing = Dancing_Script({
+  variable: "--font-dancing",
+  subsets: ["latin"],
+});
+
+const indie = Indie_Flower({
+  variable: "--font-indie",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const pacifico = Pacifico({
+  variable: "--font-pacifico",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const satisfy = Satisfy({
+  variable: "--font-satisfy",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -39,7 +72,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body
-        className={`${jakarta.variable} ${caveat.variable} ${workSans.variable} ${playfair.variable} antialiased`}
+        className={`${jakarta.variable} ${caveat.variable} ${dancing.variable} ${indie.variable} ${pacifico.variable} ${satisfy.variable} ${workSans.variable} ${playfair.variable} antialiased`}
       >
         <AuthProvider>
           {children}

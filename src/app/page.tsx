@@ -59,6 +59,23 @@ export default function LandingPage() {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
+  // State for the typography demo
+  const [demoFontIndex, setDemoFontIndex] = useState(0);
+  const demoFonts = [
+    'var(--font-hand)',
+    'var(--font-dancing)',
+    'var(--font-indie)',
+    'var(--font-pacifico)',
+    'var(--font-satisfy)'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDemoFontIndex((prev) => (prev + 1) % demoFonts.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [demoFonts.length]);
+
   return (
     <div className="bg-paper text-ink font-display selection:bg-sage selection:text-white">
       <div className="paper-grain"></div>
@@ -444,9 +461,24 @@ export default function LandingPage() {
                     <p className="text-sm text-ink-light">Une collection de polices cursives imparfaites pour donner du caractère à vos notes.</p>
                   </div>
                   <div className="mt-6 space-y-2">
-                    <p className="font-handwriting text-2xl text-ink">Chère journal...</p>
-                    <p className="font-serif italic text-lg text-ink/70">Idées pour demain</p>
-                    <p className="font-mono text-xs text-ink/50 uppercase tracking-widest">Note rapide</p>
+                    <p
+                      className="text-2xl text-ink transition-all duration-500"
+                      style={{ fontFamily: demoFonts[demoFontIndex] }}
+                    >
+                      Chère journal...
+                    </p>
+                    <p
+                      className="italic text-lg text-ink/70 transition-all duration-500"
+                      style={{ fontFamily: demoFonts[(demoFontIndex + 1) % demoFonts.length] }}
+                    >
+                      Idées pour demain
+                    </p>
+                    <p
+                      className="text-xs text-ink/50 uppercase tracking-widest transition-all duration-500"
+                      style={{ fontFamily: demoFonts[(demoFontIndex + 2) % demoFonts.length] }}
+                    >
+                      Note rapide
+                    </p>
                   </div>
                 </div>
                 <div className="col-span-1 lg:col-span-2 bg-[#e8f5e9] rounded-3xl p-8 border border-sage/20 shadow-sm relative overflow-hidden flex flex-col justify-center">
