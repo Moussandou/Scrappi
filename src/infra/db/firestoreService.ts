@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, where, deleteDoc } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc, getDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, where, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 
@@ -122,36 +122,100 @@ export const deleteScrapbook = async (id: string): Promise<void> => {
     // Delete the scrapbook metadata
     await deleteDoc(doc(db, "scrapbooks", id));
 
-    // Delete the elements associated with this scrapbook
-    await deleteDoc(doc(db, "elements", id));
+    // Delete elements from subcollection
+    const elementsRef = collection(db, "scrapbooks", id, "elements");
+    const snapshot = await getDocs(elementsRef);
+
+    // Delete in batches of 500
+    const chunkSize = 500;
+    for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        const chunk = snapshot.docs.slice(i, i + chunkSize);
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+    }
+
+    // Delete the legacy elements associated with this scrapbook if exists
+    try {
+        await deleteDoc(doc(db, "elements", id));
+    } catch {
+        // Ignore errors if document doesn't exist
+    }
 };
 
 
 export const saveElements = async (scrapbookId: string, elements: CanvasElement[], userId: string) => {
-    const elementsRef = doc(db, "elements", scrapbookId);
-    // We'll store all elements of a scrapbook in a single document for simplicity in V1
-    // If the canvas gets huge, we might need a subcollection `scrapbooks/{id}/elements` instead.
+    const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");
 
-    // Firestore does not support undefined values. We must strip them.
-    const sanitizedElements = elements.map(el => {
+    // Get existing elements to determine what to delete
+    const snapshot = await getDocs(subcollectionRef);
+    const newIds = new Set(elements.map(e => e.id));
+
+    // Prepare operations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const operations: { type: 'set' | 'delete', ref: any, data?: any }[] = [];
+
+    // Identify updates/adds
+    elements.forEach(el => {
+        // Sanitize and include userId for security rules
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sanitized: any = { ...el };
+        const sanitized: any = { ...el, userId };
         Object.keys(sanitized).forEach(key => {
             if (sanitized[key] === undefined) {
                 delete sanitized[key];
             }
         });
-        return sanitized;
+
+        operations.push({
+            type: 'set',
+            ref: doc(subcollectionRef, el.id),
+            data: sanitized
+        });
     });
 
-    await setDoc(elementsRef, {
-        elements: sanitizedElements,
-        userId,
-        updatedAt: serverTimestamp(),
+    // Identify deletions
+    snapshot.docs.forEach(d => {
+        if (!newIds.has(d.id)) {
+            operations.push({
+                type: 'delete',
+                ref: d.ref
+            });
+        }
     });
+
+    // Execute in batches of 500
+    const chunkSize = 500;
+    for (let i = 0; i < operations.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        const chunk = operations.slice(i, i + chunkSize);
+        chunk.forEach(op => {
+            if (op.type === 'set') {
+                batch.set(op.ref, op.data);
+            } else {
+                batch.delete(op.ref);
+            }
+        });
+        await batch.commit();
+    }
+
+    // Attempt to delete legacy document to complete migration
+    try {
+        await deleteDoc(doc(db, "elements", scrapbookId));
+    } catch {
+        // Ignore
+    }
 };
 
 export const getElements = async (scrapbookId: string): Promise<CanvasElement[]> => {
+    // Try to get from subcollection first
+    const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");
+    const snapshot = await getDocs(subcollectionRef);
+
+    if (!snapshot.empty) {
+        return snapshot.docs.map(d => d.data() as CanvasElement);
+    }
+
+    // Fallback to legacy document
     const elementsRef = doc(db, "elements", scrapbookId);
     const docSnap = await getDoc(elementsRef);
 
