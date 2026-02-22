@@ -31,7 +31,10 @@ function openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 1);
         request.onupgradeneeded = () => {
-            request.result.createObjectStore(STORE_NAME);
+            const db = request.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
@@ -77,10 +80,15 @@ let currentDirHandle: FileSystemDirectoryHandle | null = null;
  * Persists the handle in IndexedDB.
  */
 export async function pickDirectory(): Promise<FileSystemDirectoryHandle> {
-    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
-    currentDirHandle = handle;
-    await saveHandle(handle);
-    return handle;
+    try {
+        const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+        currentDirHandle = handle;
+        await saveHandle(handle);
+        return handle;
+    } catch (error) {
+        // User cancelled or API not supported
+        throw error;
+    }
 }
 
 /**
@@ -91,25 +99,26 @@ export async function pickDirectory(): Promise<FileSystemDirectoryHandle> {
 export async function restoreDirectory(): Promise<FileSystemDirectoryHandle | null> {
     if (currentDirHandle) return currentDirHandle;
 
-    const handle = await loadHandle();
-    if (!handle) return null;
-
-    // Verify we still have permission
-    const permission = await handle.queryPermission({ mode: "readwrite" });
-    if (permission === "granted") {
-        currentDirHandle = handle;
-        return handle;
-    }
-
-    // Request permission (requires user gesture context)
     try {
+        const handle = await loadHandle();
+        if (!handle) return null;
+
+        // Verify we still have permission
+        const permission = await handle.queryPermission({ mode: "readwrite" });
+        if (permission === "granted") {
+            currentDirHandle = handle;
+            return handle;
+        }
+
+        // Request permission (requires user gesture context)
+        // Note: This might fail if not called from a user gesture
         const requested = await handle.requestPermission({ mode: "readwrite" });
         if (requested === "granted") {
             currentDirHandle = handle;
             return handle;
         }
-    } catch {
-        // User denied or API not available
+    } catch (e) {
+        console.error("Failed to restore directory handle:", e);
     }
 
     return null;
@@ -120,9 +129,7 @@ export async function restoreDirectory(): Promise<FileSystemDirectoryHandle | nu
  */
 export async function hasLocalDirectory(): Promise<boolean> {
     const handle = await loadHandle();
-    if (!handle) return false;
-    const permission = await handle.queryPermission({ mode: "readwrite" });
-    return permission === "granted";
+    return !!handle;
 }
 
 /**
@@ -145,33 +152,56 @@ export async function saveFileLocally(
     const dir = currentDirHandle;
     if (!dir) throw new Error("No local directory selected");
 
-    // Create subdirectory if needed
-    const subDir = await dir.getDirectoryHandle(subdirectory, { create: true });
-
-    // Generate unique filename
-    const filename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
-    const fileHandle = await subDir.getFileHandle(filename, { create: true });
-
-    // Write the file
-    const writable = await fileHandle.createWritable();
-    const reader = file.stream().getReader();
-    const totalSize = file.size;
-    let written = 0;
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        await writable.write(value);
-        written += value.byteLength;
-        if (onProgress) {
-            onProgress(Math.round((written / totalSize) * 100));
+    // Create subdirectory if needed (handles nested paths)
+    let targetDir = dir;
+    if (subdirectory) {
+        const parts = subdirectory.split("/").filter(p => p.length > 0);
+        for (const part of parts) {
+            targetDir = await targetDir.getDirectoryHandle(part, { create: true });
         }
     }
 
-    await writable.close();
+    // Generate unique filename
+    const ext = file.name.split('.').pop();
+    const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "");
+    const filename = `${Date.now()}_${cleanName}.${ext}`;
+
+    const fileHandle = await targetDir.getFileHandle(filename, { create: true });
+
+    // Write the file
+    // @ts-ignore - TypeScript might not know createWritable on FileSystemFileHandle yet
+    const writable = await fileHandle.createWritable();
+
+    const stream = file.stream();
+    const reader = stream.getReader();
+    const totalSize = file.size;
+    let written = 0;
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await writable.write(value);
+            written += value.byteLength;
+            if (onProgress) {
+                onProgress(Math.round((written / totalSize) * 100));
+            }
+        }
+        await writable.close();
+    } catch (e) {
+        // Cleanup if write fails
+        try {
+            await writable.close();
+        } catch {}
+        // Optionally delete the partial file
+        // await targetDir.removeEntry(filename);
+        throw e;
+    }
 
     // Return a local reference: local:subdirectory/filename
-    return `local:${subdirectory}/${filename}`;
+    // Normalize subdirectory to avoid leading/trailing slashes issues
+    const cleanSubDir = subdirectory.split("/").filter(p => p.length > 0).join("/");
+    return `local:${cleanSubDir ? cleanSubDir + "/" : ""}${filename}`;
 }
 
 /**
@@ -184,30 +214,36 @@ export async function resolveLocalUrl(localRef: string): Promise<string> {
     if (cached) return cached;
 
     const dir = currentDirHandle;
-    if (!dir) throw new Error("No local directory selected");
+    if (!dir) throw new Error("No local directory selected (handle lost)");
 
     // Parse the reference: "local:subdirectory/filename"
     const path = localRef.replace("local:", "");
     const parts = path.split("/");
     const filename = parts.pop()!;
-    const subdirectory = parts.join("/");
 
     // Navigate to subdirectory
     let targetDir: FileSystemDirectoryHandle = dir;
-    if (subdirectory) {
-        for (const part of subdirectory.split("/")) {
+    for (const part of parts) {
+        if (!part) continue;
+        try {
             targetDir = await targetDir.getDirectoryHandle(part);
+        } catch (e) {
+             throw new Error(`Directory not found: ${part}`);
         }
     }
 
     // Get the file and create a blob URL
-    const fileHandle = await targetDir.getFileHandle(filename);
-    const file = await fileHandle.getFile();
-    const blobUrl = URL.createObjectURL(file);
+    try {
+        const fileHandle = await targetDir.getFileHandle(filename);
+        const file = await fileHandle.getFile();
+        const blobUrl = URL.createObjectURL(file);
 
-    // Cache it
-    blobUrlCache.set(localRef, blobUrl);
-    return blobUrl;
+        // Cache it
+        blobUrlCache.set(localRef, blobUrl);
+        return blobUrl;
+    } catch (e) {
+        throw new Error(`File not found: ${filename}`);
+    }
 }
 
 /**
