@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
 import { BookBinder } from "@/ui/components/BookBinder";
+import { TypewriterText } from "@/ui/components/TypewriterText";
 
 const dummyBinders = [
   { c: "#8c443e", i: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop" },
@@ -59,8 +60,6 @@ export default function LandingPage() {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  // State for the typography demo
-  const [demoFontIndex, setDemoFontIndex] = useState(0);
   const demoFonts = [
     'var(--font-hand)',
     'var(--font-dancing)',
@@ -68,13 +67,6 @@ export default function LandingPage() {
     'var(--font-pacifico)',
     'var(--font-satisfy)'
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDemoFontIndex((prev) => (prev + 1) % demoFonts.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [demoFonts.length]);
 
   return (
     <div className="bg-paper text-ink font-display selection:bg-sage selection:text-white">
@@ -459,26 +451,32 @@ export default function LandingPage() {
                     </div>
                     <h4 className="font-serif text-xl font-bold text-ink mb-2">Typos Manuscrites</h4>
                     <p className="text-sm text-ink-light">Une collection de polices cursives imparfaites pour donner du caractère à vos notes.</p>
-                  </div>
-                  <div className="mt-6 space-y-2">
-                    <p
-                      className="text-2xl text-ink transition-all duration-500"
-                      style={{ fontFamily: demoFonts[demoFontIndex] }}
-                    >
-                      Chère journal...
-                    </p>
-                    <p
-                      className="italic text-lg text-ink/70 transition-all duration-500"
-                      style={{ fontFamily: demoFonts[(demoFontIndex + 1) % demoFonts.length] }}
-                    >
-                      Idées pour demain
-                    </p>
-                    <p
-                      className="text-xs text-ink/50 uppercase tracking-widest transition-all duration-500"
-                      style={{ fontFamily: demoFonts[(demoFontIndex + 2) % demoFonts.length] }}
-                    >
-                      Note rapide
-                    </p>
+                    <div className="mt-6 space-y-4 flex flex-col">
+                      <TypewriterText
+                        texts={["Chère journal...", "Pensées du jour", "Ma liste créative"]}
+                        fonts={demoFonts}
+                        className="text-2xl text-ink"
+                        typingSpeed={15}
+                        deletingSpeed={5}
+                        pauseDuration={300}
+                      />
+                      <TypewriterText
+                        texts={["Idées pour demain", "Projets futuristes", "Moodboard pastel"]}
+                        fonts={[...demoFonts].reverse()}
+                        className="italic text-lg text-ink/70"
+                        typingSpeed={20}
+                        deletingSpeed={8}
+                        pauseDuration={300}
+                      />
+                      <TypewriterText
+                        texts={["Note rapide", "Petit mémo", "Flash d'inspiration"]}
+                        fonts={[demoFonts[2], demoFonts[4], demoFonts[1], demoFonts[3], demoFonts[0]]}
+                        className="text-xs text-ink/50 uppercase tracking-widest"
+                        typingSpeed={10}
+                        deletingSpeed={5}
+                        pauseDuration={300}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="col-span-1 lg:col-span-2 bg-[#e8f5e9] rounded-3xl p-8 border border-sage/20 shadow-sm relative overflow-hidden flex flex-col justify-center">
@@ -524,14 +522,24 @@ export default function LandingPage() {
                 <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300 font-light mb-10">
                   Rejoignez des créatifs qui trouvent leur flow dans Scrappi. Démarrez dès maintenant avec un projet gratuit et laissez parler votre imagination.
                 </p>
-                <Link
-                  href={user ? "/library" : "/login"}
-                  className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-lg font-semibold text-[#1a2a1a] shadow-xl hover:bg-gray-100 hover:scale-105 transition-all duration-300 group"
-                >
-                  {user ? "Accéder à mon atelier" : "Créer gratuitement"}
-                  <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                </Link>
-                <p className="mt-8 text-sm text-gray-400 font-handwriting opacity-80 rotate-[-1deg]">Aucune carte de crédit requise.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href={user ? "/library" : "/login"}
+                    className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-lg font-semibold text-[#1a2a1a] shadow-xl hover:bg-gray-100 hover:scale-105 transition-all duration-300 group"
+                  >
+                    {user ? "Accéder à mon atelier" : "Créer gratuitement"}
+                    <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </Link>
+                  <a
+                    href="https://ko-fi.com/moussandou"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-[#FF5E5B]/10 border border-[#FF5E5B]/20 px-8 py-4 text-lg font-semibold text-white shadow-xl hover:bg-[#FF5E5B]/20 hover:scale-105 transition-all duration-300 group"
+                  >
+                    <span className="material-symbols-outlined mr-2 text-[#FF5E5B]">coffee</span>
+                    Soutenir le projet
+                  </a>
+                </div>
               </div>
             </div>
           </section>
@@ -566,6 +574,10 @@ export default function LandingPage() {
                   <a href="https://moussandou.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-sage transition-colors group">
                     <span className="material-symbols-outlined text-[16px] group-hover:-translate-y-0.5 transition-transform">language</span>
                     Portfolio
+                  </a>
+                  <a href="https://ko-fi.com/moussandou" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-[#FF5E5B] transition-colors group">
+                    <span className="material-symbols-outlined text-[16px] group-hover:-translate-y-0.5 transition-transform text-[#FF5E5B]">coffee</span>
+                    Ko-fi
                   </a>
                 </div>
               </div>
