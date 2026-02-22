@@ -3,7 +3,8 @@
  * Fetches handwriting fonts and manages dynamic font loading.
  */
 
-const API_BASE = "https://www.googleapis.com/webfonts/v1/webfonts";
+import handwritingFonts from "./handwritingFonts.json";
+
 const FONTS_CSS_BASE = "https://fonts.googleapis.com/css2";
 
 export interface GoogleFont {
@@ -11,38 +12,14 @@ export interface GoogleFont {
     category: string;
 }
 
-let cachedFonts: GoogleFont[] | null = null;
 const loadedFonts = new Set<string>();
 
 /**
- * Fetch all handwriting fonts from Google Fonts API.
- * Results are cached in memory after the first call.
+ * Fetch all handwriting fonts.
+ * Now returns the pre-generated list from build time.
  */
 export async function fetchHandwritingFonts(): Promise<GoogleFont[]> {
-    if (cachedFonts) return cachedFonts;
-
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY;
-    if (!apiKey) {
-        console.error("Google Fonts API key is missing");
-        return [];
-    }
-
-    const url = `${API_BASE}?key=${apiKey}&sort=popularity&capability=WOFF2`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-        console.error("Failed to fetch Google Fonts:", response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const allFonts: GoogleFont[] = data.items || [];
-
-    cachedFonts = allFonts
-        .filter((f: GoogleFont) => f.category === "handwriting")
-        .map((f: GoogleFont) => ({ family: f.family, category: f.category }));
-
-    return cachedFonts;
+    return handwritingFonts as GoogleFont[];
 }
 
 /**
