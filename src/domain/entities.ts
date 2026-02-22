@@ -37,6 +37,11 @@ export interface CanvasElement {
     strokeColor?: string;
     strokeWidth?: number;
     fontFamily?: string;
+    // Video properties
+    muted?: boolean;
+    loop?: boolean;
+    volume?: number;
+    autoPlay?: boolean;
 }
 
 export interface CanvasPage {

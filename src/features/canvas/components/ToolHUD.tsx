@@ -17,6 +17,7 @@ interface ToolHUDProps {
     handleFontChange: (font: string) => void;
     onDelete: () => void;
     onMoveZ: (direction: 'forward' | 'backward' | 'front' | 'back') => void;
+    onUpdateElement?: (id: string, props: Partial<CanvasElement>) => void;
     paperType: PaperType;
     onPaperTypeChange: (type: PaperType) => void;
     paperColor: string;
@@ -46,6 +47,7 @@ export default function ToolHUD({
     handleFontChange,
     onDelete,
     onMoveZ,
+    onUpdateElement,
     paperType,
     onPaperTypeChange,
     paperColor,
@@ -60,7 +62,8 @@ export default function ToolHUD({
         layers: true,
         color: true,
         thickness: true,
-        font: true
+        font: true,
+        video: true
     });
     const fontPickerRef = useRef<HTMLDivElement>(null);
 
@@ -86,16 +89,20 @@ export default function ToolHUD({
     const hasText = selectedElements.some(el => el.type === 'text' && !el.backgroundColor);
     const hasLines = selectedElements.some(el => el.type === 'line' || el.type === 'arrow');
     const hasEraser = selectedElements.some(el => el.type === 'eraser');
+    const hasVideo = selectedElements.some(el => el.type === 'video');
+    const firstVideo = selectedElements.find(el => el.type === 'video');
+
     const isDrawingTool = activeTool === 'draw' || activeTool === 'arrow' || activeTool === 'eraser';
     const hasTextElement = hasPostIt || hasText;
 
     const showColor = (activeTool !== 'eraser' && !hasEraser) && (isDrawingTool || hasPostIt || hasText || hasLines);
     const showThickness = isDrawingTool || hasLines || hasEraser;
     const showFont = hasTextElement && activeTool === 'select';
+    const showVideo = hasVideo && activeTool === 'select';
     const showActions = selectedIds.length > 0 && activeTool === 'select';
     const showPaper = activeTool === 'select' && selectedIds.length === 0;
 
-    const showHUD = showColor || showThickness || showFont || showActions || showPaper;
+    const showHUD = showColor || showThickness || showFont || showActions || showPaper || showVideo;
     if (!showHUD) return null;
 
     let colorLabel = "Couleur";
@@ -127,7 +134,7 @@ export default function ToolHUD({
         setFontSearch("");
     };
 
-    const SectionHeader = ({ id, label, isLast = false }: { id: string, label: string, isLast?: boolean }) => (
+    const SectionHeader = ({ id, label }: { id: string, label: string }) => (
         <div
             className="flex items-center justify-between cursor-pointer group/header"
             onClick={() => toggleSection(id)}
@@ -180,6 +187,34 @@ export default function ToolHUD({
                                 </div>
                                 <span className="text-[9px] font-bold text-ink-light truncate">Couleur fond</span>
                             </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {showVideo && firstVideo && (
+                <div className="flex flex-col gap-2">
+                    <SectionHeader id="video" label="Vidéo" />
+                    {expandedSections.video && (
+                        <div className="flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-200">
+                            <button
+                                onClick={() => onUpdateElement?.(firstVideo.id, { muted: firstVideo.muted === false })}
+                                className={`flex items-center justify-between w-full p-2 rounded-xl transition-all ${firstVideo.muted !== false ? 'bg-sage/10 text-sage' : 'text-ink-light hover:bg-black/5'}`}
+                            >
+                                <span className="text-[10px] font-bold">Muet</span>
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {firstVideo.muted !== false ? 'volume_off' : 'volume_up'}
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => onUpdateElement?.(firstVideo.id, { loop: firstVideo.loop === false })}
+                                className={`flex items-center justify-between w-full p-2 rounded-xl transition-all ${firstVideo.loop !== false ? 'bg-sage/10 text-sage' : 'text-ink-light hover:bg-black/5'}`}
+                            >
+                                <span className="text-[10px] font-bold">Boucle</span>
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {firstVideo.loop !== false ? 'repeat_on' : 'repeat'}
+                                </span>
+                            </button>
                         </div>
                     )}
                 </div>

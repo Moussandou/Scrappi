@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
@@ -148,6 +148,17 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 </Group>
             )}
 
+            {element.type === 'video' && (
+                <VideoElement
+                    ref={shapeRef}
+                    element={element}
+                    isDraggable={isDraggable}
+                    onSelect={onSelect}
+                    onDragEnd={handleDragEnd}
+                    onTransformEnd={handleTransformEnd}
+                />
+            )}
+
             {(element.type === 'image' || element.type === 'sticker') && (
                 <KonvaImage
                     ref={shapeRef}
@@ -226,3 +237,92 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
         </Group>
     );
 }
+
+// Sub-component to handle Video Lifecycle
+const VideoElement = forwardRef<any, {
+    element: CanvasElement;
+    isDraggable: boolean;
+    onSelect: () => void;
+    onDragEnd: (e: any) => void;
+    onTransformEnd: () => void;
+}>(({ element, isDraggable, onSelect, onDragEnd, onTransformEnd }, ref) => {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+    const konvaImageRef = useRef<any>(null);
+
+    useEffect(() => {
+        const video = document.createElement('video');
+        video.src = element.content;
+        // video.crossOrigin = 'anonymous'; // Removed to avoid CORS blocking without explicit bucket config
+        video.loop = element.loop !== false; // Default to loop
+        video.muted = element.muted !== false; // Default to muted for autoplay support
+        video.autoplay = true;
+        video.playsInline = true;
+
+        const handleCanPlay = () => {
+            setVideoElement(video);
+            video.play().catch(e => console.warn("Autoplay block:", e));
+        };
+        const handleError = (e: any) => {
+            console.error("Video failed to play:", e);
+        };
+
+        video.addEventListener('canplay', handleCanPlay);
+        video.addEventListener('error', handleError);
+        videoRef.current = video;
+
+        return () => {
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('error', handleError);
+            video.pause();
+            video.src = "";
+            video.load();
+        };
+    }, [element.content, element.loop, element.muted]);
+
+    // Redraw loop
+    useEffect(() => {
+        if (!videoElement) return;
+
+        let animFrame: number;
+        const layer = konvaImageRef.current?.getLayer();
+
+        const step = () => {
+            if (layer) {
+                layer.batchDraw();
+            }
+            animFrame = requestAnimationFrame(step);
+        };
+
+        if (videoElement) {
+            animFrame = requestAnimationFrame(step);
+        }
+
+        return () => {
+            cancelAnimationFrame(animFrame);
+        };
+    }, [videoElement]);
+
+    // Expose the ref for the transformer
+    useImperativeHandle(ref, () => konvaImageRef.current);
+
+    return (
+        <KonvaImage
+            ref={konvaImageRef}
+            image={videoElement || undefined}
+            x={element.x}
+            y={element.y}
+            width={element.width}
+            height={element.height}
+            rotation={element.rotation}
+            draggable={isDraggable}
+            listening={isDraggable}
+            onClick={onSelect}
+            onTap={onSelect}
+            onDragEnd={onDragEnd}
+            onTransformEnd={onTransformEnd}
+        />
+    );
+});
+
+VideoElement.displayName = "VideoElement";

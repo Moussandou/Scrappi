@@ -1,15 +1,16 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /projects/{projectId}/{imageId} {
-      // Allow public read access (so anyone can view the scrapbooks for now)
+    // Rules for all project-related assets (images and videos)
+    match /projects/{projectId}/{allPaths=**} {
       allow read: if true;
       
-      // Allow uploads ONLY if: 
-      // 1. The file is less than 5MB
-      // 2. The file is an image
-      allow create, update: if request.resource.size < 5 * 1024 * 1024
-                            && request.resource.contentType.matches('image/.*');
+      allow create, update: if 
+        // Images: max 5MB
+        (request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*')) ||
+        // Videos: max 50MB
+        (request.resource.size < 50 * 1024 * 1024 && request.resource.contentType.matches('video/.*'));
+        
       allow delete: if true;
     }
     

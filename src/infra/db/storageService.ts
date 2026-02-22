@@ -36,3 +36,5 @@ export const uploadImage = async (
         );
     });
 };
+
+export const uploadFile = uploadImage;

@@ -13,6 +13,7 @@ import Toolbar from "./components/Toolbar";
 import ToolHUD from "./components/ToolHUD";
 import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
+import VideoUploadModal from "./components/VideoUploadModal";
 import { PaperSelector, PaperType } from "./components/PaperSelector";
 
 // Dynamic import for Konva canvas to avoid SSR issues
@@ -74,6 +75,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [paperType, setPaperType] = useState<PaperType>('watercolor');
     const [paperColor, setPaperColor] = useState<string>('#ffffff'); // Default to white
     const helpRef = useRef<HTMLDivElement>(null);
@@ -361,6 +363,60 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         }
     };
 
+    const handleVideoSelection = async (file: File) => {
+        setIsVideoModalOpen(false);
+        setUploading(true);
+        try {
+            const url = await uploadImage(file, `projects/${projectId}/videos`);
+
+            // Create a video element to get dimensions
+            const video = document.createElement('video');
+            video.src = url;
+            video.preload = 'metadata';
+
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => resolve(true);
+                video.onerror = (e) => {
+                    console.error("Erreur gérée pendant le preload de la vidéo :", e);
+                    resolve(false); // Resolve gracefully, we will use default dimensions
+                };
+            });
+
+            let finalWidth = video.videoWidth || 480;
+            let finalHeight = video.videoHeight || 270;
+            const maxSize = 480;
+
+            if (finalWidth > maxSize || finalHeight > maxSize) {
+                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
+            const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
+            const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
+
+            const newElement: CanvasElement = {
+                id: crypto.randomUUID(),
+                type: "video",
+                content: url,
+                x: (x - position.x) / scale,
+                y: (y - position.y) / scale,
+                width: finalWidth,
+                height: finalHeight,
+                rotation: 0,
+                zIndex: elements.length + 1,
+                muted: true, // Default to muted for autoplay support
+                loop: true,
+            };
+            setElements(prev => [...prev, newElement]);
+        } catch (error) {
+            console.error("Failed to upload video", error);
+            alert("Erreur lors de l'upload de la vidéo.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleAddSticker = async (url: string) => {
         setUploading(true);
         try {
@@ -630,6 +686,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             toggleStickerTray={() => setIsStickerTrayOpen(!isStickerTrayOpen)}
                             isStickerTrayOpen={isStickerTrayOpen}
                             openImageModal={() => setIsImageModalOpen(true)}
+                            openVideoModal={() => setIsVideoModalOpen(true)}
                         />
 
                         <StickerTray
@@ -645,6 +702,13 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             uploading={uploading}
                         />
 
+                        <VideoUploadModal
+                            isOpen={isVideoModalOpen}
+                            onClose={() => setIsVideoModalOpen(false)}
+                            onUpload={handleVideoSelection}
+                            uploading={uploading}
+                        />
+
                         <ToolHUD
                             activeTool={activeTool}
                             elements={elements}
@@ -657,6 +721,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             handleFontChange={handleFontChange}
                             onDelete={handleDeleteSelected}
                             onMoveZ={handleMoveZ}
+                            onUpdateElement={handleElementChange}
                             paperType={paperType}
                             onPaperTypeChange={setPaperType}
                             paperColor={paperColor}

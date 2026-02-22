@@ -11,6 +11,7 @@ interface ToolbarProps {
     toggleStickerTray: () => void;
     isStickerTrayOpen: boolean;
     openImageModal: () => void;
+    openVideoModal?: () => void;
 }
 
 export default function Toolbar({
@@ -21,12 +22,14 @@ export default function Toolbar({
     addTextElement,
     toggleStickerTray,
     isStickerTrayOpen,
-    openImageModal
+    openImageModal,
+    openVideoModal
 }: ToolbarProps) {
     return (
         <div className="flex-1 flex items-start justify-start gap-4 mt-4">
             <div className="pointer-events-auto flex flex-col gap-4">
                 <div className="flex flex-col gap-2 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-black/5 shadow-soft">
+                    {/* ... other buttons ... */}
                     <button
                         onClick={() => setActiveTool('hand')}
                         className={`size-11 rounded-xl shadow-sm flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto ${activeTool === 'hand' ? 'bg-sage text-white' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}
@@ -76,10 +79,20 @@ export default function Toolbar({
                     <button
                         onClick={openImageModal}
                         className="size-11 rounded-xl flex items-center justify-center transition-all hover:scale-105 pointer-events-auto border-2 border-dashed border-sage/30 text-sage hover:border-sage hover:bg-sage/5"
-                        title="Importer une image ou glisser-déposer"
+                        title="Importer une image"
                     >
                         <span className="material-symbols-outlined">
                             add_photo_alternate
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={openVideoModal}
+                        className="size-11 rounded-xl flex items-center justify-center transition-all hover:scale-105 pointer-events-auto border-2 border-dashed border-sage/30 text-sage hover:border-sage hover:bg-sage/5"
+                        title="Importer une vidéo (max 50MB)"
+                    >
+                        <span className="material-symbols-outlined">
+                            video_file
                         </span>
                     </button>
 
