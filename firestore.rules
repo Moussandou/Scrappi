@@ -28,7 +28,9 @@ service cloud.firestore {
 
     match /elements/{id} {
       allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow write: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isSignedIn() && isOwner(resource.data.userId);
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
     }
 
     // User profiles
