@@ -5,6 +5,7 @@ import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
+import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
 
 interface InfiniteCanvasProps {
     elements: CanvasElement[];
@@ -326,8 +327,8 @@ export default function InfiniteCanvas({
                         y={Math.min(selectionBox.y1, selectionBox.y2)}
                         width={Math.abs(selectionBox.x2 - selectionBox.x1)}
                         height={Math.abs(selectionBox.y2 - selectionBox.y1)}
-                        fill="rgba(138, 154, 134, 0.2)"
-                        stroke="#8a9a86"
+                        fill={SELECTION_FILL_COLOR}
+                        stroke={SELECTION_STROKE_COLOR}
                         strokeWidth={1}
                         dash={[5, 5]}
                     />
@@ -335,11 +336,11 @@ export default function InfiniteCanvas({
                 {activeTool === 'select' && selectedIds.length > 0 && (
                     <Transformer
                         ref={transformerRef}
-                        anchorFill="#8a9a86"
+                        anchorFill={SELECTION_STROKE_COLOR}
                         anchorStroke="#ffffff"
                         anchorSize={10}
                         anchorCornerRadius={3}
-                        borderStroke="#8a9a86"
+                        borderStroke={SELECTION_STROKE_COLOR}
                         borderStrokeWidth={2}
                         borderDash={[4, 4]}
                         padding={10}
