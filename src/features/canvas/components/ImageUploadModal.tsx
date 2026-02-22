@@ -7,9 +7,10 @@ interface ImageUploadModalProps {
     onClose: () => void;
     onUpload: (file: File) => void;
     uploading: boolean;
+    storageMode?: 'cloud' | 'local';
 }
 
-export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading }: ImageUploadModalProps) {
+export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading, storageMode = 'cloud' }: ImageUploadModalProps) {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,7 +111,7 @@ export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading 
                     <div className="mt-6 flex flex-col gap-3">
                         <div className="flex items-center gap-2 text-[10px] text-ink-light/60 font-medium uppercase tracking-wider">
                             <span className="h-px flex-1 bg-black/5"></span>
-                            <span>Conseils</span>
+                            <span>{storageMode === 'local' ? 'Stockage Local' : 'Conseils'}</span>
                             <span className="h-px flex-1 bg-black/5"></span>
                         </div>
                         <ul className="grid grid-cols-2 gap-3">
@@ -120,7 +121,7 @@ export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading 
                             </li>
                             <li className="flex items-center gap-2 text-[11px] text-ink-light">
                                 <span className="material-symbols-outlined text-[14px] text-sage">check_circle</span>
-                                Max 5 Mo recommandé
+                                {storageMode === 'local' ? "Aucune limite" : "Max 5 Mo recommandé"}
                             </li>
                         </ul>
                     </div>
@@ -128,7 +129,10 @@ export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading 
 
                 <div className="p-4 bg-white/30 border-t border-black/5 flex justify-center">
                     <p className="text-[10px] text-ink-light font-medium tracking-tight">
-                        Vos images sont stockées en toute sécurité dans votre projet.
+                        {storageMode === 'local'
+                            ? "Vos images sont gardées sur votre PC."
+                            : "Vos images sont stockées en toute sécurité dans votre projet Cloud."
+                        }
                     </p>
                 </div>
             </div>

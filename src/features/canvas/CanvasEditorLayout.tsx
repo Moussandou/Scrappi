@@ -692,6 +692,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onClose={() => setIsImageModalOpen(false)}
                             onUpload={handleFileSelection}
                             uploading={uploading}
+                            storageMode={storageMode.mode}
                         />
 
                         <VideoUploadModal
@@ -699,6 +700,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onClose={() => setIsVideoModalOpen(false)}
                             onUpload={handleVideoSelection}
                             uploading={uploading}
+                            storageMode={storageMode.mode}
                         />
 
                         {uploading && (

@@ -25,6 +25,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
     const [coverX, setCoverX] = useState(initialData?.coverX ?? 50);
     const [coverY, setCoverY] = useState(initialData?.coverY ?? 50);
     const [showPreview, setShowPreview] = useState(initialData?.showPreview ?? true);
+    const [storageMode, setStorageMode] = useState<'cloud' | 'local'>(initialData?.storageMode || 'local');
     const { user } = useAuth();
     const [uploading, setUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             setCoverX(initialData?.coverX ?? 50);
             setCoverY(initialData?.coverY ?? 50);
             setShowPreview(initialData?.showPreview ?? true);
+            setStorageMode(initialData?.storageMode || 'local');
             setErrorMessage(null);
         }
     }, [isOpen, initialData]);
@@ -117,7 +119,8 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             coverZoom: coverZoom,
             coverX: coverX,
             coverY: coverY,
-            showPreview: showPreview
+            showPreview: showPreview,
+            storageMode: storageMode
         });
     };
 
@@ -219,186 +222,227 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                     onChange={(e) => setBinderGrain(parseFloat(e.target.value))}
                                     className="w-full h-1.5 bg-paper-dark rounded-lg appearance-none cursor-pointer accent-sage"
                                 />
+                                {/* View Option */}
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Transparence</label>
+                                    <div className={`flex items-center justify-between p-5 rounded-3xl border transition-all ${showPreview ? 'bg-sage/5 border-sage/20' : 'bg-white/50 border-black/5'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${showPreview ? 'bg-sage/10 text-sage' : 'bg-black/5 text-ink/20'}`}>
+                                                <span className="material-symbols-outlined text-[20px]">
+                                                    {showPreview ? 'visibility' : 'visibility_off'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-sm font-bold text-ink">Aperçu du contenu</span>
+                                                <span className="text-[10px] text-ink-light/60 font-serif italic text-left">Entrevoir les pages à travers la couverture</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowPreview(!showPreview)}
+                                            className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${showPreview ? 'bg-sage' : 'bg-ink/10'} shadow-inner`}
+                                        >
+                                            <div className={`absolute top-1 left-1 size-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${showPreview ? 'translate-x-[18px]' : 'translate-x-0'}`}></div>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* View Option */}
+                            {/* Storage Mode Selection */}
                             <div className="space-y-4">
-                                <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Transparence</label>
-                                <div className={`flex items-center justify-between p-5 rounded-3xl border transition-all ${showPreview ? 'bg-sage/5 border-sage/20' : 'bg-white/50 border-black/5'}`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${showPreview ? 'bg-sage/10 text-sage' : 'bg-black/5 text-ink/20'}`}>
-                                            <span className="material-symbols-outlined text-[20px]">
-                                                {showPreview ? 'visibility' : 'visibility_off'}
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-sm font-bold text-ink">Aperçu du contenu</span>
-                                            <span className="text-[10px] text-ink-light/60 font-serif italic">Entrevoir vos pages à travers la couverture</span>
-                                        </div>
-                                    </div>
+                                <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Lieu de Stockage</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <button
-                                        onClick={() => setShowPreview(!showPreview)}
-                                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${showPreview ? 'bg-sage' : 'bg-ink/10'} shadow-inner`}
+                                        onClick={() => setStorageMode('local')}
+                                        className={`flex flex-col p-5 rounded-3xl border transition-all text-left h-full group ${storageMode === 'local' ? 'bg-sage/5 border-sage/20 ring-2 ring-sage/10' : 'bg-white/50 border-black/5 hover:border-black/10'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 size-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${showPreview ? 'translate-x-[18px]' : 'translate-x-0'}`}></div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${storageMode === 'local' ? 'bg-sage/10 text-sage' : 'bg-black/5 text-ink/20'}`}>
+                                                <span className="material-symbols-outlined text-[20px]">laptop_mac</span>
+                                            </div>
+                                            {storageMode === 'local' && (
+                                                <span className="material-symbols-outlined text-sage text-[18px]">check_circle</span>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-bold text-ink block mb-1">Stockage Local (Défaut)</span>
+                                        <p className="text-[10px] text-ink-light/60 font-serif italic leading-relaxed">
+                                            Les fichiers sont sur votre PC. **Sans limite** et ultra-rapide.
+                                        </p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setStorageMode('cloud')}
+                                        className={`flex flex-col p-5 rounded-3xl border transition-all text-left h-full group ${storageMode === 'cloud' ? 'bg-sky-50 border-sky-200 ring-2 ring-sky-100' : 'bg-white/50 border-black/5 hover:border-black/10'}`}
+                                    >
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${storageMode === 'cloud' ? 'bg-sky-100 text-sky-600' : 'bg-black/5 text-ink/20'}`}>
+                                                <span className="material-symbols-outlined text-[20px]">cloud_sync</span>
+                                            </div>
+                                            {storageMode === 'cloud' && (
+                                                <span className="material-symbols-outlined text-sky-600 text-[18px]">check_circle</span>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-bold text-ink block mb-1">Stockage Cloud</span>
+                                        <p className="text-[10px] text-ink-light/60 font-serif italic leading-relaxed">
+                                            Synchronisé partout. **Limite de 5 Go** par compte.
+                                        </p>
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Cover Image */}
-                        <div className="space-y-4">
-                            <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Image de Couverture</label>
-                            <div className="flex flex-col sm:flex-row gap-8 items-start">
-                                <div
-                                    ref={containerRef}
-                                    onMouseDown={handleDragStart}
-                                    onMouseMove={handleDragMove}
-                                    onMouseUp={handleDragEnd}
-                                    onMouseLeave={handleDragEnd}
-                                    onTouchStart={handleDragStart}
-                                    onTouchMove={handleDragMove}
-                                    onTouchEnd={handleDragEnd}
-                                    onClick={() => !coverUrl && fileInputRef.current?.click()}
-                                    className={`relative aspect-[3/4] w-full max-w-[200px] rounded-2xl border-2 border-dashed border-black/5 bg-white/50 hover:bg-white transition-all cursor-${isDragging ? 'grabbing' : coverUrl ? 'grab' : 'pointer'} overflow-hidden flex flex-col items-center justify-center group select-none shadow-sm`}
-                                >
-                                    {coverUrl ? (
-                                        <>
+                            {/* Cover Image */}
+                            <div className="space-y-4">
+                                <label className="text-[11px] font-bold text-ink-light uppercase tracking-[0.2em] ml-1">Image de Couverture</label>
+                                <div className="flex flex-col sm:flex-row gap-8 items-start">
+                                    <div
+                                        ref={containerRef}
+                                        onMouseDown={handleDragStart}
+                                        onMouseMove={handleDragMove}
+                                        onMouseUp={handleDragEnd}
+                                        onMouseLeave={handleDragEnd}
+                                        onTouchStart={handleDragStart}
+                                        onTouchMove={handleDragMove}
+                                        onTouchEnd={handleDragEnd}
+                                        onClick={() => !coverUrl && fileInputRef.current?.click()}
+                                        className={`relative aspect-[3/4] w-full max-w-[200px] rounded-2xl border-2 border-dashed border-black/5 bg-white/50 hover:bg-white transition-all cursor-${isDragging ? 'grabbing' : coverUrl ? 'grab' : 'pointer'} overflow-hidden flex flex-col items-center justify-center group select-none shadow-sm`}
+                                    >
+                                        {coverUrl ? (
+                                            <>
+                                                <div
+                                                    className="absolute shadow-xl border border-black/10 bg-white p-0.5 transition-all duration-100"
+                                                    style={{
+                                                        left: `${coverX}%`,
+                                                        top: `${coverY}%`,
+                                                        width: `${coverZoom * 80}%`,
+                                                        transform: 'translate(-50%, -50%) rotate(-1deg)',
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={coverUrl}
+                                                        alt="Cover preview"
+                                                        className="w-full h-auto block pointer-events-none rounded-[1px]"
+                                                    />
+                                                </div>
+                                                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                                                    <span className="material-symbols-outlined text-4xl drop-shadow-md">drag_pan</span>
+                                                </div>
+                                            </>
+                                        ) : (
                                             <div
-                                                className="absolute shadow-xl border border-black/10 bg-white p-0.5 transition-all duration-100"
-                                                style={{
-                                                    left: `${coverX}%`,
-                                                    top: `${coverY}%`,
-                                                    width: `${coverZoom * 80}%`,
-                                                    transform: 'translate(-50%, -50%) rotate(-1deg)',
-                                                }}
+                                                className="w-full h-full flex flex-col items-center justify-center px-4 text-center"
                                             >
-                                                <img
-                                                    src={coverUrl}
-                                                    alt="Cover preview"
-                                                    className="w-full h-auto block pointer-events-none rounded-[1px]"
-                                                />
-                                            </div>
-                                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
-                                                <span className="material-symbols-outlined text-4xl drop-shadow-md">drag_pan</span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div
-                                            className="w-full h-full flex flex-col items-center justify-center px-4 text-center"
-                                        >
-                                            <div className="size-16 rounded-full bg-sage/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                                <span className="material-symbols-outlined text-3xl text-sage/40">
-                                                    {uploading ? "sync" : "photo_library"}
+                                                <div className="size-16 rounded-full bg-sage/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                                    <span className="material-symbols-outlined text-3xl text-sage/40">
+                                                        {uploading ? "sync" : "photo_library"}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xs text-ink-light font-bold">
+                                                    {uploading ? "Traitement..." : "Glissez une image ou cliquez ici"}
                                                 </span>
                                             </div>
-                                            <span className="text-xs text-ink-light font-bold">
-                                                {uploading ? "Traitement..." : "Glissez une image ou cliquez ici"}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex-1 w-full space-y-6">
-                                    <div className="flex flex-wrap gap-2">
-                                        {coverUrl && (
-                                            <>
-                                                <button
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    className="px-4 py-2.5 rounded-xl bg-white border border-black/5 text-xs font-bold text-ink hover:bg-sage hover:text-white hover:border-sage transition-all flex items-center gap-2 shadow-sm"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">upload</span>
-                                                    Changer l'image
-                                                </button>
-                                                <button
-                                                    onClick={() => setCoverUrl("")}
-                                                    className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center gap-2 shadow-sm"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                    Supprimer
-                                                </button>
-                                            </>
                                         )}
                                     </div>
 
-                                    {coverUrl && (
-                                        <div className="space-y-3 bg-white/50 p-4 rounded-2xl border border-black/5">
-                                            <div className="flex justify-between text-[10px] text-ink-light font-bold uppercase tracking-wider">
-                                                <span>Zoom de l&apos;image</span>
-                                                <span>{Math.round(coverZoom * 100)}%</span>
-                                            </div>
-                                            <input
-                                                type="range" min="0.1" max="2" step="0.05"
-                                                value={coverZoom}
-                                                onChange={(e) => setCoverZoom(parseFloat(e.target.value))}
-                                                className="w-full h-1 bg-paper-dark rounded-lg appearance-none cursor-pointer accent-sage"
-                                            />
-                                            <p className="text-[10px] text-ink-light/40 italic">Astuce : Déplacez l&apos;image à gauche pour l&apos;ajuster.</p>
+                                    <div className="flex-1 w-full space-y-6">
+                                        <div className="flex flex-wrap gap-2">
+                                            {coverUrl && (
+                                                <>
+                                                    <button
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        className="px-4 py-2.5 rounded-xl bg-white border border-black/5 text-xs font-bold text-ink hover:bg-sage hover:text-white hover:border-sage transition-all flex items-center gap-2 shadow-sm"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">upload</span>
+                                                        Changer l'image
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setCoverUrl("")}
+                                                        className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center gap-2 shadow-sm"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                        Supprimer
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
-                                    )}
+
+                                        {coverUrl && (
+                                            <div className="space-y-3 bg-white/50 p-4 rounded-2xl border border-black/5">
+                                                <div className="flex justify-between text-[10px] text-ink-light font-bold uppercase tracking-wider">
+                                                    <span>Zoom de l&apos;image</span>
+                                                    <span>{Math.round(coverZoom * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0.1" max="2" step="0.05"
+                                                    value={coverZoom}
+                                                    onChange={(e) => setCoverZoom(parseFloat(e.target.value))}
+                                                    className="w-full h-1 bg-paper-dark rounded-lg appearance-none cursor-pointer accent-sage"
+                                                />
+                                                <p className="text-[10px] text-ink-light/40 italic">Astuce : Déplacez l&apos;image à gauche pour l&apos;ajuster.</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
                             </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageUpload}
-                                accept="image/*"
-                                className="hidden"
-                            />
+                        </div>
+
+                        <div className="mt-auto pt-10 flex gap-4 shrink-0">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 py-5 rounded-[20px] font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-[0.2em] text-[10px]"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleConfirm}
+                                disabled={uploading}
+                                className="flex-[2] py-5 rounded-[20px] bg-ink text-white font-bold shadow-xl hover:bg-sage hover:shadow-sage/20 transition-all uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 group flex items-center justify-center gap-2"
+                            >
+                                Lancer la Création
+                                <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div className="mt-auto pt-10 flex gap-4 shrink-0">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 py-5 rounded-[20px] font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-[0.2em] text-[10px]"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={uploading}
-                            className="flex-[2] py-5 rounded-[20px] bg-ink text-white font-bold shadow-xl hover:bg-sage hover:shadow-sage/20 transition-all uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 group flex items-center justify-center gap-2"
-                        >
-                            Lancer la Création
-                            <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Right Side: Immersive Preview */}
-                <div className="relative z-10 hidden md:flex w-[400px] bg-paper-dark/40 border-l border-paper-dark/30 flex-col items-center justify-center p-12 overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white opacity-20 blur-[120px] rounded-full" />
-                    </div>
-
-                    <div className="relative w-full max-w-[280px] z-10">
-                        <div className="text-center mb-12">
-                            <p className="text-[11px] font-bold text-ink-light/40 uppercase tracking-[0.3em]">Signature Digitale</p>
-                            <div className="h-px w-12 bg-sage/20 mx-auto mt-2" />
+                    {/* Right Side: Immersive Preview */}
+                    <div className="relative z-10 hidden md:flex w-[400px] bg-paper-dark/40 border-l border-paper-dark/30 flex-col items-center justify-center p-12 overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white opacity-20 blur-[120px] rounded-full" />
                         </div>
 
-                        <div className="relative w-full aspect-[3/4] mx-auto perspective-[2500px] rotate-[-2deg] hover:rotate-0 transition-transform duration-700 ease-out">
-                            <div className="absolute inset-0 bg-black/5 blur-2xl translate-y-8 translate-x-4 rounded-[1px] opacity-40 shadow-2xl" />
-                            <BookBinder
-                                scrapbook={{
-                                    title: projectTitle || "Mon Projet",
-                                    binderColor: selectedColor,
-                                    binderGrain: binderGrain,
-                                    coverImage: coverUrl || undefined,
-                                    coverZoom: coverZoom,
-                                    coverX: coverX,
-                                    coverY: coverY,
-                                    showPreview: showPreview
-                                }}
-                                showDetails={true}
-                                interactive={false}
-                                className="pointer-events-none drop-shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
-                            />
-                        </div>
+                        <div className="relative w-full max-w-[280px] z-10">
+                            <div className="text-center mb-12">
+                                <p className="text-[11px] font-bold text-ink-light/40 uppercase tracking-[0.3em]">Signature Digitale</p>
+                                <div className="h-px w-12 bg-sage/20 mx-auto mt-2" />
+                            </div>
 
-                        <div className="mt-16 text-center space-y-2">
-                            <p className="font-handwriting text-2xl text-sage/60 rotate-[-4deg]">Prêt pour l&apos;aventure ?</p>
+                            <div className="relative w-full aspect-[3/4] mx-auto perspective-[2500px] rotate-[-2deg] hover:rotate-0 transition-transform duration-700 ease-out">
+                                <div className="absolute inset-0 bg-black/5 blur-2xl translate-y-8 translate-x-4 rounded-[1px] opacity-40 shadow-2xl" />
+                                <BookBinder
+                                    scrapbook={{
+                                        title: projectTitle || "Mon Projet",
+                                        binderColor: selectedColor,
+                                        binderGrain: binderGrain,
+                                        coverImage: coverUrl || undefined,
+                                        coverZoom: coverZoom,
+                                        coverX: coverX,
+                                        coverY: coverY,
+                                        showPreview: showPreview
+                                    }}
+                                    showDetails={true}
+                                    interactive={false}
+                                    className="pointer-events-none drop-shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
+                                />
+                            </div>
+
+                            <div className="mt-16 text-center space-y-2">
+                                <p className="font-handwriting text-2xl text-sage/60 rotate-[-4deg]">Prêt pour l&apos;aventure ?</p>
+                            </div>
                         </div>
                     </div>
                 </div>

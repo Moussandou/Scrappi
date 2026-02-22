@@ -8,9 +8,10 @@ interface VideoUploadModalProps {
     onClose: () => void;
     onUpload: (file: File) => void;
     uploading: boolean;
+    storageMode?: 'cloud' | 'local';
 }
 
-export default function VideoUploadModal({ isOpen, onClose, onUpload, uploading }: VideoUploadModalProps) {
+export default function VideoUploadModal({ isOpen, onClose, onUpload, uploading, storageMode = 'cloud' }: VideoUploadModalProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -23,9 +24,10 @@ export default function VideoUploadModal({ isOpen, onClose, onUpload, uploading 
             setError("Veuillez sélectionner un fichier vidéo.");
             return;
         }
-        // 50MB limit (50 * 1024 * 1024)
-        if (file.size > 52428800) {
-            setError("La vidéo est trop volumineuse (max 50Mo).");
+
+        // Only enforce limit in cloud mode (50MB)
+        if (storageMode === 'cloud' && file.size > 52428800) {
+            setError("La vidéo est trop volumineuse pour le Cloud (max 50Mo). Passez en mode Local pour lever cette limite.");
             return;
         }
         onUpload(file);
@@ -133,13 +135,18 @@ export default function VideoUploadModal({ isOpen, onClose, onUpload, uploading 
                     <div className="mt-6 flex flex-col gap-3">
                         <div className="flex items-center gap-2 text-[10px] text-ink-light/60 font-medium uppercase tracking-wider">
                             <span className="h-px flex-1 bg-black/5"></span>
-                            <span>Quotas Firebase</span>
+                            <span>{storageMode === 'local' ? 'Stockage Local (PC)' : 'Quotas Firebase'}</span>
                             <span className="h-px flex-1 bg-black/5"></span>
                         </div>
                         <ul className="grid grid-cols-1 gap-3">
                             <li className="flex items-center gap-2 text-[11px] text-ink-light">
-                                <span className="material-symbols-outlined text-[14px] text-sage">info</span>
-                                Limite de 50 Mo pour le stockage.
+                                <span className="material-symbols-outlined text-[14px] text-sage">
+                                    {storageMode === 'local' ? 'check_circle' : 'info'}
+                                </span>
+                                {storageMode === 'local'
+                                    ? "Aucune limite de taille de fichier en local."
+                                    : "Limite de 50 Mo pour le stockage Cloud."
+                                }
                             </li>
                             <li className="flex items-center gap-2 text-[11px] text-ink-light">
                                 <span className="material-symbols-outlined text-[14px] text-sage">tips_and_updates</span>

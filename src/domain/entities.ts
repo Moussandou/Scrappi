@@ -16,6 +16,7 @@ export interface Scrapbook {
     showPreview?: boolean;
     backgroundColor?: string;
     paperType?: string;
+    storageMode?: 'cloud' | 'local';
     createdAt: string;
     updatedAt: string;
 }
@@ -29,6 +30,7 @@ export interface ScrapbookConfig {
     coverX?: number;
     coverY?: number;
     showPreview?: boolean;
+    storageMode?: 'cloud' | 'local';
 }
 
 export type CanvasElementType = 'text' | 'image' | 'video' | 'gif' | 'sticker' | 'line' | 'arrow' | 'eraser' | 'hand';

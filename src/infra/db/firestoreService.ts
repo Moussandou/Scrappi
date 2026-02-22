@@ -11,10 +11,12 @@ export const createScrapbook = async (
     coverZoom?: number,
     coverX?: number,
     coverY?: number,
-    showPreview?: boolean
+    showPreview?: boolean,
+    storageMode?: 'cloud' | 'local'
 ): Promise<Scrapbook> => {
     const newDocRef = doc(collection(db, "scrapbooks"));
     const now = Timestamp.now();
+    const finalStorageMode = storageMode || 'local';
 
     const scrapbookData = {
         title,
@@ -26,6 +28,7 @@ export const createScrapbook = async (
         coverX: coverX ?? 50,
         coverY: coverY ?? 50,
         showPreview: showPreview ?? true,
+        storageMode: finalStorageMode,
         createdAt: now,
         updatedAt: now,
     };
@@ -42,6 +45,7 @@ export const createScrapbook = async (
         coverX: scrapbookData.coverX,
         coverY: scrapbookData.coverY,
         showPreview: scrapbookData.showPreview,
+        storageMode: scrapbookData.storageMode as 'cloud' | 'local',
         createdAt: now.toDate().toISOString(),
         updatedAt: now.toDate().toISOString(),
     };
@@ -67,6 +71,7 @@ export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
             showPreview: data.showPreview ?? true,
             binderColor: data.binderColor,
             binderGrain: data.binderGrain,
+            storageMode: data.storageMode,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
         };
@@ -89,6 +94,7 @@ export const getScrapbook = async (id: string): Promise<Scrapbook | null> => {
             showPreview: data.showPreview ?? true,
             binderColor: data.binderColor,
             binderGrain: data.binderGrain,
+            storageMode: data.storageMode,
             createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
         };
