@@ -5,6 +5,7 @@ import { Scrapbook } from '@/domain/entities';
 import { useAuth } from '@/infra/auth/authContext';
 import { uploadImage } from '@/infra/db/storageService';
 import { BookBinder } from '@/ui/components/BookBinder';
+import { BINDER_COLORS } from '@/ui/constants';
 
 export interface ProjectModalProps {
     isOpen: boolean;
@@ -14,15 +15,6 @@ export interface ProjectModalProps {
     title: string;
     error?: string | null;
 }
-
-const BINDER_COLORS = [
-    { name: "Crème", value: "#e8e4dc", shadow: "#8B4513" },
-    { name: "Forêt", value: "#3a4a3a", shadow: "#1a2a1a" },
-    { name: "Sable", value: "#c7bca5", shadow: "#8c7b5d" },
-    { name: "Ciel", value: "#dbeafe", shadow: "#93c5fd" },
-    { name: "Pétale", value: "#fce7f3", shadow: "#f9a8d4" },
-    { name: "Encre", value: "#1a1e26", shadow: "#000000" },
-];
 
 export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, title, error: externalError }: ProjectModalProps) {
     const [projectTitle, setProjectTitle] = useState(initialData?.title || "");
