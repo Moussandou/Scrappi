@@ -737,6 +737,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onPaperTypeChange={setPaperType}
                             paperColor={paperColor}
                             onPaperColorChange={setPaperColor}
+                            storageMode={storageMode}
                         />
                     </div>
 
