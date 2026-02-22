@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { CanvasElement } from "@/domain/entities";
 import { fetchHandwritingFonts, loadFont, GoogleFont } from "@/infra/fonts/googleFontsService";
 import { PaperType } from "./PaperSelector";
+import { TOOL_HUD_COLORS, DEFAULT_FONT } from "../constants";
 
 interface ToolHUDProps {
     activeTool: 'select' | 'draw' | 'arrow' | 'eraser' | 'hand';
@@ -23,17 +24,6 @@ interface ToolHUDProps {
     paperColor: string;
     onPaperColorChange: (color: string) => void;
 }
-
-const COLORS = [
-    { name: 'Ink', value: '#1a1e26' },
-    { name: 'Sage', value: '#8a9a86' },
-    { name: 'Red', value: '#ef4444' },
-    { name: 'Blue', value: '#3b82f6' },
-    { name: 'Yellow', value: '#eab308' },
-    { name: 'Pink', value: '#ec4899' },
-];
-
-const DEFAULT_FONT = "Inter";
 
 export default function ToolHUD({
     activeTool,
@@ -273,7 +263,7 @@ export default function ToolHUD({
                     <SectionHeader id="color" label={colorLabel} />
                     {expandedSections.color && (
                         <div className="grid grid-cols-3 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
-                            {COLORS.map(color => (
+                            {TOOL_HUD_COLORS.map(color => (
                                 <button
                                     key={color.name}
                                     onClick={() => handleColorSelect(color.value)}
@@ -283,7 +273,7 @@ export default function ToolHUD({
                                 />
                             ))}
                             <div
-                                className={`relative size-6 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 overflow-hidden flex items-center justify-center ${!COLORS.some(c => c.value === activeColor) ? 'border-ink scale-110 shadow-sm' : 'border-transparent'}`}
+                                className={`relative size-6 flex-shrink-0 rounded-full border-2 transition-transform hover:scale-110 overflow-hidden flex items-center justify-center ${!TOOL_HUD_COLORS.some(c => c.value === activeColor) ? 'border-ink scale-110 shadow-sm' : 'border-transparent'}`}
                                 style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
                                 title="Couleur personnalisée"
                             >

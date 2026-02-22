@@ -7,8 +7,7 @@ import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
 import { loadFont } from "@/infra/fonts/googleFontsService";
 import { isLocalRef, resolveLocalUrl } from "@/infra/storage/localStorageService";
-
-const DEFAULT_FONT = "Inter";
+import { DEFAULT_FONT, SELECTION_STROKE_COLOR, DEFAULT_STROKE_COLOR } from "../constants";
 
 interface ElementProps {
     element: CanvasElement;
@@ -121,7 +120,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                         height={element.height}
                         fontSize={24}
                         fontFamily={fontFamily}
-                        fill={element.strokeColor || "#1a1e26"} // use strokeColor to store text color natively
+                        fill={element.strokeColor || DEFAULT_STROKE_COLOR} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
                     />
@@ -155,7 +154,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                                     minHeight: '50px',
                                     padding: element.backgroundColor ? '16px' : '8px',
                                     backgroundColor: element.backgroundColor || 'var(--color-paper)',
-                                    color: element.strokeColor || '#1a1e26',
+                                    color: element.strokeColor || DEFAULT_STROKE_COLOR,
                                     fontFamily: `"${fontFamily}", cursive`,
                                 }}
                             />
@@ -214,7 +213,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <Line
                     ref={shapeRef}
                     points={element.points || []}
-                    stroke={element.strokeColor || '#1a1e26'}
+                    stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
                     tension={0.5}
                     lineCap="round"
@@ -236,9 +235,9 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <Arrow
                     ref={shapeRef}
                     points={element.points || []}
-                    stroke={element.strokeColor || '#1a1e26'}
+                    stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
-                    fill={element.strokeColor || '#1a1e26'}
+                    fill={element.strokeColor || DEFAULT_STROKE_COLOR}
                     lineCap="round"
                     lineJoin="round"
                     x={element.x}
@@ -261,7 +260,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     y={element.y - 5}
                     width={(element.width || 0) + 10}
                     height={(element.height || 50) + 10}
-                    stroke="#8a9a86"
+                    stroke={SELECTION_STROKE_COLOR}
                     strokeWidth={1}
                     dash={[4, 4]}
                     listening={false}
