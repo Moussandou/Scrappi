@@ -135,7 +135,11 @@ export default function LandingPage() {
           </section>
 
           {/* Galerie de Classeurs */}
-          <section className="py-24 bg-paper-dark/30 border-t border-paper-dark relative overflow-hidden min-h-[800px] flex items-center justify-center">
+          <section className="py-24 bg-paper-dark/30 relative overflow-hidden min-h-[800px] flex items-center justify-center">
+            {/* Top fade */}
+            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-paper to-transparent z-[1] pointer-events-none"></div>
+            {/* Bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent z-[1] pointer-events-none"></div>
             {/* Infinite Marquee Background */}
             <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 rotate-[-10deg] scale-[1.3] md:scale-150 pointer-events-none z-0">
               {renderMarqueeRow(false)}
@@ -266,7 +270,8 @@ export default function LandingPage() {
           </section>
 
           {/* Features / Experience */}
-          <section id="features" className="py-24 bg-white border-t border-paper-dark relative">
+          <section id="features" className="py-24 bg-white relative">
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-paper to-transparent pointer-events-none"></div>
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
               <div className="grid lg:grid-cols-2 gap-16 items-center">
                 <div className="order-2 lg:order-1">
@@ -435,24 +440,6 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Quote */}
-          <section className="py-20 border-y border-paper-dark bg-sage/5">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
-              <span className="material-symbols-outlined text-4xl text-sage mb-6">format_quote</span>
-              <blockquote className="text-2xl font-serif italic text-ink max-w-3xl mx-auto leading-relaxed">
-                {"\"Scrappi est un sanctuaire. C'est le seul outil numérique qui respecte le processus désordonné et merveilleux de la création artistique réelle.\""}
-              </blockquote>
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <div className="h-12 w-12 rounded-full overflow-hidden border border-sage/50">
-                  <img alt="Portrait of an artist" className="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACsve0e0p5t3U7PtElqo_r6JWf-szXvH5kvqmeLvgDNzb2kCMl4fWzSdWb2dD2w5ji4DUyr4-KcymqSO8u3JSPZkZS37ndXwe-2eu62PrUjZA81iYtTKAvrFqIgWbjRFuM0XIxGnY9qh20qiK8ff4_7c5FeQWmk52CIZ7JXFPC4pam-2rOXdC352wkRto72gs0DsAlUbqiUPJsP2VfmOP91C9tRHDRl2EzzPIX1YgjWgs7KyAs8v2S-j1dGmT0ut_SrWbUUfdAVYwY" />
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-ink text-sm">Elena R.</div>
-                  <div className="text-ink-light text-xs uppercase tracking-wide">Artiste Mix Media</div>
-                </div>
-              </div>
-            </div>
-          </section>
 
           {/* Call to Action */}
           <section className="relative isolate overflow-hidden py-24 sm:py-32 m-4 lg:m-8 rounded-[3rem] bg-[#1a2a1a] border border-[#2a3a2a] shadow-2xl">
