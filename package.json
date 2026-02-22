@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest"
+    "test": "node --test --experimental-strip-types src/**/*.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

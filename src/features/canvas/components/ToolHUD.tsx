@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { CanvasElement } from "@/domain/entities";
-import { fetchHandwritingFonts, loadFont, GoogleFont } from "@/infra/fonts/googleFontsService";
+import { fetchHandwritingFonts, loadFont, loadFonts, GoogleFont } from "@/infra/fonts/googleFontsService";
 import { PaperType } from "./PaperSelector";
 
 interface ToolHUDProps {
@@ -119,7 +119,7 @@ export default function ToolHUD({
             setFonts(result);
             setFontsLoading(false);
             // Preload the first 20 fonts for preview
-            result.slice(0, 20).forEach(f => loadFont(f.family));
+            loadFonts(result.slice(0, 20).map(f => f.family));
         }
     };
 
@@ -347,7 +347,7 @@ export default function ToolHUD({
                                         onChange={(e) => {
                                             setFontSearch(e.target.value);
                                             const matches = fonts.filter(f => f.family.toLowerCase().includes(e.target.value.toLowerCase()));
-                                            matches.slice(0, 15).forEach(f => loadFont(f.family));
+                                            loadFonts(matches.slice(0, 15).map(f => f.family));
                                         }}
                                         className="w-full px-2 py-1.5 text-xs border border-paper-dark rounded-xl bg-paper/30 outline-none focus:border-sage transition-colors"
                                         autoFocus
@@ -361,7 +361,7 @@ export default function ToolHUD({
                                                 const target = e.currentTarget;
                                                 const scrollRatio = target.scrollTop / (target.scrollHeight - target.clientHeight || 1);
                                                 const startIdx = Math.floor(scrollRatio * filteredFonts.length);
-                                                filteredFonts.slice(startIdx, startIdx + 15).forEach(f => loadFont(f.family));
+                                                loadFonts(filteredFonts.slice(startIdx, startIdx + 15).map(f => f.family));
                                             }}
                                         >
                                             {filteredFonts.map(font => (

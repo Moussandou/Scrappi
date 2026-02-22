@@ -46,19 +46,45 @@ export async function fetchHandwritingFonts(): Promise<GoogleFont[]> {
 }
 
 /**
+ * Reset the font cache for testing purposes.
+ */
+export function _resetCache(): void {
+    cachedFonts = null;
+    loadedFonts.clear();
+}
+
+/**
  * Dynamically load a Google Font by injecting a <link> into <head>.
  * Each font is only loaded once per session.
  */
 export function loadFont(family: string): void {
-    if (!family || loadedFonts.has(family)) return;
+    loadFonts([family]);
+}
 
-    loadedFonts.add(family);
+/**
+ * Batch load multiple Google Fonts in a single request.
+ * Reduces the number of HTTP requests and DOM manipulations.
+ */
+export function loadFonts(families: string[]): void {
+    const uniqueFamilies = Array.from(new Set(families));
+    const familiesToLoad = uniqueFamilies.filter(f => f && !loadedFonts.has(f));
 
-    const encoded = family.replace(/ /g, "+");
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = `${FONTS_CSS_BASE}?family=${encoded}&display=swap`;
-    document.head.appendChild(link);
+    if (familiesToLoad.length === 0) return;
+
+    // Mark all as loaded immediately to prevent duplicate requests
+    familiesToLoad.forEach(f => loadedFonts.add(f));
+
+    // Batch in chunks to keep URL length reasonable (approx 20 fonts per request)
+    const chunkSize = 20;
+    for (let i = 0; i < familiesToLoad.length; i += chunkSize) {
+        const chunk = familiesToLoad.slice(i, i + chunkSize);
+        const params = chunk.map(f => `family=${f.replace(/ /g, "+")}`).join("&");
+
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = `${FONTS_CSS_BASE}?${params}&display=swap`;
+        document.head.appendChild(link);
+    }
 }
 
 /**
