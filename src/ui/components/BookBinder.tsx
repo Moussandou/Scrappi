@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Scrapbook } from '@/domain/entities';
 import { MiniCanvasPreview } from './MiniCanvasPreview';
 
@@ -116,11 +117,13 @@ export const BookBinder: React.FC<BookBinderProps> = ({
                             }}
                         >
                             <div className="relative p-1 bg-white shadow-xl rounded-sm border border-black/5 rotate-[-1deg]">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                     src={scrapbook.coverImage}
                                     alt="Cover Photo"
+                                    width={400}
+                                    height={400}
                                     className="w-full h-auto block rounded-sm opacity-90 mix-blend-multiply"
+                                    unoptimized
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-tr from-black/5 to-transparent pointer-events-none"></div>
                             </div>
