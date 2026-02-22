@@ -33,6 +33,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
     const [coverX, setCoverX] = useState(initialData?.coverX ?? 50);
     const [coverY, setCoverY] = useState(initialData?.coverY ?? 50);
     const [showPreview, setShowPreview] = useState(initialData?.showPreview ?? true);
+    const { user } = useAuth();
     const [uploading, setUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -65,7 +66,8 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
         setUploading(true);
         setErrorMessage(null);
         try {
-            const url = await uploadImage(file, "covers");
+            const path = user ? `users/${user.uid}/covers` : "covers";
+            const url = await uploadImage(file, path);
             setCoverUrl(url);
             setCoverX(50);
             setCoverY(50);
