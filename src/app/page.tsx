@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
 import { BookBinder } from "@/ui/components/BookBinder";
@@ -39,6 +39,25 @@ export default function LandingPage() {
   const [galleryBinderColor, setGalleryBinderColor] = useState("#c7bca5");
   const [galleryBinderGrain, setGalleryBinderGrain] = useState(0.1);
   const [galleryBinderImage, setGalleryBinderImage] = useState("https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop");
+
+  // State for the infinite canvas zoom demo
+  const [demoZoom, setDemoZoom] = useState(100);
+
+  useEffect(() => {
+    let start: number;
+    let frameId: number;
+    const animate = (time: number) => {
+      if (!start) start = time;
+      const elapsed = (time - start) / 3000; // 3s per cycle
+      // Sinusoidal movement from 0 to 1 and back
+      const s = (Math.sin(elapsed * Math.PI * 2 - Math.PI / 2) + 1) / 2;
+      // Range: 80% to 160%
+      setDemoZoom(Math.round(80 + s * 80));
+      frameId = requestAnimationFrame(animate);
+    };
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
 
   return (
     <div className="bg-paper text-ink font-display selection:bg-sage selection:text-white">
@@ -376,18 +395,26 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1 w-full flex justify-center">
                       <div className="relative w-64 h-64 bg-paper rounded-2xl border border-paper-dark overflow-hidden shadow-inner">
-                        <div className="absolute inset-0 sketchbook-grid opacity-30"></div>
-                        <div className="absolute top-8 left-6 w-24 h-16 bg-[#fffde7] p-2 shadow-lg rotate-[-3deg] border border-yellow-200/50">
-                          <p className="font-handwriting text-sm text-ink">Note A</p>
+                        <div
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                          style={{
+                            transform: `scale(${demoZoom / 100})`,
+                            transition: 'transform 0.1s linear'
+                          }}
+                        >
+                          <div className="absolute inset-0 sketchbook-grid opacity-30"></div>
+                          <div className="absolute top-8 left-6 w-24 h-16 bg-[#fffde7] p-2 shadow-lg rotate-[-3deg] border border-yellow-200/50">
+                            <p className="font-handwriting text-sm text-ink">Note A</p>
+                          </div>
+                          <div className="absolute top-16 right-6 w-20 h-20 bg-[#e8f5e9] p-2 shadow-lg rotate-[5deg] border border-sage/20">
+                            <p className="font-handwriting text-sm text-ink">Idée</p>
+                          </div>
+                          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-28 h-14 bg-white p-2 shadow-lg rotate-[2deg] border border-black/5">
+                            <p className="font-handwriting text-sm text-ink">Brouillon</p>
+                          </div>
                         </div>
-                        <div className="absolute top-16 right-6 w-20 h-20 bg-[#e8f5e9] p-2 shadow-lg rotate-[5deg] border border-sage/20">
-                          <p className="font-handwriting text-sm text-ink">Idée</p>
-                        </div>
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-28 h-14 bg-white p-2 shadow-lg rotate-[2deg] border border-black/5">
-                          <p className="font-handwriting text-sm text-ink">Brouillon</p>
-                        </div>
-                        <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-black/5 text-[10px] text-ink-light font-mono">
-                          100%
+                        <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-black/5 text-[10px] text-ink-light font-mono z-10">
+                          {demoZoom}%
                         </div>
                       </div>
                     </div>

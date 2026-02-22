@@ -15,22 +15,20 @@ interface ElementProps {
     onSelect: () => void;
     onChange: (id: string, newProps: Partial<CanvasElement>) => void;
     isDraggable: boolean;
+    onNodeRegister?: (id: string, node: any) => void;
 }
 
-export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable }: ElementProps) {
+export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const trRef = useRef<any>(null);
     const [img] = useImage(element.type === 'image' || element.type === 'sticker' ? element.content : '');
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
-        if (isSelected && trRef.current && shapeRef.current) {
-            trRef.current.nodes([shapeRef.current]);
-            trRef.current.getLayer().batchDraw();
+        if (shapeRef.current && onNodeRegister) {
+            onNodeRegister(element.id, shapeRef.current);
         }
-    }, [isSelected]);
+    }, [onNodeRegister, element.id]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleDragEnd = (e: any) => {
@@ -214,25 +212,15 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
             )}
 
             {isSelected && !isEditing && (
-                <Transformer
-                    ref={trRef}
-                    anchorFill="#8a9a86"
-                    anchorStroke="#ffffff"
-                    anchorSize={10}
-                    anchorCornerRadius={3}
-                    borderStroke="#8a9a86"
-                    borderStrokeWidth={2}
-                    borderDash={[4, 4]}
-                    padding={10}
-                    rotateAnchorOffset={30}
-                    shouldOverdrawWholeArea
-                    boundBoxFunc={(oldBox, newBox) => {
-                        // limit resize
-                        if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
-                            return oldBox;
-                        }
-                        return newBox;
-                    }}
+                <Rect
+                    x={element.x - 5}
+                    y={element.y - 5}
+                    width={(element.width || 0) + 10}
+                    height={(element.height || 50) + 10}
+                    stroke="#8a9a86"
+                    strokeWidth={1}
+                    dash={[4, 4]}
+                    listening={false}
                 />
             )}
         </Group>

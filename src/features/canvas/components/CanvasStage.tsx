@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Stage, Layer, Rect } from "react-konva";
+import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
@@ -9,6 +9,7 @@ import { RenderElement } from "./ElementRenderer";
 interface InfiniteCanvasProps {
     elements: CanvasElement[];
     onElementChange?: (id: string, partial: Partial<CanvasElement>) => void;
+    onElementsChange?: (changes: Array<{ id: string, partial: Partial<CanvasElement> }>) => void;
     onAddElement?: (element: CanvasElement) => void;
     scale: number;
     setScale: (s: number) => void;
@@ -33,10 +34,15 @@ export default function InfiniteCanvas({
     activeColor,
     activeStrokeWidth,
     selectedIds,
-    setSelectedIds
+    setSelectedIds,
+    onElementsChange
 }: InfiniteCanvasProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stageRef = useRef<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transformerRef = useRef<any>(null);
+    const nodesRef = useRef<Record<string, any>>({});
+
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
     const [selectionBox, setSelectionBox] = useState<{ x1: number, y1: number, x2: number, y2: number } | null>(null);
@@ -52,6 +58,22 @@ export default function InfiniteCanvas({
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
+
+    // Sync transformer nodes when selectedIds or nodesRef change
+    useEffect(() => {
+        if (transformerRef.current) {
+            const selectedNodes = selectedIds
+                .map(id => nodesRef.current[id])
+                .filter(node => !!node);
+
+            transformerRef.current.nodes(selectedNodes);
+            transformerRef.current.getLayer().batchDraw();
+        }
+    }, [selectedIds, elements]); // also sync on elements change to handle z-index swaps
+
+    const handleNodeRegister = (id: string, node: any) => {
+        nodesRef.current[id] = node;
+    };
 
 
     const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -235,9 +257,34 @@ export default function InfiniteCanvas({
                             }
                         }}
                         onChange={(id, newProps) => {
+                            if (selectedIds.includes(id) && (newProps.x !== undefined || newProps.y !== undefined)) {
+                                // Multi-drag logic
+                                const el = elements.find(e => e.id === id);
+                                if (!el) return;
+                                const dx = (newProps.x ?? el.x) - el.x;
+                                const dy = (newProps.y ?? el.y) - el.y;
+
+                                if (dx !== 0 || dy !== 0) {
+                                    const changes = selectedIds.map(sid => {
+                                        const selEl = elements.find(e => e.id === sid);
+                                        if (!selEl) return null;
+                                        return {
+                                            id: sid,
+                                            partial: {
+                                                x: selEl.x + dx,
+                                                y: selEl.y + dy
+                                            }
+                                        };
+                                    }).filter(c => c !== null) as Array<{ id: string, partial: Partial<CanvasElement> }>;
+
+                                    if (onElementsChange) onElementsChange(changes);
+                                    return;
+                                }
+                            }
                             if (onElementChange) onElementChange(id, newProps);
                         }}
                         isDraggable={activeTool === 'select'}
+                        onNodeRegister={handleNodeRegister}
                     />
                 ))}
                 {currentLine && (
@@ -259,6 +306,50 @@ export default function InfiniteCanvas({
                         stroke="#8a9a86"
                         strokeWidth={1}
                         dash={[5, 5]}
+                    />
+                )}
+                {activeTool === 'select' && selectedIds.length > 0 && (
+                    <Transformer
+                        ref={transformerRef}
+                        anchorFill="#8a9a86"
+                        anchorStroke="#ffffff"
+                        anchorSize={10}
+                        anchorCornerRadius={3}
+                        borderStroke="#8a9a86"
+                        borderStrokeWidth={2}
+                        borderDash={[4, 4]}
+                        padding={10}
+                        rotateAnchorOffset={30}
+                        shouldOverdrawWholeArea
+                        onTransformEnd={() => {
+                            const nodes = transformerRef.current.nodes();
+                            // Update all selected elements based on their new node attributes
+                            if (onElementChange) {
+                                nodes.forEach((node: any) => {
+                                    const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
+                                    if (id) {
+                                        const scaleX = node.scaleX();
+                                        const scaleY = node.scaleY();
+                                        node.scaleX(1);
+                                        node.scaleY(1);
+
+                                        onElementChange(id, {
+                                            x: node.x(),
+                                            y: node.y(),
+                                            width: Math.max(5, node.width() * scaleX),
+                                            height: Math.max(5, node.height() * scaleY),
+                                            rotation: node.rotation()
+                                        });
+                                    }
+                                });
+                            }
+                        }}
+                        boundBoxFunc={(oldBox, newBox) => {
+                            if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
+                                return oldBox;
+                            }
+                            return newBox;
+                        }}
                     />
                 )}
             </Layer>

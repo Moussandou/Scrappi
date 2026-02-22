@@ -232,6 +232,16 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         setElements(elements.map(el => el.id === id ? { ...el, ...partial } : el));
     };
 
+    const handleElementsChange = (changes: Array<{ id: string, partial: Partial<CanvasElement> }>) => {
+        setElements(prev => prev.map(el => {
+            const change = changes.find(c => c.id === el.id);
+            if (change) {
+                return { ...el, ...change.partial };
+            }
+            return el;
+        }));
+    };
+
     const handleRecenter = () => {
         setScale(1);
         setPosition({ x: 0, y: 0 });
@@ -271,12 +281,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const handleStrokeWidthChange = (width: number) => {
         setActiveStrokeWidth(width);
         if (selectedIds.length > 0) {
-            selectedIds.forEach(id => {
-                const el = elements.find(e => e.id === id);
-                if (el && (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser')) {
-                    handleElementChange(id, { strokeWidth: width });
+            setElements(prev => prev.map(el => {
+                if (selectedIds.includes(el.id) && (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser')) {
+                    return { ...el, strokeWidth: width };
                 }
-            });
+                return el;
+            }));
         }
     };
 
@@ -284,16 +294,16 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         setActiveColor(colorValue);
 
         if (selectedIds.length > 0) {
-            selectedIds.forEach(id => {
-                const el = elements.find(e => e.id === id);
-                if (el) {
+            setElements(prev => prev.map(el => {
+                if (selectedIds.includes(el.id)) {
                     if (el.type === 'text' && el.backgroundColor) {
-                        handleElementChange(id, { backgroundColor: colorValue });
-                    } else {
-                        handleElementChange(id, { strokeColor: colorValue });
+                        return { ...el, backgroundColor: colorValue };
+                    } else if (el.type !== 'image' && el.type !== 'sticker') {
+                        return { ...el, strokeColor: colorValue };
                     }
                 }
-            });
+                return el;
+            }));
         }
     };
 
@@ -472,21 +482,59 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 const remainingElements = next.filter((_, idx) => !selectedIndices.includes(idx));
                 return [...selectedElements, ...remainingElements];
             } else if (direction === 'forward') {
-                for (let i = selectedIndices.length - 1; i >= 0; i--) {
-                    const idx = selectedIndices[i];
-                    if (idx < next.length - 1 && !selectedIndices.includes(idx + 1)) {
-                        const temp = next[idx];
-                        next[idx] = next[idx + 1];
-                        next[idx + 1] = temp;
+                const maxIdx = Math.max(...selectedIndices);
+                if (maxIdx < next.length - 1) {
+                    // Pull the element at maxIdx + 1 down, move selection up
+                    const targetIdx = maxIdx + 1;
+                    const itemToShift = next[targetIdx];
+                    const selectedSet = new Set(selectedIdsRef.current);
+                    const remaining = next.filter((el, i) => !selectedSet.has(el.id));
+
+                    // Insert the target item before the selection in the new order
+                    // Actually, simpler: find the next non-selected index
+                    let nextNonSelected = -1;
+                    for (let i = maxIdx + 1; i < next.length; i++) {
+                        if (!selectedSet.has(next[i].id)) {
+                            nextNonSelected = i;
+                            break;
+                        }
+                    }
+
+                    if (nextNonSelected !== -1) {
+                        const newElements = [...next];
+                        const selectedItems = selectedIndices.map(i => newElements[i]);
+                        const swappedItem = newElements[nextNonSelected];
+
+                        // We want to move the block past swappedItem
+                        // Remove selected items
+                        const filtered = newElements.filter((_, i) => !selectedIndices.includes(i));
+                        // Find index of swappedItem in filtered
+                        const insertIdx = filtered.findIndex(el => el.id === swappedItem.id);
+                        filtered.splice(insertIdx + 1, 0, ...selectedItems);
+                        return filtered;
                     }
                 }
             } else if (direction === 'backward') {
-                for (let i = 0; i < selectedIndices.length; i++) {
-                    const idx = selectedIndices[i];
-                    if (idx > 0 && !selectedIndices.includes(idx - 1)) {
-                        const temp = next[idx];
-                        next[idx] = next[idx - 1];
-                        next[idx - 1] = temp;
+                const minIdx = Math.min(...selectedIndices);
+                if (minIdx > 0) {
+                    const selectedSet = new Set(selectedIdsRef.current);
+                    let prevNonSelected = -1;
+                    for (let i = minIdx - 1; i >= 0; i--) {
+                        if (!selectedSet.has(next[i].id)) {
+                            prevNonSelected = i;
+                            break;
+                        }
+                    }
+
+                    if (prevNonSelected !== -1) {
+                        const newElements = [...next];
+                        const selectedItems = selectedIndices.map(i => newElements[i]);
+                        const swappedItem = newElements[prevNonSelected];
+
+                        const filtered = newElements.filter((_, i) => !selectedIndices.includes(i));
+                        const insertIdx = filtered.findIndex(el => el.id === swappedItem.id);
+                        filtered.splice(insertIdx, 0, ...selectedItems);
+                        return filtered;
                     }
                 }
             }
@@ -544,6 +592,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     activeStrokeWidth={activeStrokeWidth}
                     selectedIds={selectedIds}
                     setSelectedIds={setSelectedIds}
+                    onElementsChange={handleElementsChange}
                 />
             </div>
 
