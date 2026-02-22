@@ -19,6 +19,11 @@ service cloud.firestore {
       allow update: if isSignedIn() && isOwner(resource.data.userId)
                     && request.resource.data.title.size() < 100;
       allow delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+
+      match /elements/{elementId} {
+        allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+        allow write: if isSignedIn() && isOwner(request.resource.data.userId);
+      }
     }
 
     match /elements/{id} {

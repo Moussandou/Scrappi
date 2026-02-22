@@ -1,5 +1,5 @@
 import {
-    collection, getDocs, getDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp
+    collection, getDocs, getDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp, writeBatch
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
@@ -101,6 +101,15 @@ export const aggregateUsers = (
 
 // Read-only fetch of any scrapbook's elements (admin only)
 export const getAnyElements = async (scrapbookId: string): Promise<CanvasElement[]> => {
+    // Try to get from subcollection first
+    const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");
+    const snapshot = await getDocs(subcollectionRef);
+
+    if (!snapshot.empty) {
+        return snapshot.docs.map(d => d.data() as CanvasElement);
+    }
+
+    // Fallback to legacy document
     const ref = doc(db, "elements", scrapbookId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
@@ -112,6 +121,20 @@ export const getAnyElements = async (scrapbookId: string): Promise<CanvasElement
 // Admin delete of any scrapbook
 export const deleteAnyScrapbook = async (id: string): Promise<void> => {
     await deleteDoc(doc(db, "scrapbooks", id));
+
+    // Delete elements from subcollection
+    const elementsRef = collection(db, "scrapbooks", id, "elements");
+    const snapshot = await getDocs(elementsRef);
+
+    const chunkSize = 500;
+    for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        const chunk = snapshot.docs.slice(i, i + chunkSize);
+        chunk.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+    }
+
+    // Delete legacy elements doc if exists
     try {
         await deleteDoc(doc(db, "elements", id));
     } catch {
