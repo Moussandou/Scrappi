@@ -367,19 +367,27 @@ export default function LandingPage() {
                   <div className="absolute top-0 right-0 p-12 bg-sage/5 rounded-bl-full -mr-16 -mt-16 z-0"></div>
                   <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
                     <div className="flex-1 space-y-4">
-                      <h4 className="font-serif text-2xl font-bold text-ink">Effet Bords Brûlés</h4>
-                      <p className="text-ink-light">Nos algorithmes génèrent procéduralement des bords vieillis, brûlés ou déchirés pour chaque image. Aucun doublon, chaque texture est unique.</p>
+                      <h4 className="font-serif text-2xl font-bold text-ink">Canvas Infini</h4>
+                      <p className="text-ink-light">Zoomez, dézoomez, naviguez librement dans un espace de travail sans limites. Glissez-déposez vos éléments où vous voulez, sans aucune contrainte de mise en page.</p>
                       <div className="flex gap-2 mt-4">
-                        <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold uppercase tracking-wider rounded-full">Exclusif</span>
+                        <span className="px-3 py-1 bg-sage/10 text-sage text-xs font-bold uppercase tracking-wider rounded-full">Zoom fluide</span>
+                        <span className="px-3 py-1 bg-sage/10 text-sage text-xs font-bold uppercase tracking-wider rounded-full">Pan libre</span>
                       </div>
                     </div>
                     <div className="flex-1 w-full flex justify-center">
-                      <div className="relative w-64 h-64">
-                        <div className="absolute inset-0 bg-[#f8f5f0] shadow-2xl rotate-3 p-2 burnt-edge overflow-hidden rounded-sm">
-                          <img alt="Texture papier" className="w-full h-full object-cover opacity-80 mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtseUCbljV07eM8W4TshhEEFyHVScYuuhUk-CE8_JhtNYnWuRhOwnhOfj5gSAwlP7jvHQC423DnfvzIcIIToVgzGfLC5hVVmdA-R6901BbwS91JlXwq0v6BbigV1iapGJVPwAbCj7M591QH4FDQaKbZ-yBnHixAgRsCRtccvIP3pQVMozy-rRime_BxuOasVpRKanjJtytLBmDIOe15pkIPaHOx7tGpgbbl3x0EJtgglh_0xfWhPx7WZVurQEz-jkW0gtxHu97aHBR" />
+                      <div className="relative w-64 h-64 bg-paper rounded-2xl border border-paper-dark overflow-hidden shadow-inner">
+                        <div className="absolute inset-0 sketchbook-grid opacity-30"></div>
+                        <div className="absolute top-8 left-6 w-24 h-16 bg-[#fffde7] p-2 shadow-lg rotate-[-3deg] border border-yellow-200/50">
+                          <p className="font-handwriting text-sm text-ink">Note A</p>
                         </div>
-                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white rounded-full border-4 border-sage/20 shadow-xl flex items-center justify-center overflow-hidden z-20">
-                          <div className="w-[200%] h-[200%] bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAtseUCbljV07eM8W4TshhEEFyHVScYuuhUk-CE8_JhtNYnWuRhOwnhOfj5gSAwlP7jvHQC423DnfvzIcIIToVgzGfLC5hVVmdA-R6901BbwS91JlXwq0v6BbigV1iapGJVPwAbCj7M591QH4FDQaKbZ-yBnHixAgRsCRtccvIP3pQVMozy-rRime_BxuOasVpRKanjJtytLBmDIOe15pkIPaHOx7tGpgbbl3x0EJtgglh_0xfWhPx7WZVurQEz-jkW0gtxHu97aHBR')] bg-cover bg-center scale-150 brightness-110 contrast-125"></div>
+                        <div className="absolute top-16 right-6 w-20 h-20 bg-[#e8f5e9] p-2 shadow-lg rotate-[5deg] border border-sage/20">
+                          <p className="font-handwriting text-sm text-ink">Idée</p>
+                        </div>
+                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-28 h-14 bg-white p-2 shadow-lg rotate-[2deg] border border-black/5">
+                          <p className="font-handwriting text-sm text-ink">Brouillon</p>
+                        </div>
+                        <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-black/5 text-[10px] text-ink-light font-mono">
+                          100%
                         </div>
                       </div>
                     </div>

@@ -11,6 +11,9 @@ import { useAuth } from "@/infra/auth/authContext";
 import EditorHeader from "./components/EditorHeader";
 import Toolbar from "./components/Toolbar";
 import ToolHUD from "./components/ToolHUD";
+import StickerTray from "./components/StickerTray";
+import ImageUploadModal from "./components/ImageUploadModal";
+import { PaperSelector, PaperType } from "./components/PaperSelector";
 
 // Dynamic import for Konva canvas to avoid SSR issues
 const Canvas = dynamic(() => import("./components/CanvasStage"), { ssr: false });
@@ -69,6 +72,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [activeStrokeWidth, setActiveStrokeWidth] = useState(4);
     const [activeFontFamily, setActiveFontFamily] = useState('Inter');
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [paperType, setPaperType] = useState<PaperType>('watercolor');
+    const [paperColor, setPaperColor] = useState<string>('#ffffff'); // Default to white
     const helpRef = useRef<HTMLDivElement>(null);
 
     // Sync active params with selection
@@ -100,7 +107,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         isEditingTitleRef.current = isEditingTitle;
     }, [elements, selectedIds, isEditingTitle]);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function loadData() {
@@ -108,6 +114,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             try {
                 const fetchedScrapbook = await getScrapbook(projectId);
                 setScrapbook(fetchedScrapbook);
+                if (fetchedScrapbook?.backgroundColor) {
+                    setPaperColor(fetchedScrapbook.backgroundColor);
+                }
+                if (fetchedScrapbook?.paperType) {
+                    setPaperType(fetchedScrapbook.paperType as PaperType);
+                }
 
                 const fetchedElements = await getElements(projectId);
                 setHistory([fetchedElements]);
@@ -145,13 +157,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 if (e.key.toLowerCase() === 'a') {
                     e.preventDefault();
                     setSelectedIds(elementsRef.current.map(el => el.id));
-                    return;
-                }
-                if (e.key.toLowerCase() === 'z') {
+                } else if (e.key.toLowerCase() === 'z') {
                     e.preventDefault();
                     if (e.shiftKey) handleRedo();
                     else handleUndo();
-                    return;
                 }
                 if (e.key.toLowerCase() === 'y') {
                     e.preventDefault();
@@ -186,12 +195,18 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         setSaving(true);
         try {
             if (user) {
+                // Save elements
                 await saveElements(projectId, elements, user.uid);
+                // Save scrapbook metadata (like background color)
+                await updateScrapbook(projectId, {
+                    backgroundColor: paperColor,
+                    paperType: paperType // Also saving paperType preference
+                });
             }
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
-            console.error("Failed to save elements", error);
+            console.error("Failed to save", error);
         } finally {
             setSaving(false);
         }
@@ -292,10 +307,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         });
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const handleFileSelection = async (file: File) => {
+        setIsImageModalOpen(false);
         setUploading(true);
         try {
             const url = await uploadImage(file, `projects/${projectId}`);
@@ -335,7 +348,49 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             alert("Erreur lors de l'upload de l'image.");
         } finally {
             setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleAddSticker = async (url: string) => {
+        setUploading(true);
+        try {
+            const img = new window.Image();
+            img.src = url;
+            // For pixels to be readable if we ever add effects back
+            img.crossOrigin = "anonymous";
+            await new Promise((resolve) => {
+                img.onload = resolve;
+            });
+
+            let finalWidth = img.width;
+            let finalHeight = img.height;
+            const maxSize = 250; // Stickers are usually smaller
+
+            if (finalWidth > maxSize || finalHeight > maxSize) {
+                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
+            const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
+            const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
+
+            const newElement: CanvasElement = {
+                id: crypto.randomUUID(),
+                type: "sticker",
+                content: url,
+                x: (x - position.x) / scale,
+                y: (y - position.y) / scale,
+                width: finalWidth,
+                height: finalHeight,
+                rotation: 0,
+                zIndex: elements.length + 1,
+            };
+            setElements(prev => [...prev, newElement]);
+        } catch (error) {
+            console.error("Failed to add sticker", error);
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -390,18 +445,89 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         }
     };
 
+    const handleDeleteSelected = () => {
+        if (selectedIdsRef.current.length === 0) return;
+        setElements(prev => prev.filter(el => !selectedIdsRef.current.includes(el.id)));
+        setSelectedIds([]);
+    };
+
+    const handleMoveZ = (direction: 'forward' | 'backward' | 'front' | 'back') => {
+        if (selectedIdsRef.current.length === 0) return;
+
+        setElements(prev => {
+            const next = [...prev];
+            const selectedIndices = selectedIdsRef.current
+                .map(id => next.findIndex(el => el.id === id))
+                .filter(idx => idx !== -1)
+                .sort((a, b) => a - b);
+
+            if (selectedIndices.length === 0) return next;
+
+            if (direction === 'front') {
+                const selectedElements = selectedIndices.map(idx => next[idx]);
+                const remainingElements = next.filter((_, idx) => !selectedIndices.includes(idx));
+                return [...remainingElements, ...selectedElements];
+            } else if (direction === 'back') {
+                const selectedElements = selectedIndices.map(idx => next[idx]);
+                const remainingElements = next.filter((_, idx) => !selectedIndices.includes(idx));
+                return [...selectedElements, ...remainingElements];
+            } else if (direction === 'forward') {
+                for (let i = selectedIndices.length - 1; i >= 0; i--) {
+                    const idx = selectedIndices[i];
+                    if (idx < next.length - 1 && !selectedIndices.includes(idx + 1)) {
+                        const temp = next[idx];
+                        next[idx] = next[idx + 1];
+                        next[idx + 1] = temp;
+                    }
+                }
+            } else if (direction === 'backward') {
+                for (let i = 0; i < selectedIndices.length; i++) {
+                    const idx = selectedIndices[i];
+                    if (idx > 0 && !selectedIndices.includes(idx - 1)) {
+                        const temp = next[idx];
+                        next[idx] = next[idx - 1];
+                        next[idx - 1] = temp;
+                    }
+                }
+            }
+            return next;
+        });
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center h-screen bg-paper">
             <div className="text-secondary animate-pulse font-serif text-xl italic">Chargement de votre atelier...</div>
         </div>
     );
 
-    return (
-        <div className="bg-paper min-h-screen relative overflow-hidden font-sans">
-            <div className="fixed inset-0 pointer-events-none opacity-40 z-0 mix-blend-multiply sketchbook-grid"></div>
+    const getPaperClass = () => {
+        switch (paperType) {
+            case 'canson': return 'paper-grain-canson';
+            case 'watercolor': return 'paper-grain-watercolor';
+            case 'kraft': return 'paper-grain-kraft';
+            default: return 'paper-grain-800dpi';
+        }
+    };
 
+    const getBgClass = () => {
+        return paperType === 'kraft' ? 'kraft-paper' : 'bg-paper';
+    };
+
+    return (
+        <div
+            className={`${getBgClass()} min-h-screen relative overflow-hidden font-sans transition-colors duration-500`}
+            style={paperColor ? { backgroundColor: paperColor } : {}}
+        >
+            {/* Background Base Texture & Grid */}
+            <div className={`fixed inset-0 pointer-events-none opacity-40 z-0 mix-blend-multiply sketchbook-grid ${paperType === 'kraft' ? 'opacity-20' : ''}`}></div>
+
+            {/* Top Paper Grain (Mixed with content for realism) */}
+            {/* Moved behind canvas so it doesn't affect images/opaque elements */}
+            <div className={`fixed inset-0 pointer-events-none z-10 ${getPaperClass()}`}></div>
+
+            {/* Main Drawing Area */}
             <div
-                className="absolute inset-0 z-0 bg-transparent"
+                className="absolute inset-0 z-20"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
@@ -421,13 +547,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 />
             </div>
 
-            <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                className="hidden"
-            />
+
 
             <div className="relative z-50 flex flex-col h-screen pointer-events-none">
                 <EditorHeader
@@ -457,9 +577,23 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             setActiveTool={setActiveTool}
                             handleDelete={handleDelete}
                             selectedIds={selectedIds}
-                            fileInputRef={fileInputRef}
-                            uploading={uploading}
                             addTextElement={addTextElement}
+                            toggleStickerTray={() => setIsStickerTrayOpen(!isStickerTrayOpen)}
+                            isStickerTrayOpen={isStickerTrayOpen}
+                            openImageModal={() => setIsImageModalOpen(true)}
+                        />
+
+                        <StickerTray
+                            isOpen={isStickerTrayOpen}
+                            onClose={() => setIsStickerTrayOpen(false)}
+                            onSelectSticker={handleAddSticker}
+                        />
+
+                        <ImageUploadModal
+                            isOpen={isImageModalOpen}
+                            onClose={() => setIsImageModalOpen(false)}
+                            onUpload={handleFileSelection}
+                            uploading={uploading}
                         />
 
                         <ToolHUD
@@ -472,6 +606,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             handleColorSelect={handleColorSelect}
                             handleStrokeWidthChange={handleStrokeWidthChange}
                             handleFontChange={handleFontChange}
+                            onDelete={handleDeleteSelected}
+                            onMoveZ={handleMoveZ}
+                            paperType={paperType}
+                            onPaperTypeChange={setPaperType}
+                            paperColor={paperColor}
+                            onPaperColorChange={setPaperColor}
                         />
                     </div>
 

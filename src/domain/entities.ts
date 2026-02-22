@@ -14,6 +14,8 @@ export interface Scrapbook {
     binderColor?: string;
     binderGrain?: number;
     showPreview?: boolean;
+    backgroundColor?: string;
+    paperType?: string;
     createdAt: string;
     updatedAt: string;
 }

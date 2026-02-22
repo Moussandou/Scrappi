@@ -82,6 +82,7 @@ export default function EditorHeader({
                                     setTempTitle(scrapbook?.title || "");
                                     setIsEditingTitle(true);
                                 }}
+                                title="Cliquer pour modifier le titre"
                                 className="text-xl font-serif text-ink tracking-tight italic cursor-pointer hover:text-sage transition-colors flex items-center gap-2 group/title"
                             >
                                 {scrapbook?.title || "Projet sans titre"}
@@ -106,10 +107,10 @@ export default function EditorHeader({
                     <div className="h-8 w-px bg-ink/10"></div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={handleUndo} disabled={historyStep === 0} className="size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-30">
+                        <button onClick={handleUndo} disabled={historyStep === 0} className="size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-30" title="Annuler (Ctrl+Z)">
                             <span className="material-symbols-outlined text-[20px]">undo</span>
                         </button>
-                        <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-30">
+                        <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-30" title="Rétablir (Ctrl+Y)">
                             <span className="material-symbols-outlined text-[20px]">redo</span>
                         </button>
                     </div>
@@ -120,6 +121,7 @@ export default function EditorHeader({
                         <button
                             onClick={() => setIsZoomMenuOpen(!isZoomMenuOpen)}
                             className="px-3 py-1.5 rounded-xl text-ink-light text-xs font-bold flex items-center gap-1.5 hover:bg-black/5 transition-all shadow-sm"
+                            title="Niveau de zoom"
                         >
                             {Math.round(scale * 100)}%
                             <span className="material-symbols-outlined text-[16px]">expand_more</span>
@@ -150,7 +152,9 @@ export default function EditorHeader({
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className={`px-5 py-2 rounded-full text-white transition-all shadow-md text-xs font-bold flex items-center gap-2 disabled:opacity-50 ${saveSuccess ? 'bg-green-500 shadow-green-500/20' : 'bg-sage hover:bg-sage/90 shadow-sage/20'}`}>
+                        className={`px-5 py-2 rounded-full text-white transition-all shadow-md text-xs font-bold flex items-center gap-2 disabled:opacity-50 ${saveSuccess ? 'bg-green-500 shadow-green-500/20' : 'bg-sage hover:bg-sage/90 shadow-sage/20'}`}
+                        title="Enregistrer les modifications"
+                    >
                         <span className="material-symbols-outlined text-[16px]">{saveSuccess ? 'check' : 'save'}</span>
                         {saving ? "..." : saveSuccess ? "Ok" : "Sauver"}
                     </button>
