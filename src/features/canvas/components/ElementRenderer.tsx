@@ -1,25 +1,24 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, memo } from "react";
 import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
 import { loadFont } from "@/infra/fonts/googleFontsService";
 import { isLocalRef, resolveLocalUrl } from "@/infra/storage/localStorageService";
-
-const DEFAULT_FONT = "Inter";
+import { DEFAULT_FONT, SELECTION_STROKE_COLOR, DEFAULT_STROKE_COLOR } from "../constants";
 
 interface ElementProps {
     element: CanvasElement;
     isSelected: boolean;
-    onSelect: () => void;
+    onSelect: (id: string) => void;
     onChange: (id: string, newProps: Partial<CanvasElement>) => void;
     isDraggable: boolean;
     onNodeRegister?: (id: string, node: any) => void;
 }
 
-export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
+export const RenderElement = memo(function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
     const isImageType = element.type === 'image' || element.type === 'sticker';
@@ -98,8 +97,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDblClick={handleDoubleClick}
                     onDblTap={handleDoubleClick}
                     onDragEnd={handleDragEnd}
@@ -121,7 +120,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                         height={element.height}
                         fontSize={24}
                         fontFamily={fontFamily}
-                        fill={element.strokeColor || "#1a1e26"} // use strokeColor to store text color natively
+                        fill={element.strokeColor || DEFAULT_STROKE_COLOR} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
                     />
@@ -155,7 +154,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                                     minHeight: '50px',
                                     padding: element.backgroundColor ? '16px' : '8px',
                                     backgroundColor: element.backgroundColor || 'var(--color-paper)',
-                                    color: element.strokeColor || '#1a1e26',
+                                    color: element.strokeColor || DEFAULT_STROKE_COLOR,
                                     fontFamily: `"${fontFamily}", cursive`,
                                 }}
                             />
@@ -168,7 +167,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <VideoElement
                     element={element}
                     isDraggable={isDraggable}
-                    onSelect={onSelect}
+                    onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
@@ -182,7 +181,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <GifElement
                     element={element}
                     isDraggable={isDraggable}
-                    onSelect={onSelect}
+                    onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
@@ -203,8 +202,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                 />
@@ -214,7 +213,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <Line
                     ref={shapeRef}
                     points={element.points || []}
-                    stroke={element.strokeColor || '#1a1e26'}
+                    stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
                     tension={0.5}
                     lineCap="round"
@@ -224,8 +223,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     hitStrokeWidth={20}
                     globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
@@ -236,9 +235,9 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                 <Arrow
                     ref={shapeRef}
                     points={element.points || []}
-                    stroke={element.strokeColor || '#1a1e26'}
+                    stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
-                    fill={element.strokeColor || '#1a1e26'}
+                    fill={element.strokeColor || DEFAULT_STROKE_COLOR}
                     lineCap="round"
                     lineJoin="round"
                     x={element.x}
@@ -246,8 +245,8 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     rotation={element.rotation}
                     draggable={isDraggable}
                     listening={isDraggable}
-                    onClick={onSelect}
-                    onTap={onSelect}
+                    onClick={() => onSelect(element.id)}
+                    onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
                     hitStrokeWidth={20}
                     pointerLength={10}
@@ -261,7 +260,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     y={element.y - 5}
                     width={(element.width || 0) + 10}
                     height={(element.height || 50) + 10}
-                    stroke="#8a9a86"
+                    stroke={SELECTION_STROKE_COLOR}
                     strokeWidth={1}
                     dash={[4, 4]}
                     listening={false}
@@ -269,7 +268,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
             )}
         </Group>
     );
-}
+});
 
 // Sub-component to handle Video Lifecycle
 interface MediaElementProps {

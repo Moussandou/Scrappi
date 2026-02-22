@@ -15,6 +15,7 @@ import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
 import { PaperSelector, PaperType } from "./components/PaperSelector";
+import { resizeDimensions } from "./utils";
 
 // Dynamic import for Konva canvas to avoid SSR issues
 const Canvas = dynamic(() => import("./components/CanvasStage"), { ssr: false });
@@ -336,15 +337,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 img.onload = resolve;
             });
 
-            let finalWidth = img.width;
-            let finalHeight = img.height;
             const maxSize = 400;
-
-            if (finalWidth > maxSize || finalHeight > maxSize) {
-                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
-                finalWidth *= ratio;
-                finalHeight *= ratio;
-            }
+            const { width: finalWidth, height: finalHeight } = resizeDimensions(img.width, img.height, maxSize);
 
             const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
             const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
@@ -395,18 +389,14 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             video.load();
             await metadataLoaded;
 
-            let finalWidth = video.videoWidth || 640;
-            let finalHeight = video.videoHeight || 360;
+            const videoWidth = video.videoWidth || 640;
+            const videoHeight = video.videoHeight || 360;
 
             // Scale down only if the video is larger than 80% of the viewport
             const maxW = typeof window !== "undefined" ? window.innerWidth * 0.6 : 800;
             const maxH = typeof window !== "undefined" ? window.innerHeight * 0.6 : 600;
 
-            if (finalWidth > maxW || finalHeight > maxH) {
-                const ratio = Math.min(maxW / finalWidth, maxH / finalHeight);
-                finalWidth *= ratio;
-                finalHeight *= ratio;
-            }
+            const { width: finalWidth, height: finalHeight } = resizeDimensions(videoWidth, videoHeight, maxW, maxH);
 
             const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
             const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
@@ -444,15 +434,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 img.onload = resolve;
             });
 
-            let finalWidth = img.width;
-            let finalHeight = img.height;
             const maxSize = 250; // Stickers are usually smaller
-
-            if (finalWidth > maxSize || finalHeight > maxSize) {
-                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
-                finalWidth *= ratio;
-                finalHeight *= ratio;
-            }
+            const { width: finalWidth, height: finalHeight } = resizeDimensions(img.width, img.height, maxSize);
 
             const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
             const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
@@ -494,15 +477,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 img.onload = resolve;
             });
 
-            let finalWidth = img.width;
-            let finalHeight = img.height;
             const maxSize = 400;
-
-            if (finalWidth > maxSize || finalHeight > maxSize) {
-                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
-                finalWidth *= ratio;
-                finalHeight *= ratio;
-            }
+            const { width: finalWidth, height: finalHeight } = resizeDimensions(img.width, img.height, maxSize);
 
             const x = (e.clientX - position.x) / scale;
             const y = (e.clientY - position.y) / scale;
@@ -761,6 +737,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onPaperTypeChange={setPaperType}
                             paperColor={paperColor}
                             onPaperColorChange={setPaperColor}
+                            storageMode={storageMode}
                         />
                     </div>
 
