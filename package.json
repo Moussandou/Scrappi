@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "generate:fonts": "node scripts/generate-fonts.mjs"
+    "test": "vitest"
+    "test": "node --test --experimental-strip-types src/**/*.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -31,6 +33,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.0.18"
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";

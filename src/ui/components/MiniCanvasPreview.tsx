@@ -17,7 +17,6 @@ export const MiniCanvasPreview: React.FC<MiniCanvasPreviewProps> = ({ scrapbookI
             setLoading(true);
             getElements(scrapbookId).then((fetchedElems) => {
                 if (mounted) {
-                    console.log(`[MiniCanvasPreview] Fetched ${fetchedElems.length} elements for scrapbook ${scrapbookId}`, fetchedElems);
                     setElements(fetchedElems);
                     setLoading(false);
                 }
@@ -69,8 +68,6 @@ export const MiniCanvasPreview: React.FC<MiniCanvasPreviewProps> = ({ scrapbookI
         const aspect = width / height;
         if (aspect > 3) { height = width / 3; }
         if (aspect < 0.3) { width = height * 0.3; }
-
-        console.log(`[MiniCanvasPreview] Computed BBox: minX=${minX}, minY=${minY}, width=${width}, height=${height}, aspect=${aspect}`);
 
         return { minX, minY, width, height };
     };
