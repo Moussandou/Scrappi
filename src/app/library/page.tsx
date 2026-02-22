@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createScrapbook, getScrapbooks, updateScrapbook } from "@/infra/db/firestoreService";
-import { Scrapbook } from "@/domain/entities";
+import { Scrapbook, ScrapbookConfig } from "@/domain/entities";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
 import ProjectSettingsModal from "@/ui/modals/ProjectSettingsModal";
@@ -90,16 +90,7 @@ export default function LibraryOverview() {
         setModalConfig({ isOpen: true, mode: "edit", initialData: scrapbook });
     };
 
-    const handleConfirmModal = async (data: {
-        title: string;
-        binderColor: string;
-        coverImage?: string | null;
-        binderGrain?: number;
-        coverZoom?: number;
-        coverX?: number;
-        coverY?: number;
-        showPreview?: boolean;
-    }) => {
+    const handleConfirmModal = async (data: ScrapbookConfig) => {
         if (!user) return;
         setCreating(true);
         setError(null);

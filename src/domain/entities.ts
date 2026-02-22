@@ -20,6 +20,17 @@ export interface Scrapbook {
     updatedAt: string;
 }
 
+export interface ScrapbookConfig {
+    title: string;
+    binderColor: string;
+    coverImage?: string | null;
+    binderGrain?: number;
+    coverZoom?: number;
+    coverX?: number;
+    coverY?: number;
+    showPreview?: boolean;
+}
+
 export type CanvasElementType = 'text' | 'image' | 'video' | 'gif' | 'sticker' | 'line' | 'arrow' | 'eraser' | 'hand';
 
 export interface CanvasElement {

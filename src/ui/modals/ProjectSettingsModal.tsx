@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Scrapbook } from '@/domain/entities';
+import { Scrapbook, ScrapbookConfig } from '@/domain/entities';
 import { useAuth } from '@/infra/auth/authContext';
 import { uploadImage } from '@/infra/db/storageService';
 import { BookBinder } from '@/ui/components/BookBinder';
@@ -9,7 +9,7 @@ import { BookBinder } from '@/ui/components/BookBinder';
 export interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { title: string; binderColor: string; coverImage?: string | null; binderGrain?: number; coverZoom?: number; coverX?: number; coverY?: number; showPreview?: boolean }) => void;
+    onConfirm: (data: ScrapbookConfig) => void;
     initialData?: Scrapbook;
     title: string;
     error?: string | null;
