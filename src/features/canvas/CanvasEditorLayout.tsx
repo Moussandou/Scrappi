@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { CanvasElement, Scrapbook } from "@/domain/entities";
 import { getScrapbook, getElements, saveElements, updateScrapbook } from "@/infra/db/firestoreService";
-import { uploadImage } from "@/infra/db/storageService";
+import { useStorageMode } from "./hooks/useStorageMode";
 import { useAuth } from "@/infra/auth/authContext";
 
 import EditorHeader from "./components/EditorHeader";
@@ -56,6 +56,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             setHistoryStep(historyStep + 1);
         }
     };
+
+    const storageMode = useStorageMode();
 
     const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
     const [loading, setLoading] = useState(true);
@@ -327,7 +329,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         setUploadProgress(0);
         setUploadLabel('image');
         try {
-            const url = await uploadImage(file, `projects/${projectId}`, (p) => setUploadProgress(Math.round(p)));
+            const url = await storageMode.uploadFile(file, `projects/${projectId}`, (p) => setUploadProgress(Math.round(p)));
             const img = new window.Image();
             img.src = url;
             await new Promise((resolve) => {
@@ -374,7 +376,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         setUploadProgress(0);
         setUploadLabel('vid\u00e9o');
         try {
-            const url = await uploadImage(file, `projects/${projectId}/videos`, (p) => setUploadProgress(Math.round(p)));
+            const url = await storageMode.uploadFile(file, `projects/${projectId}/videos`, (p) => setUploadProgress(Math.round(p)));
 
             // Create a video element to get dimensions
             const video = document.createElement('video');
@@ -485,7 +487,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
         setUploading(true);
         try {
-            const url = await uploadImage(file, `projects/${projectId}`);
+            const url = await storageMode.uploadFile(file, `projects/${projectId}`);
             const img = new window.Image();
             img.src = url;
             await new Promise((resolve) => {
