@@ -62,6 +62,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadLabel, setUploadLabel] = useState('');
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -322,8 +324,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const handleFileSelection = async (file: File) => {
         setIsImageModalOpen(false);
         setUploading(true);
+        setUploadProgress(0);
+        setUploadLabel('image');
         try {
-            const url = await uploadImage(file, `projects/${projectId}`);
+            const url = await uploadImage(file, `projects/${projectId}`, (p) => setUploadProgress(Math.round(p)));
             const img = new window.Image();
             img.src = url;
             await new Promise((resolve) => {
@@ -343,9 +347,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             const x = typeof window !== "undefined" ? window.innerWidth / 2 : 300;
             const y = typeof window !== "undefined" ? window.innerHeight / 2 : 300;
 
+            const isGif = file.type === 'image/gif';
             const newElement: CanvasElement = {
                 id: crypto.randomUUID(),
-                type: "image",
+                type: isGif ? "gif" : "image",
                 content: url,
                 x: (x - position.x) / scale,
                 y: (y - position.y) / scale,
@@ -366,28 +371,37 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const handleVideoSelection = async (file: File) => {
         setIsVideoModalOpen(false);
         setUploading(true);
+        setUploadProgress(0);
+        setUploadLabel('vid\u00e9o');
         try {
-            const url = await uploadImage(file, `projects/${projectId}/videos`);
+            const url = await uploadImage(file, `projects/${projectId}/videos`, (p) => setUploadProgress(Math.round(p)));
 
             // Create a video element to get dimensions
             const video = document.createElement('video');
-            video.src = url;
+            video.crossOrigin = 'anonymous';
             video.preload = 'metadata';
 
-            await new Promise((resolve) => {
+            const metadataLoaded = new Promise((resolve) => {
                 video.onloadedmetadata = () => resolve(true);
                 video.onerror = (e) => {
                     console.error("Erreur gérée pendant le preload de la vidéo :", e);
-                    resolve(false); // Resolve gracefully, we will use default dimensions
+                    resolve(false);
                 };
             });
 
-            let finalWidth = video.videoWidth || 480;
-            let finalHeight = video.videoHeight || 270;
-            const maxSize = 480;
+            video.src = url;
+            video.load();
+            await metadataLoaded;
 
-            if (finalWidth > maxSize || finalHeight > maxSize) {
-                const ratio = Math.min(maxSize / finalWidth, maxSize / finalHeight);
+            let finalWidth = video.videoWidth || 640;
+            let finalHeight = video.videoHeight || 360;
+
+            // Scale down only if the video is larger than 80% of the viewport
+            const maxW = typeof window !== "undefined" ? window.innerWidth * 0.6 : 800;
+            const maxH = typeof window !== "undefined" ? window.innerHeight * 0.6 : 600;
+
+            if (finalWidth > maxW || finalHeight > maxH) {
+                const ratio = Math.min(maxW / finalWidth, maxH / finalHeight);
                 finalWidth *= ratio;
                 finalHeight *= ratio;
             }
@@ -709,6 +723,25 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             uploading={uploading}
                         />
 
+                        {uploading && (
+                            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] animate-in slide-in-from-bottom-4 fade-in duration-300">
+                                <div className="bg-ink text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[260px]">
+                                    <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold">
+                                            Import {uploadLabel} en cours...
+                                        </p>
+                                        <div className="mt-1.5 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-sage rounded-full transition-all duration-300 ease-out"
+                                                style={{ width: `${uploadProgress}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-white/60 mt-1">{uploadProgress}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <ToolHUD
                             activeTool={activeTool}
                             elements={elements}

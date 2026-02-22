@@ -198,6 +198,15 @@ export default function ToolHUD({
                     {expandedSections.video && (
                         <div className="flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                             <button
+                                onClick={() => onUpdateElement?.(firstVideo.id, { autoPlay: firstVideo.autoPlay === false })}
+                                className={`flex items-center justify-between w-full p-2 rounded-xl transition-all ${firstVideo.autoPlay !== false ? 'bg-sage/10 text-sage' : 'text-ink-light hover:bg-black/5'}`}
+                            >
+                                <span className="text-[10px] font-bold">Lecture</span>
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {firstVideo.autoPlay !== false ? 'pause_circle' : 'play_circle'}
+                                </span>
+                            </button>
+                            <button
                                 onClick={() => onUpdateElement?.(firstVideo.id, { muted: firstVideo.muted === false })}
                                 className={`flex items-center justify-between w-full p-2 rounded-xl transition-all ${firstVideo.muted !== false ? 'bg-sage/10 text-sage' : 'text-ink-light hover:bg-black/5'}`}
                             >

@@ -93,7 +93,7 @@ export default function ImageUploadModal({ isOpen, onClose, onUpload, uploading 
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold text-ink">Glissez votre image ici</p>
-                                    <p className="text-xs text-ink-light mt-1">ou cliquez pour parcourir</p>
+                                    <p className="text-xs text-ink-light mt-1">PNG, JPG, WebP ou GIF animé</p>
                                 </div>
                             </>
                         )}

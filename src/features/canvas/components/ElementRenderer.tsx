@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
@@ -21,9 +21,11 @@ interface ElementProps {
 export function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shapeRef = useRef<any>(null);
-    const [img] = useImage(element.type === 'image' || element.type === 'sticker' ? element.content : '');
+    const isImageType = element.type === 'image' || element.type === 'sticker';
+    const [img] = useImage(isImageType ? element.content : '', isImageType ? 'anonymous' : undefined);
     const [isEditing, setIsEditing] = useState(false);
 
+    // Register node for Transformer
     useEffect(() => {
         if (shapeRef.current && onNodeRegister) {
             onNodeRegister(element.id, shapeRef.current);
@@ -150,12 +152,29 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
 
             {element.type === 'video' && (
                 <VideoElement
-                    ref={shapeRef}
                     element={element}
                     isDraggable={isDraggable}
                     onSelect={onSelect}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
+                    onNodeRegister={(node) => {
+                        shapeRef.current = node;
+                        onNodeRegister?.(element.id, node);
+                    }}
+                />
+            )}
+
+            {element.type === 'gif' && (
+                <GifElement
+                    element={element}
+                    isDraggable={isDraggable}
+                    onSelect={onSelect}
+                    onDragEnd={handleDragEnd}
+                    onTransformEnd={handleTransformEnd}
+                    onNodeRegister={(node) => {
+                        shapeRef.current = node;
+                        onNodeRegister?.(element.id, node);
+                    }}
                 />
             )}
 
@@ -239,37 +258,43 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
 }
 
 // Sub-component to handle Video Lifecycle
-const VideoElement = forwardRef<any, {
+interface MediaElementProps {
     element: CanvasElement;
     isDraggable: boolean;
     onSelect: () => void;
     onDragEnd: (e: any) => void;
     onTransformEnd: () => void;
-}>(({ element, isDraggable, onSelect, onDragEnd, onTransformEnd }, ref) => {
+    onNodeRegister: (node: any) => void;
+}
+
+function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
     const konvaImageRef = useRef<any>(null);
+
+    // Callback ref: fires when KonvaImage mounts/updates its DOM node
+    const registerRef = useCallback((node: any) => {
+        konvaImageRef.current = node;
+        if (node) onNodeRegister(node);
+    }, [onNodeRegister]);
 
     useEffect(() => {
         const video = document.createElement('video');
         video.src = element.content;
         video.crossOrigin = 'anonymous';
-        video.loop = element.loop !== false; // Default to loop
-        video.muted = element.muted !== false; // Default to muted for autoplay support
-        video.autoplay = true;
         video.playsInline = true;
 
         const handleCanPlay = () => {
             setVideoElement(video);
-            video.play().catch(e => console.warn("Autoplay block:", e));
         };
         const handleError = (e: any) => {
-            console.error("Video failed to play:", e);
+            console.error("Video failed to load:", e);
         };
 
         video.addEventListener('canplay', handleCanPlay);
         video.addEventListener('error', handleError);
         videoRef.current = video;
+        video.load();
 
         return () => {
             video.removeEventListener('canplay', handleCanPlay);
@@ -278,37 +303,36 @@ const VideoElement = forwardRef<any, {
             video.src = "";
             video.load();
         };
-    }, [element.content, element.loop, element.muted]);
+    }, [element.content]);
 
-    // Redraw loop
+    // React to property changes without recreating the video
     useEffect(() => {
         if (!videoElement) return;
-
-        let animFrame: number;
-        const layer = konvaImageRef.current?.getLayer();
-
-        const step = () => {
-            if (layer) {
-                layer.batchDraw();
-            }
-            animFrame = requestAnimationFrame(step);
-        };
-
-        if (videoElement) {
-            animFrame = requestAnimationFrame(step);
+        videoElement.loop = element.loop !== false;
+        videoElement.muted = element.muted !== false;
+        if (element.autoPlay === false) {
+            videoElement.pause();
+        } else {
+            videoElement.play().catch(e => console.warn("Play block:", e));
         }
+    }, [element.autoPlay, element.loop, element.muted, videoElement]);
 
-        return () => {
-            cancelAnimationFrame(animFrame);
+    // Redraw loop for video frames
+    useEffect(() => {
+        if (!videoElement) return;
+        let animFrame: number;
+        const step = () => {
+            const layer = konvaImageRef.current?.getLayer();
+            if (layer) layer.batchDraw();
+            animFrame = requestAnimationFrame(step);
         };
+        animFrame = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(animFrame);
     }, [videoElement]);
-
-    // Expose the ref for the transformer
-    useImperativeHandle(ref, () => konvaImageRef.current);
 
     return (
         <KonvaImage
-            ref={konvaImageRef}
+            ref={registerRef}
             image={videoElement || undefined}
             x={element.x}
             y={element.y}
@@ -323,6 +347,54 @@ const VideoElement = forwardRef<any, {
             onTransformEnd={onTransformEnd}
         />
     );
-});
+}
 
-VideoElement.displayName = "VideoElement";
+// Sub-component to handle Animated GIF rendering
+function GifElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
+    const [gifImage, setGifImage] = useState<HTMLImageElement | null>(null);
+    const konvaImageRef = useRef<any>(null);
+
+    const registerRef = useCallback((node: any) => {
+        konvaImageRef.current = node;
+        if (node) onNodeRegister(node);
+    }, [onNodeRegister]);
+
+    useEffect(() => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.src = element.content;
+        img.onload = () => setGifImage(img);
+        img.onerror = (e) => console.error("GIF failed to load:", e);
+    }, [element.content]);
+
+    // Continuous redraw for GIF animation frames
+    useEffect(() => {
+        if (!gifImage) return;
+        let animFrame: number;
+        const step = () => {
+            const layer = konvaImageRef.current?.getLayer();
+            if (layer) layer.batchDraw();
+            animFrame = requestAnimationFrame(step);
+        };
+        animFrame = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(animFrame);
+    }, [gifImage]);
+
+    return (
+        <KonvaImage
+            ref={registerRef}
+            image={gifImage || undefined}
+            x={element.x}
+            y={element.y}
+            width={element.width}
+            height={element.height}
+            rotation={element.rotation}
+            draggable={isDraggable}
+            listening={isDraggable}
+            onClick={onSelect}
+            onTap={onSelect}
+            onDragEnd={onDragEnd}
+            onTransformEnd={onTransformEnd}
+        />
+    );
+}
