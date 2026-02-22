@@ -253,7 +253,7 @@ const VideoElement = forwardRef<any, {
     useEffect(() => {
         const video = document.createElement('video');
         video.src = element.content;
-        // video.crossOrigin = 'anonymous'; // Removed to avoid CORS blocking without explicit bucket config
+        video.crossOrigin = 'anonymous';
         video.loop = element.loop !== false; // Default to loop
         video.muted = element.muted !== false; // Default to muted for autoplay support
         video.autoplay = true;
