@@ -24,8 +24,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "frameworksBackend": {
-      "authAndAppCheck": true
-    }
+    "frameworksBackend": {}
   }
 }

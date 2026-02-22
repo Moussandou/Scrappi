@@ -23,3 +23,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SCRAPPI_APP }}'
           channelId: live
           projectId: scrappi-app
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
