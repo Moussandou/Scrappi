@@ -12,6 +12,7 @@ import {
 
 import "./globals.css";
 import { AuthProvider } from "@/infra/auth/authContext";
+import { MaintenanceGuard } from "@/ui/components/MaintenanceGuard";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -75,7 +76,9 @@ export default function RootLayout({
         className={`${jakarta.variable} ${caveat.variable} ${dancing.variable} ${indie.variable} ${pacifico.variable} ${satisfy.variable} ${workSans.variable} ${playfair.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
+          <MaintenanceGuard>
+            {children}
+          </MaintenanceGuard>
         </AuthProvider>
       </body>
     </html>

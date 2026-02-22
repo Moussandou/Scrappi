@@ -1,27 +1,41 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper to check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    // Helper to check if user owns the document
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    match /scrapbooks/{id} {
-      allow read: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-      allow update: if isSignedIn() && isOwner(resource.data.userId) 
-                    && request.resource.data.title.size() < 100;
-      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    function isAdmin() {
+      return request.auth.token.admin == true;
     }
-    
+
+    match /scrapbooks/{id} {
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isSignedIn() && isOwner(resource.data.userId)
+                    && request.resource.data.title.size() < 100;
+      allow delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+    }
+
     match /elements/{id} {
-      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
       allow write: if isSignedIn() && isOwner(request.resource.data.userId);
+    }
+
+    // User profiles
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // App config (maintenance mode, etc.)
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isAdmin();
     }
   }
 }
