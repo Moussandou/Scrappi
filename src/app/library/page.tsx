@@ -21,7 +21,9 @@ export default function LibraryOverview() {
         initialData?: Scrapbook;
     }>({ isOpen: false, mode: "create" });
     const [creating, setCreating] = useState(false);
-
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortBy, setSortBy] = useState<"recent" | "oldest" | "alphabetical">("recent");
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -44,13 +46,30 @@ export default function LibraryOverview() {
         }
     }, [user, authLoading, router]);
 
+    const filteredAndSortedScrapbooks = scrapbooks
+        .filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (sortBy === "recent") {
+                return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+            }
+            if (sortBy === "oldest") {
+                return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+            }
+            if (sortBy === "alphabetical") {
+                return a.title.localeCompare(b.title);
+            }
+            return 0;
+        });
+
     const handleOpenCreate = () => {
+        setError(null);
         setModalConfig({ isOpen: true, mode: "create" });
     };
 
     const handleOpenEdit = (e: React.MouseEvent, scrapbook: Scrapbook) => {
         e.preventDefault();
         e.stopPropagation();
+        setError(null);
         setModalConfig({ isOpen: true, mode: "edit", initialData: scrapbook });
     };
 
@@ -66,6 +85,7 @@ export default function LibraryOverview() {
     }) => {
         if (!user) return;
         setCreating(true);
+        setError(null);
         try {
             if (modalConfig.mode === "create") {
                 const newId = await createScrapbook(
@@ -89,7 +109,7 @@ export default function LibraryOverview() {
             setModalConfig({ ...modalConfig, isOpen: false });
         } catch (error) {
             console.error("Erreur", error);
-            alert("Une erreur est survenue.");
+            setError("Une erreur est survenue lors de l'enregistrement.");
         } finally {
             setCreating(false);
         }
@@ -110,12 +130,39 @@ export default function LibraryOverview() {
 
             <main className="py-24 relative overflow-hidden">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div className="mx-auto max-w-2xl text-center mb-16">
-                        <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Bibliothèque</h2>
-                        <p className="mt-2 text-4xl font-serif font-medium tracking-tight text-ink sm:text-5xl">Vos Classeurs</p>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                        <div>
+                            <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3 text-center md:text-left">Bibliothèque</h2>
+                            <p className="text-4xl font-serif font-medium tracking-tight text-ink sm:text-5xl text-center md:text-left">Vos Classeurs</p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                            <div className="relative w-full sm:w-64">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-light text-[20px]">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-white border border-paper-dark rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage transition-all shadow-sm"
+                                />
+                            </div>
+                            <div className="relative w-full sm:w-48">
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as any)}
+                                    className="w-full pl-4 pr-10 py-2 bg-white border border-paper-dark rounded-full text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage transition-all shadow-sm cursor-pointer"
+                                >
+                                    <option value="recent">Nouveaux</option>
+                                    <option value="oldest">Anciens</option>
+                                    <option value="alphabetical">Alphabétique</option>
+                                </select>
+                                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-ink-light pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
                         {/* Create New Card */}
                         <div
                             onClick={handleOpenCreate}
@@ -130,10 +177,7 @@ export default function LibraryOverview() {
                         {loading ? (
                             <div className="text-ink-light col-span-3 py-10 text-center font-handwriting text-2xl">Recherche de vos classeurs...</div>
                         ) : (
-                            scrapbooks.map((scrapbook) => {
-                                const binderStyle = getBinderStyle(scrapbook);
-                                const isDark = scrapbook.binderColor === "#1a1e26" || scrapbook.binderColor === "#3a4a3a";
-
+                            filteredAndSortedScrapbooks.map((scrapbook) => {
                                 return (
                                     <div key={scrapbook.id} className="relative group/wrapper w-full aspect-[3/4]">
                                         <BookBinder
@@ -156,6 +200,13 @@ export default function LibraryOverview() {
                                 );
                             })
                         )}
+
+                        {!loading && filteredAndSortedScrapbooks.length === 0 && searchTerm && (
+                            <div className="col-span-full py-20 text-center">
+                                <span className="material-symbols-outlined text-5xl text-ink-light/20 mb-4">folder_off</span>
+                                <p className="text-ink-light font-serif italic text-lg">Aucun classeur ne correspond à votre recherche.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
@@ -166,6 +217,7 @@ export default function LibraryOverview() {
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 onConfirm={handleConfirmModal}
                 initialData={modalConfig.mode === "edit" ? modalConfig.initialData : undefined}
+                error={error}
             />
         </div>
     );
