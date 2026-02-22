@@ -26,7 +26,6 @@ export async function fetchHandwritingFonts(): Promise<GoogleFont[]> {
  * Reset the font cache for testing purposes.
  */
 export function _resetCache(): void {
-    cachedFonts = null;
     loadedFonts.clear();
 }
 

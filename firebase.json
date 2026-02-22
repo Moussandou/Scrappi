@@ -16,5 +16,16 @@
         "supportEmail": "moussandou.m@gmail.com"
       }
     }
+  },
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "authAndAppCheck": true
+    }
   }
 }

@@ -7,9 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:fonts": "node scripts/generate-fonts.mjs"
+    "generate:fonts": "node scripts/generate-fonts.mjs",
     "test": "vitest"
-    "test": "node --test --experimental-strip-types src/**/*.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
