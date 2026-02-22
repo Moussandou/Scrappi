@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { CanvasElement } from "@/domain/entities";
@@ -47,6 +47,23 @@ export default function InfiniteCanvas({
     const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
     const [selectionBox, setSelectionBox] = useState<{ x1: number, y1: number, x2: number, y2: number } | null>(null);
 
+    // Refs for stable callbacks
+    const elementsRef = useRef(elements);
+    const selectedIdsRef = useRef(selectedIds);
+    const activeToolRef = useRef(activeTool);
+
+    useEffect(() => {
+        elementsRef.current = elements;
+    }, [elements]);
+
+    useEffect(() => {
+        selectedIdsRef.current = selectedIds;
+    }, [selectedIds]);
+
+    useEffect(() => {
+        activeToolRef.current = activeTool;
+    }, [activeTool]);
+
     useEffect(() => {
         const handleResize = () => {
             setDimensions({
@@ -71,9 +88,9 @@ export default function InfiniteCanvas({
         }
     }, [selectedIds, elements]); // also sync on elements change to handle z-index swaps
 
-    const handleNodeRegister = (id: string, node: any) => {
+    const handleNodeRegister = useCallback((id: string, node: any) => {
         nodesRef.current[id] = node;
-    };
+    }, []);
 
 
     const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -178,6 +195,43 @@ export default function InfiniteCanvas({
         }
     };
 
+    const handleSelect = useCallback((id: string) => {
+        if (activeToolRef.current === 'select') {
+            setSelectedIds([id]);
+        }
+    }, [setSelectedIds]);
+
+    const handleElementChange = useCallback((id: string, newProps: Partial<CanvasElement>) => {
+        const currentSelectedIds = selectedIdsRef.current;
+        const currentElements = elementsRef.current;
+
+        if (currentSelectedIds.includes(id) && (newProps.x !== undefined || newProps.y !== undefined)) {
+            // Multi-drag logic
+            const el = currentElements.find(e => e.id === id);
+            if (!el) return;
+            const dx = (newProps.x ?? el.x) - el.x;
+            const dy = (newProps.y ?? el.y) - el.y;
+
+            if (dx !== 0 || dy !== 0) {
+                const changes = currentSelectedIds.map(sid => {
+                    const selEl = currentElements.find(e => e.id === sid);
+                    if (!selEl) return null;
+                    return {
+                        id: sid,
+                        partial: {
+                            x: selEl.x + dx,
+                            y: selEl.y + dy
+                        }
+                    };
+                }).filter(c => c !== null) as Array<{ id: string, partial: Partial<CanvasElement> }>;
+
+                if (onElementsChange) onElementsChange(changes);
+                return;
+            }
+        }
+        if (onElementChange) onElementChange(id, newProps);
+    }, [onElementsChange, onElementChange]);
+
     const handleMouseUp = () => {
         if (currentLine) {
             if (onAddElement) onAddElement(currentLine);
@@ -251,38 +305,8 @@ export default function InfiniteCanvas({
                         key={el.id}
                         element={el}
                         isSelected={selectedIds.includes(el.id)}
-                        onSelect={() => {
-                            if (activeTool === 'select') {
-                                setSelectedIds([el.id]);
-                            }
-                        }}
-                        onChange={(id, newProps) => {
-                            if (selectedIds.includes(id) && (newProps.x !== undefined || newProps.y !== undefined)) {
-                                // Multi-drag logic
-                                const el = elements.find(e => e.id === id);
-                                if (!el) return;
-                                const dx = (newProps.x ?? el.x) - el.x;
-                                const dy = (newProps.y ?? el.y) - el.y;
-
-                                if (dx !== 0 || dy !== 0) {
-                                    const changes = selectedIds.map(sid => {
-                                        const selEl = elements.find(e => e.id === sid);
-                                        if (!selEl) return null;
-                                        return {
-                                            id: sid,
-                                            partial: {
-                                                x: selEl.x + dx,
-                                                y: selEl.y + dy
-                                            }
-                                        };
-                                    }).filter(c => c !== null) as Array<{ id: string, partial: Partial<CanvasElement> }>;
-
-                                    if (onElementsChange) onElementsChange(changes);
-                                    return;
-                                }
-                            }
-                            if (onElementChange) onElementChange(id, newProps);
-                        }}
+                        onSelect={handleSelect}
+                        onChange={handleElementChange}
                         isDraggable={activeTool === 'select'}
                         onNodeRegister={handleNodeRegister}
                     />
