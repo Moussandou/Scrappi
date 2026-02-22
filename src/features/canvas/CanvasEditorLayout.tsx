@@ -67,6 +67,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'arrow' | 'eraser' | 'hand'>('select');
     const [activeColor, setActiveColor] = useState('#1a1e26');
     const [activeStrokeWidth, setActiveStrokeWidth] = useState(4);
+    const [activeFontFamily, setActiveFontFamily] = useState('Inter');
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const helpRef = useRef<HTMLDivElement>(null);
 
@@ -281,6 +282,16 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         }
     };
 
+    const handleFontChange = (font: string) => {
+        setActiveFontFamily(font);
+        selectedIds.forEach(id => {
+            const el = elements.find(e => e.id === id);
+            if (el && el.type === 'text') {
+                handleElementChange(id, { fontFamily: font });
+            }
+        });
+    };
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -457,8 +468,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             selectedIds={selectedIds}
                             activeColor={activeColor}
                             activeStrokeWidth={activeStrokeWidth}
+                            activeFontFamily={activeFontFamily}
                             handleColorSelect={handleColorSelect}
                             handleStrokeWidthChange={handleStrokeWidthChange}
+                            handleFontChange={handleFontChange}
                         />
                     </div>
 

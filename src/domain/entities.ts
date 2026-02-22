@@ -34,6 +34,7 @@ export interface CanvasElement {
     points?: number[]; // For drawings
     strokeColor?: string;
     strokeWidth?: number;
+    fontFamily?: string;
 }
 
 export interface CanvasPage {

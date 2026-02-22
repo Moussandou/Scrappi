@@ -5,6 +5,9 @@ import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
+import { loadFont } from "@/infra/fonts/googleFontsService";
+
+const DEFAULT_FONT = "Inter";
 
 interface ElementProps {
     element: CanvasElement;
@@ -60,6 +63,15 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
         }
     };
 
+    const fontFamily = element.fontFamily || DEFAULT_FONT;
+
+    // Load custom font on mount
+    useEffect(() => {
+        if (element.fontFamily) {
+            loadFont(element.fontFamily);
+        }
+    }, [element.fontFamily]);
+
     return (
         <Group>
             {element.type === 'text' && (
@@ -79,23 +91,22 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                 >
-                    {element.backgroundColor && (
-                        <Rect
-                            width={element.width}
-                            height={element.height || 50}
-                            fill={element.backgroundColor}
-                            cornerRadius={8}
-                            shadowColor="rgba(0,0,0,0.1)"
-                            shadowBlur={10}
-                            shadowOffsetY={4}
-                        />
-                    )}
+                    {/* Hit area: makes the entire bounding box grabbable */}
+                    <Rect
+                        width={element.width}
+                        height={element.height || 50}
+                        fill={element.backgroundColor || "transparent"}
+                        cornerRadius={element.backgroundColor ? 8 : 0}
+                        shadowColor={element.backgroundColor ? "rgba(0,0,0,0.1)" : undefined}
+                        shadowBlur={element.backgroundColor ? 10 : 0}
+                        shadowOffsetY={element.backgroundColor ? 4 : 0}
+                    />
                     <Text
                         text={element.content}
                         width={element.width}
                         height={element.height}
                         fontSize={24}
-                        fontFamily="var(--font-handwriting, Caveat)"
+                        fontFamily={fontFamily}
                         fill={element.strokeColor || "#1a1e26"} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
@@ -124,13 +135,14 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                                 }}
                                 onBlur={() => setIsEditing(false)}
                                 autoFocus
-                                className="w-full bg-transparent border-2 border-sage border-dashed outline-none resize-none font-handwriting text-[24px] m-0 rounded-lg shadow-xl"
+                                className="w-full bg-transparent border-2 border-sage border-dashed outline-none resize-none text-[24px] m-0 rounded-lg shadow-xl"
                                 style={{
                                     height: element.height || 50,
                                     minHeight: '50px',
                                     padding: element.backgroundColor ? '16px' : '8px',
                                     backgroundColor: element.backgroundColor || 'var(--color-paper)',
                                     color: element.strokeColor || '#1a1e26',
+                                    fontFamily: `"${fontFamily}", cursive`,
                                 }}
                             />
                         </Html>
@@ -213,6 +225,7 @@ export function RenderElement({ element, isSelected, onSelect, onChange, isDragg
                     borderDash={[4, 4]}
                     padding={10}
                     rotateAnchorOffset={30}
+                    shouldOverdrawWholeArea
                     boundBoxFunc={(oldBox, newBox) => {
                         // limit resize
                         if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
