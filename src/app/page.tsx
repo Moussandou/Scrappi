@@ -2,11 +2,43 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
+import { BookBinder } from "@/ui/components/BookBinder";
+
+const dummyBinders = [
+  { c: "#8c443e", i: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop" },
+  { c: "#2a3b4c" },
+  { c: "#e8e4dc", i: "https://images.unsplash.com/photo-1495521821757-a1efb6729054?q=80&w=400&fit=crop" },
+  { c: "#3a4a3a" },
+  { c: "#c7bca5", i: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=400&fit=crop" },
+  { c: "#6B8E6B", i: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=400&fit=crop" },
+  { c: "#f4a261" },
+  { c: "#264653", i: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=400&fit=crop" }
+];
+
+const renderMarqueeRow = (reverse = false) => (
+  <div className={`flex gap-4 md:gap-8 whitespace-nowrap opacity-[0.15] ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} w-max py-4`}>
+    {[...dummyBinders, ...dummyBinders, ...dummyBinders, ...dummyBinders].map((b, i) => (
+      <div key={i} className="w-24 md:w-32 lg:w-40 xl:w-48 aspect-[3/4] rounded-r-lg rounded-l-sm shadow-[0_10px_20px_rgba(0,0,0,0.2)] border-l-[6px] border-black/30 relative overflow-hidden shrink-0" style={{ backgroundColor: b.c }}>
+        {b.i && <img src={b.i} className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-multiply" alt="" />}
+        <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-20 mix-blend-overlay"></div>
+      </div>
+    ))}
+  </div>
+);
 
 export default function LandingPage() {
   const { user } = useAuth();
+
+  // States for the interactive gallery binder
+  const [galleryBinderOpen, setGalleryBinderOpen] = useState(false);
+  const [galleryBinderTitle, setGalleryBinderTitle] = useState("Mon Classeur");
+  const [galleryBinderColor, setGalleryBinderColor] = useState("#c7bca5");
+  const [galleryBinderGrain, setGalleryBinderGrain] = useState(0.1);
+  const [galleryBinderImage, setGalleryBinderImage] = useState("https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop");
 
   return (
     <div className="bg-paper text-ink font-display selection:bg-sage selection:text-white">
@@ -49,43 +81,52 @@ export default function LandingPage() {
                 <div className="flex-1 w-full relative min-h-[500px] flex items-center justify-center lg:justify-end">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-sage/10 to-transparent rounded-full blur-3xl -z-10"></div>
 
-                  <div className="relative w-full max-w-[500px] aspect-square">
-                    {/* Main Polaroid */}
-                    <div className="absolute top-10 left-10 w-3/4 h-3/4 bg-[#fcfcfc] rounded-sm shadow-float rotate-[-6deg] p-6 flex flex-col items-center justify-center z-10 burnt-edge transform transition-transform hover:scale-[1.02] duration-500">
-                      <div className="w-full h-full border-2 border-dashed border-gray-200 p-4 flex flex-col items-center justify-center relative overflow-hidden">
-                        <p className="font-serif italic text-2xl text-gray-300 absolute top-4 left-4">Projet N°04</p>
-                        <div className="w-full h-full flex flex-wrap content-center gap-2 opacity-10">
-                          <div className="w-full h-2 bg-black rounded-full"></div>
-                          <div className="w-3/4 h-2 bg-black rounded-full"></div>
-                          <div className="w-5/6 h-2 bg-black rounded-full"></div>
+                  <div className="relative w-full max-w-[800px] lg:max-w-[1000px] aspect-[1/1.2] md:aspect-[16/9] flex items-center justify-center mt-[-20px] md:mt-0">
+                    {/* CSS Canvas Mockup */}
+                    <div className="absolute lg:relative top-0 md:top-1/2 lg:top-auto md:-translate-y-1/2 lg:-translate-y-0 right-[-5%] md:right-0 lg:right-auto w-[95%] sm:w-[85%] md:w-[80%] lg:w-[90%] max-w-[700px] aspect-[4/3] bg-white rounded-2xl shadow-float border border-paper-dark overflow-hidden flex flex-col transform rotate-[2deg] transition-transform duration-700 hover:rotate-[0deg] z-0 mx-auto">
+                      {/* Header */}
+                      <div className="h-10 md:h-12 border-b border-paper-dark bg-paper/50 backdrop-blur-sm flex items-center justify-between px-3 md:px-4 shrink-0">
+                        <div className="flex gap-2 md:gap-3 items-center">
+                          <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-sage flex items-center justify-center shadow-sm"><span className="material-symbols-outlined text-[12px] md:text-[14px] text-white">brush</span></div>
+                          <div className="w-16 md:w-24 lg:w-32 h-2 bg-ink/10 rounded-full"></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/5 hidden md:block"></div>
+                          <div className="w-12 h-6 md:w-16 md:h-8 rounded-full bg-sage shadow-sm border border-black/5"></div>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Secondary Polaroid */}
-                    <div className="absolute top-0 right-4 w-64 bg-white p-3 pb-8 shadow-2xl rotate-[4deg] z-20 animate-float-delayed hover:rotate-6 transition-transform">
-                      <div className="aspect-[4/5] w-full overflow-hidden bg-gray-100 relative">
-                        <img alt="Photo artistique" className="h-full w-full object-cover sepia-[.3]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyetwpAH_UbgWjf8AN1pvblXr04wz5Hjg9nZvayATytnj_AYH0TELnnjwZb3Ryt5kN2Ez4GlZ2FHqU9GIhCFPCDwoKYp-MKeTivArCH6GiXopdO6pf_BS5fgaHHAzm6TtMzOLLCPYDDs2Rw-mctLo-pcv6JOYem-yblxjBjQWAWut7TeRTafNlvNo8ixtDMtxW-mMPrJ-M268_KeY9YW5vJrGJfjRfcGEaEQ0B7WckphpgGTmSeNBLu4JJ7QXLP1zgspbIfnSPmv2n" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-50"></div>
+                      {/* Workspace */}
+                      <div className="flex-1 relative bg-[#fdfaf1] bg-[radial-gradient(#d1cfc7_1px,transparent_1px)] [background-size:16px_16px] md:[background-size:20px_20px]">
+                        {/* Toolbar */}
+                        <div className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 md:w-10 lg:w-12 py-2 md:py-3 bg-white rounded-xl md:rounded-2xl shadow-sm border border-black/5 flex flex-col gap-1 md:gap-2 lg:gap-3 items-center">
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl bg-sage/10 text-sage flex items-center justify-center"><span className="material-symbols-outlined text-[14px] md:text-[16px]">near_me</span></div>
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl hover:bg-black/5 flex items-center justify-center"><span className="material-symbols-outlined text-[14px] md:text-[16px] text-ink/60">brush</span></div>
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl hover:bg-black/5 flex items-center justify-center"><span className="material-symbols-outlined text-[14px] md:text-[16px] text-ink/60">image</span></div>
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl hover:bg-black/5 flex items-center justify-center"><span className="material-symbols-outlined text-[14px] md:text-[16px] text-ink/60">sticky_note_2</span></div>
+                        </div>
+                        {/* Canvas Elements */}
+                        <div className="absolute top-6 md:top-10 left-16 md:left-24 w-40 md:w-56 lg:w-64 h-auto bg-[#fffde7] rotate-[-4deg] shadow-md p-3 md:p-5 flex flex-col border border-black/5 transition-transform hover:scale-105 hover:rotate-0 cursor-pointer">
+                          <div className="w-16 md:w-24 h-4 md:h-6 bg-red-200/40 absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 rotate-2 backdrop-blur-sm"></div>
+                          <p className="font-handwriting text-ink leading-tight text-sm md:text-xl mb-1 md:mb-3">Mots d&apos;ordre :</p>
+                          <ul className="font-handwriting text-ink/80 text-xs md:text-base list-disc pl-4 md:pl-6 space-y-1 md:space-y-2">
+                            <li>Créativité</li>
+                            <li>Inspiration libre</li>
+                            <li>Sans limites</li>
+                          </ul>
+                        </div>
+                        <div className="absolute bottom-4 md:bottom-8 right-6 md:right-12 w-36 md:w-52 lg:w-64 h-40 md:h-56 lg:h-72 bg-white shadow-lg rotate-[6deg] p-1 md:p-2 border border-black/5 transition-transform hover:scale-105 hover:rotate-2 cursor-pointer z-10">
+                          <div className="w-full h-full bg-gray-100 overflow-hidden relative">
+                            <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&fit=crop" className="w-full h-full object-cover sepia-[.2]" alt="" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                          </div>
+                        </div>
+                        {/* Drawn Arrow */}
+                        <div className="absolute top-24 md:top-36 left-24 md:left-40 lg:left-48 w-16 md:w-24 lg:w-32 h-16 md:h-24 lg:h-32 opacity-40">
+                          <svg viewBox="0 0 100 100" fill="none" stroke="#6B8E6B" strokeLinecap="round" strokeLinejoin="round" className="rotate-[-20deg] stroke-[3px] md:stroke-[4px]">
+                            <path d="M10,90 Q40,10 90,10 M70,10 L90,10 L90,30" />
+                          </svg>
+                        </div>
                       </div>
-                      <div className="mt-4 font-handwriting text-center text-gray-600 text-xl rotate-[-2deg]">{"Souvenirs d'été"}</div>
-                    </div>
-
-                    {/* Sticky Note */}
-                    <div className="absolute bottom-20 left-0 bg-[#FFF9C4] w-56 p-6 shadow-lg rotate-[-3deg] z-30 animate-float rounded-sm transform transition-transform hover:rotate-0 duration-300">
-                      <div className="w-8 h-8 rounded-full bg-sage/20 absolute -top-3 left-1/2 -translate-x-1/2 backdrop-blur-sm border border-white/50 shadow-sm"></div>
-                      <p className="font-handwriting text-ink text-2xl leading-tight">{"\"La créativité, c'est l'intelligence qui s'amuse.\""}</p>
-                      <div className="mt-2 flex gap-1 justify-end">
-                        <span className="material-symbols-outlined text-yellow-600 text-sm">star</span>
-                        <span className="material-symbols-outlined text-yellow-600 text-sm">star</span>
-                        <span className="material-symbols-outlined text-yellow-600 text-sm">star</span>
-                      </div>
-                    </div>
-
-                    {/* Tape & Sticker */}
-                    <div className="absolute top-6 right-20 w-24 h-8 bg-white/40 rotate-[45deg] z-30 backdrop-blur-[2px] shadow-sm border border-white/20"></div>
-                    <div className="absolute bottom-10 right-10 w-16 h-16 bg-orange-300 rounded-full z-20 flex items-center justify-center shadow-lg rotate-12 text-white font-bold text-xs uppercase tracking-widest border-2 border-white border-dashed">
-                      Art
                     </div>
                   </div>
                 </div>
@@ -94,57 +135,118 @@ export default function LandingPage() {
           </section>
 
           {/* Galerie de Classeurs */}
-          <section className="py-24 bg-sage/5 border-t border-paper-dark relative overflow-hidden">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-              <div className="mx-auto max-w-2xl text-center mb-16">
-                <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Organisation Visuelle</h2>
-                <p className="mt-2 text-4xl font-serif font-medium tracking-tight text-ink sm:text-5xl">Galerie de Classeurs</p>
-                <p className="mt-6 text-lg leading-8 text-ink-light font-light">
-                  {"Organisez vos projets dans des classeurs virtuels magnifiquement texturés. Une bibliothèque visuelle qui inspire avant même d'ouvrir une page."}
-                </p>
+          <section className="py-24 bg-paper-dark/30 border-t border-paper-dark relative overflow-hidden min-h-[800px] flex items-center justify-center">
+            {/* Infinite Marquee Background */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 rotate-[-10deg] scale-[1.3] md:scale-150 pointer-events-none z-0">
+              {renderMarqueeRow(false)}
+              {renderMarqueeRow(true)}
+              {renderMarqueeRow(false)}
+              {renderMarqueeRow(true)}
+            </div>
+
+            <div className="relative z-10 w-full max-w-7xl px-6 lg:px-8 flex flex-col md:flex-row items-center gap-12 md:gap-16 lg:gap-24">
+              {/* Text Context */}
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-4 bg-white/70 backdrop-blur-md inline-block px-4 py-1.5 rounded-full border border-white/40 shadow-sm">Organisation Visuelle</h2>
+                <div className="bg-white/70 backdrop-blur-md inline-block p-6 md:p-8 rounded-[2rem] border border-white/40 shadow-float">
+                  <p className="text-4xl lg:text-5xl font-serif font-medium tracking-tight text-ink">Une infinité<br />de classeurs <br /><span className="text-sage italic">sur-mesure</span>.</p>
+                  <p className="mt-6 text-lg leading-8 text-ink-light font-medium">
+                    {"Imaginez une bibliothèque sans fin. Organisez vos projets dans des carnets virtuels magnifiquement texturés. Personnalisez le vôtre !"}
+                  </p>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-                <div className="group relative aspect-[3/4] bg-[#e8e4dc] rounded-r-2xl rounded-l-sm shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-l-8 border-l-[#8B4513] overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent z-10"></div>
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-30"></div>
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-white px-6 py-4 shadow-sm border border-gray-200 rotate-1 min-w-[140px] text-center">
-                    <h3 className="font-serif text-lg text-ink font-semibold">Voyages 2023</h3>
-                    <p className="text-xs text-ink-light mt-1 font-mono">12 pages</p>
-                  </div>
-                  <div className="absolute bottom-0 w-full h-1/2 flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <button className="bg-sage text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">Ouvrir</button>
+
+              {/* Interactive Binder */}
+              <div className="flex-1 w-full flex flex-col items-center">
+                <div className="w-[200px] md:w-[260px] lg:w-[320px] aspect-[3/4] perspective-[2000px] transition-transform duration-500 hover:scale-[1.02] relative z-20">
+                  <BookBinder
+                    scrapbook={{
+                      id: "binder-test",
+                      title: galleryBinderTitle,
+                      binderColor: galleryBinderColor,
+                      binderGrain: galleryBinderGrain,
+                      coverImage: galleryBinderImage,
+                      coverZoom: 0.6,
+                      coverX: 50,
+                      coverY: 50,
+                      showPreview: false,
+                    }}
+                    onClick={() => {
+                      setGalleryBinderOpen(!galleryBinderOpen);
+                    }}
+                  />
+                  {/* Click indicator */}
+                  <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap flex items-center gap-1.5 font-serif text-sm bg-sage text-white px-5 py-2 rounded-full shadow-lg pointer-events-none transition-all duration-300 ${galleryBinderOpen ? 'translate-y-4 opacity-0 scale-90' : 'animate-bounce opacity-100 scale-100'}`}>
+                    <span className="material-symbols-outlined text-[18px]">touch_app</span>
+                    Cliquez pour ouvrir !
                   </div>
                 </div>
-                <div className="group relative aspect-[3/4] bg-[#3a4a3a] rounded-r-2xl rounded-l-sm shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-l-8 border-l-[#1a2a1a] overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/30 to-transparent z-10"></div>
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/canvas-orange.png')] opacity-20"></div>
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-[#f0f0f0] px-6 py-4 shadow-sm border border-gray-300 -rotate-1 min-w-[140px] text-center">
-                    <h3 className="font-serif text-lg text-ink font-semibold">Architecture</h3>
-                    <p className="text-xs text-ink-light mt-1 font-mono">45 pages</p>
+
+                {/* Local Controls for Binder */}
+                <div className="mt-20 w-full max-w-[340px] bg-white/95 backdrop-blur-xl rounded-[2rem] p-5 lg:p-6 border border-white shadow-float flex flex-col gap-5 z-20 relative">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] uppercase font-bold tracking-widest px-4 py-1 rounded-full shadow-md whitespace-nowrap">Personnalisation (Démo)</span>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Titre du carnet</label>
+                    <input
+                      type="text"
+                      value={galleryBinderTitle}
+                      onChange={(e) => setGalleryBinderTitle(e.target.value)}
+                      className="w-full bg-paper/50 rounded-xl px-4 py-2.5 text-sm border border-paper-dark focus:border-sage focus:ring-1 focus:ring-sage text-ink font-serif transition-colors outline-none"
+                      maxLength={24}
+                    />
                   </div>
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <div className="flex gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-300"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-200"></div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Couleur</label>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["#c7bca5", "#8c443e", "#2a3b4c", "#e8e4dc", "#6B8E6B", "#f4a261", "#264653"].map(color => (
+                        <button
+                          key={color}
+                          onClick={() => setGalleryBinderColor(color)}
+                          className={`w-7 h-7 rounded-full transition-all ${galleryBinderColor === color ? 'ring-2 ring-offset-2 ring-ink scale-110 shadow-sm' : 'hover:scale-110 shadow-sm hover:ring-2 hover:ring-offset-1 hover:ring-ink/20'}`}
+                          style={{ backgroundColor: color }}
+                          aria-label={`Couleur ${color}`}
+                        />
+                      ))}
                     </div>
                   </div>
-                  <div className="absolute bottom-0 w-full h-1/2 flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <button className="bg-white text-ink px-4 py-2 rounded-full text-sm font-medium shadow-md">Ouvrir</button>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Texture du papier</label>
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-[16px] text-ink-light opacity-40">texture</span>
+                      <input
+                        type="range"
+                        min="0" max="0.5" step="0.05"
+                        value={galleryBinderGrain}
+                        onChange={(e) => setGalleryBinderGrain(parseFloat(e.target.value))}
+                        className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sage"
+                      />
+                      <span className="material-symbols-outlined text-[16px] text-ink-light">texture</span>
+                    </div>
                   </div>
-                </div>
-                <div className="group relative aspect-[3/4] bg-[#c7bca5] rounded-r-2xl rounded-l-sm shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-l-8 border-l-[#8c7b5d] overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/10 to-transparent z-10"></div>
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-white px-6 py-4 shadow-sm border border-gray-200 rotate-0 min-w-[140px] text-center">
-                    <h3 className="font-serif text-lg text-ink font-semibold">Recettes</h3>
-                    <p className="text-xs text-ink-light mt-1 font-mono">8 pages</p>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-ink-light font-semibold uppercase tracking-wide">Image de couverture</label>
+                    <div className="flex gap-3">
+                      {[
+                        "", // none
+                        "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&fit=crop",
+                        "https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=400&fit=crop",
+                        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=400&fit=crop"
+                      ].map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setGalleryBinderImage(img)}
+                          className={`w-12 h-12 rounded-xl overflow-hidden transition-all bg-paper-dark flex items-center justify-center ${galleryBinderImage === img ? 'ring-2 ring-sage scale-105 shadow-md' : 'hover:opacity-100 hover:scale-105 opacity-80 shadow-sm'}`}
+                        >
+                          {img ? <img src={img} alt="texture" className="w-full h-full object-cover" /> : <span className="material-symbols-outlined text-ink/30">block</span>}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="absolute bottom-12 right-8 w-16 h-16 opacity-80 rotate-12">
-                    <img alt="sticker" className="w-full h-full drop-shadow-md grayscale-[0.2]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8Y62fXPRBtycv8JUpjQAYzwN0KvhWHTYyoUKhAdnuCKlnv20vCxEEj-d2k0sTOZC5RKn-FOPavQkqTFxN0fEHSZc2lDHXDPx8SgJufdYEEd56dZHqI_c6Xwaw9c3eF-7QlEnF91sc-igvX7yzVkciARQrvfdVA8T0SBmBZFJIGzz2BLHV8SBIW8F-CEGr2USAAjGXzReNXQiepM6_JRDb9i8Uy-N4HbC0FopiGRJilpR_dJJ2URFk09WZCwJBpt6tVZ3c6CY5x2Wp" />
-                  </div>
-                  <div className="absolute bottom-0 w-full h-1/2 flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <button className="bg-sage text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">Ouvrir</button>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -158,37 +260,37 @@ export default function LandingPage() {
                   <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Expérience</h2>
                   <h3 className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl mb-6">Donnez vie à vos idées</h3>
                   <p className="text-lg leading-8 text-ink-light font-light mb-8">
-                    Un espace de travail qui respire. Glissez, déposez, superposez. Notre moteur de rendu simule la texture des matériaux et abolit les limites fixes.
+                    Un espace de travail qui simule la vraie matière. Outils de dessin avancés, post-its dynamiques, images haute résolution et classeurs ultra-personnalisables.
                   </p>
 
                   <div className="space-y-8">
                     <div className="flex gap-4 items-start">
                       <div className="flex-none w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center text-sage">
-                        <span className="material-symbols-outlined">all_inclusive</span>
+                        <span className="material-symbols-outlined">brush</span>
                       </div>
                       <div>
-                        <h4 className="font-bold text-ink text-lg font-serif">Canvas Infini</h4>
-                        <p className="text-ink-light text-sm font-light mt-1">{"Ne soyez jamais à court de place. Le canvas s'étend au fur et à mesure que votre imagination grandit."}</p>
+                        <h4 className="font-bold text-ink text-lg font-serif">Outils de Dessin Pro</h4>
+                        <p className="text-ink-light text-sm font-light mt-1">Palette de couleurs sur-mesure, épaisseur de trait dynamique et gomme de précision tactile.</p>
                       </div>
                     </div>
 
                     <div className="flex gap-4 items-start">
                       <div className="flex-none w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center text-sage">
-                        <span className="material-symbols-outlined">auto_fix</span>
+                        <span className="material-symbols-outlined">sticky_note_2</span>
                       </div>
                       <div>
-                        <h4 className="font-bold text-ink text-lg font-serif">Stickers & Washi Tape</h4>
-                        <p className="text-ink-light text-sm font-light mt-1">{"Une collection d'éléments interactifs et texturés pour enrichir la mise en page de vos boards."}</p>
+                        <h4 className="font-bold text-ink text-lg font-serif">Post-its Dynamiques</h4>
+                        <p className="text-ink-light text-sm font-light mt-1">Écrivez, ajustez la taille et la couleur de vos notes. Le texte s&apos;adapte parfaitement, enrichi d&apos;un grain réaliste.</p>
                       </div>
                     </div>
 
                     <div className="flex gap-4 items-start">
                       <div className="flex-none w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center text-sage">
-                        <span className="material-symbols-outlined">gesture</span>
+                        <span className="material-symbols-outlined">collections_bookmark</span>
                       </div>
                       <div>
-                        <h4 className="font-bold text-ink text-lg font-serif">Liberté Totale</h4>
-                        <p className="text-ink-light text-sm font-light mt-1">Pas de grilles rigides. Placez, rotationnez et superposez vos éléments où vous le souhaitez.</p>
+                        <h4 className="font-bold text-ink text-lg font-serif">Classeurs Customisables</h4>
+                        <p className="text-ink-light text-sm font-light mt-1">Couverture photo sticker, grain ajustable, couleurs variées. Vos carnets sont uniques depuis la bibliothèque.</p>
                       </div>
                     </div>
                   </div>
@@ -197,14 +299,31 @@ export default function LandingPage() {
                 <div className="order-1 lg:order-2 relative h-[600px] w-full bg-paper rounded-2xl overflow-hidden border border-paper-dark shadow-inner group">
                   <div className="absolute inset-0 sketchbook-grid opacity-50"></div>
 
-                  <div className="absolute top-1/4 left-1/4 w-64 h-80 bg-white p-3 pb-12 shadow-2xl rotate-[-6deg] transition-all duration-700 hover:rotate-[-8deg] hover:scale-105 hover:shadow-float z-10 cursor-move">
-                    <img alt="Fleurs séchées" className="w-full h-full object-cover filter contrast-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXKcfyU9fLGCdUkGvUF-et91p1N9b2bjuEcnAn46efxmhWAFNq_x1osOjQatdFLNVoKQtxvYW83D3czG3TS2-w6aNuLM-ofhlghZELGftBlVBntgW_TWEo7AnB-BEHN79f_ejJjBNTnckIH-qzcuRMFkSJPDLWXJKSFMfAp5K2xp9J0iSmTPfrmQ6qLv01pzIVeI8PhJaftcGyB-e0SyTvGPU4TOt97GiPM7ymK2_-gskGW9eh9JoZWRXWSGPPbfPWNg4XZ9PFA1WV" />
+                  <div className="absolute top-[10%] left-[15%] w-72 h-44 bg-white p-3 shadow-2xl rotate-[-3deg] transition-all duration-700 hover:rotate-0 hover:scale-105 hover:shadow-float z-10 cursor-move border border-black/5">
+                    <img alt="Moodboard texture" className="w-full h-full object-cover filter sepia-[.1]" src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=600&fit=crop" />
+                    <div className="absolute -top-3 left-6 w-16 h-8 bg-white/70 backdrop-blur-sm rotate-[-8deg] shadow-sm flex items-center justify-center"><div className="w-12 h-4 bg-gray-200/50"></div></div>
                   </div>
 
-                  <div className="absolute bottom-1/4 right-1/4 w-56 h-auto bg-[#fffde7] p-4 shadow-xl rotate-[3deg] transition-all duration-500 hover:rotate-[0deg] z-20 cursor-move">
+                  <div className="absolute top-[40%] right-[10%] w-60 h-auto bg-[#e8f5e9] p-5 shadow-xl rotate-[6deg] transition-all duration-500 hover:rotate-[3deg] hover:scale-105 z-20 cursor-move border border-[#c8e6c9]">
+                    <div className="w-16 h-8 bg-[#81c784]/20 absolute -top-4 right-8 rotate-[-5deg] backdrop-blur-md mix-blend-multiply"></div>
+                    <h5 className="font-handwriting text-3xl text-ink leading-tight mb-2">Palette Sage</h5>
+                    <div className="flex gap-2">
+                      <div className="w-8 h-8 rounded-full bg-sage shadow-inner border border-black/5"></div>
+                      <div className="w-8 h-8 rounded-full bg-[#3a4a3a] shadow-inner border border-black/5"></div>
+                      <div className="w-8 h-8 rounded-full bg-[#fdfaf1] shadow-inner border border-black/5"></div>
+                    </div>
+                  </div>
+
+                  <div className="absolute bottom-[20%] left-[20%] w-56 h-auto bg-[#fffde7] p-4 shadow-xl rotate-[-4deg] transition-all duration-500 hover:rotate-[0deg] z-20 cursor-move">
                     <div className="w-32 h-8 bg-pink-200/50 absolute -top-4 left-1/2 -translate-x-1/2 rotate-1 backdrop-blur-sm"></div>
                     <p className="font-handwriting text-2xl text-ink leading-snug">Ranger et trier les assets pour la presentation de demain !</p>
                   </div>
+
+                  {/* Drawn path */}
+                  <svg className="absolute top-[25%] left-[45%] w-48 h-48 opacity-60 z-15 pointer-events-none" viewBox="0 0 100 100" fill="none" stroke="#6B8E6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10,10 Q50,90 90,50" />
+                    <path d="M80,45 L90,50 L85,60" />
+                  </svg>
 
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur shadow-lg rounded-full px-6 py-3 flex gap-6 border border-gray-100">
                     <button className="hover:text-sage transition-colors"><span className="material-symbols-outlined">undo</span></button>
@@ -323,52 +442,71 @@ export default function LandingPage() {
           </section>
 
           {/* Call to Action */}
-          <section className="relative isolate overflow-hidden py-24 sm:py-32 bg-sage/5 border-t border-paper-dark">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <section className="relative isolate overflow-hidden py-24 sm:py-32 m-4 lg:m-8 rounded-[3rem] bg-[#1a2a1a] border border-[#2a3a2a] shadow-2xl">
+            {/* Dynamic Background Elements */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stucco.png')] opacity-20 mix-blend-overlay"></div>
+            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-sage/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-orange-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
               <div className="mx-auto max-w-2xl text-center">
-                <h2 className="text-3xl font-serif font-medium tracking-tight text-ink sm:text-4xl">Prêt à commencer votre carnet ?</h2>
-                <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-ink-light font-light">
-                  Rejoignez des créatifs qui trouvent leur flow dans Scrappi. Démarrez dès maintenant avec un projet gratuit.
+                <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white/80 text-xs font-mono mb-6 border border-white/5 backdrop-blur-md">/ L&apos;ATELIER VOUS ATTEND /</span>
+                <h2 className="text-4xl font-serif font-medium tracking-tight text-white sm:text-6xl mb-6 drop-shadow-md">
+                  Prêt à commencer votre carnet ?
+                </h2>
+                <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300 font-light mb-10">
+                  Rejoignez des créatifs qui trouvent leur flow dans Scrappi. Démarrez dès maintenant avec un projet gratuit et laissez parler votre imagination.
                 </p>
                 <Link
                   href={user ? "/library" : "/login"}
-                  className="rounded-full bg-sage px-8 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage transition-all hover:-translate-y-1"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-lg font-semibold text-[#1a2a1a] shadow-xl hover:bg-gray-100 hover:scale-105 transition-all duration-300 group"
                 >
                   {user ? "Accéder à mon atelier" : "Créer gratuitement"}
+                  <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </Link>
+                <p className="mt-8 text-sm text-gray-400 font-handwriting opacity-80 rotate-[-1deg]">Aucune carte de crédit requise.</p>
               </div>
             </div>
           </section>
         </main>
 
-        <footer className="bg-paper border-t border-paper-dark pt-16 pb-8">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pb-12">
-              <div className="flex flex-col gap-4">
+        <footer className="bg-white/80 backdrop-blur-md border border-paper-dark rounded-[2rem] mx-4 lg:mx-8 mb-4 pt-12 pb-8 shadow-sm">
+          <div className="mx-auto max-w-7xl px-8 lg:px-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12">
+              <div className="flex flex-col gap-4 md:col-span-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded bg-sage text-white shadow-sm">
-                    <span className="material-symbols-outlined text-[14px]">brush</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
+                    <span className="material-symbols-outlined text-[18px]">brush</span>
                   </div>
-                  <span className="font-serif text-lg font-semibold text-ink">Scrappi</span>
+                  <span className="font-serif text-2xl font-semibold text-ink">Scrappi</span>
                 </div>
-                <p className="text-sm text-ink-light font-light leading-relaxed">
+                <p className="text-sm text-ink-light font-light leading-relaxed max-w-sm">
                   Le sanctuaire numérique pour votre processus créatif. Capturez l&apos;imprévu, cultivez l&apos;inspiration.
                 </p>
               </div>
 
               <div className="flex flex-col gap-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Réseaux</h3>
-                <div className="flex flex-col gap-2">
-                  <a href="https://github.com/Moussandou" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">GitHub</a>
-                  <a href="https://www.instagram.com/takaxdev/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">Instagram</a>
-                  <a href="https://www.linkedin.com/in/moussandou/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">LinkedIn</a>
+                <div className="flex flex-col gap-3">
+                  <a href="https://github.com/Moussandou" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-sage transition-colors group">
+                    <svg className="w-4 h-4 fill-current group-hover:-translate-y-0.5 transition-transform" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+                    GitHub
+                  </a>
+                  <a href="https://www.linkedin.com/in/moussandou/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-sage transition-colors group">
+                    <svg className="w-4 h-4 fill-current group-hover:-translate-y-0.5 transition-transform" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+                    LinkedIn
+                  </a>
+                  <a href="https://moussandou.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-sage transition-colors group">
+                    <span className="material-symbols-outlined text-[16px] group-hover:-translate-y-0.5 transition-transform">language</span>
+                    Portfolio
+                  </a>
                 </div>
               </div>
 
               <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Ressources</h3>
-                <div className="flex flex-col gap-2">
-                  <a href="https://moussandou.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-light hover:text-sage transition-colors">Portfolio</a>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Informations</h3>
+                <div className="flex flex-col gap-3">
+                  <Link href="/credits" className="text-sm text-ink-light hover:text-sage transition-colors">Crédits</Link>
                   <Link href="/legal#mentions" className="text-sm text-ink-light hover:text-sage transition-colors">Mentions Légales</Link>
                   <Link href="/legal#privacy" className="text-sm text-ink-light hover:text-sage transition-colors">Confidentialité</Link>
                 </div>
@@ -384,6 +522,6 @@ export default function LandingPage() {
           </div>
         </footer>
       </div>
-    </div>
+    </div >
   );
 }
