@@ -11,12 +11,13 @@ export interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (data: ScrapbookConfig) => void;
+    onDelete?: (id: string) => Promise<void>;
     initialData?: Scrapbook;
     title: string;
     error?: string | null;
 }
 
-export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, title, error: externalError }: ProjectModalProps) {
+export default function ProjectModal({ isOpen, onClose, onConfirm, onDelete, initialData, title, error: externalError }: ProjectModalProps) {
     const [projectTitle, setProjectTitle] = useState(initialData?.title || "");
     const [selectedColor, setSelectedColor] = useState(initialData?.binderColor || BINDER_COLORS[0].value);
     const [binderGrain, setBinderGrain] = useState(initialData?.binderGrain ?? 0.1);
@@ -28,6 +29,8 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
     const [storageMode, setStorageMode] = useState<'cloud' | 'local'>(initialData?.storageMode || 'local');
     const { user } = useAuth();
     const [uploading, setUploading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const actualError = externalError || errorMessage;
@@ -47,6 +50,8 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             setCoverY(initialData?.coverY ?? 50);
             setShowPreview(initialData?.showPreview ?? true);
             setStorageMode(initialData?.storageMode || 'local');
+            setShowDeleteConfirm(false);
+            setDeleting(false);
             setErrorMessage(null);
         }
     }, [isOpen, initialData]);
@@ -122,6 +127,22 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
             showPreview: showPreview,
             storageMode: storageMode
         });
+    };
+
+    const handleDelete = async () => {
+        if (!initialData?.id || !onDelete) return;
+
+        setDeleting(true);
+        setErrorMessage(null);
+        try {
+            await onDelete(initialData.id);
+            onClose();
+        } catch (error) {
+            console.error("Delete failed", error);
+            setErrorMessage("Impossible de supprimer le classeur.");
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
     };
 
     return (
@@ -351,7 +372,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                                                         className="px-4 py-2.5 rounded-xl bg-white border border-black/5 text-xs font-bold text-ink hover:bg-sage hover:text-white hover:border-sage transition-all flex items-center gap-2 shadow-sm"
                                                     >
                                                         <span className="material-symbols-outlined text-[18px]">upload</span>
-                                                        Changer l'image
+                                                        Changer l&apos;image
                                                     </button>
                                                     <button
                                                         onClick={() => setCoverUrl("")}
@@ -391,21 +412,54 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             </div>
                         </div>
 
-                        <div className="mt-auto pt-10 flex gap-4 shrink-0">
-                            <button
-                                onClick={onClose}
-                                className="flex-1 py-5 rounded-[20px] font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-[0.2em] text-[10px]"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={handleConfirm}
-                                disabled={uploading}
-                                className="flex-[2] py-5 rounded-[20px] bg-ink text-white font-bold shadow-xl hover:bg-sage hover:shadow-sage/20 transition-all uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 group flex items-center justify-center gap-2"
-                            >
-                                Lancer la Création
-                                <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                            </button>
+                        <div className="mt-auto pt-10 flex flex-col sm:flex-row gap-4 shrink-0">
+                            {initialData && !showDeleteConfirm && (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="px-6 py-5 rounded-[20px] font-bold text-red-600 hover:bg-red-50 transition-all uppercase tracking-[0.2em] text-[10px] border border-red-100"
+                                >
+                                    Supprimer
+                                </button>
+                            )}
+
+                            {showDeleteConfirm && (
+                                <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-4 duration-300">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="px-4 py-5 rounded-[20px] font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-[0.2em] text-[10px]"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                        className="flex-1 py-5 rounded-[20px] bg-red-600 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2"
+                                    >
+                                        {deleting ? "Suppression..." : "Confirmer la suppression"}
+                                    </button>
+                                </div>
+                            )}
+
+                            {!showDeleteConfirm && (
+                                <>
+                                    <button
+                                        onClick={onClose}
+                                        className="flex-1 py-5 rounded-[20px] font-bold text-ink-light hover:bg-black/5 transition-all uppercase tracking-[0.2em] text-[10px]"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={handleConfirm}
+                                        disabled={uploading}
+                                        className="flex-[2] py-5 rounded-[20px] bg-ink text-white font-bold shadow-xl hover:bg-sage hover:shadow-sage/20 transition-all uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 group flex items-center justify-center gap-2"
+                                    >
+                                        {initialData ? "Enregistrer" : "Lancer la Création"}
+                                        <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                                            {initialData ? 'save' : 'arrow_forward'}
+                                        </span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

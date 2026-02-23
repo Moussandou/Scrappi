@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createScrapbook, getScrapbooks, updateScrapbook } from "@/infra/db/firestoreService";
+import { createScrapbook, getScrapbooks, updateScrapbook, deleteScrapbook } from "@/infra/db/firestoreService";
 import { Scrapbook, ScrapbookConfig } from "@/domain/entities";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
@@ -20,7 +19,6 @@ export default function LibraryOverview() {
         mode: "create" | "edit";
         initialData?: Scrapbook;
     }>({ isOpen: false, mode: "create" });
-    const [creating, setCreating] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<"recent" | "oldest" | "alphabetical">("recent");
     const [error, setError] = useState<string | null>(null);
@@ -35,7 +33,7 @@ export default function LibraryOverview() {
     const currentSortLabel = sortOptions.find(o => o.value === sortBy)?.label || "Trier";
 
     useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
+        const handleClickOutside = () => {
             if (isSortOpen) setIsSortOpen(false);
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -92,7 +90,6 @@ export default function LibraryOverview() {
 
     const handleConfirmModal = async (data: ScrapbookConfig) => {
         if (!user) return;
-        setCreating(true);
         setError(null);
         try {
             if (modalConfig.mode === "create") {
@@ -111,7 +108,7 @@ export default function LibraryOverview() {
             } else if (modalConfig.mode === "edit" && modalConfig.initialData) {
                 // Ensure null coverImage is handled for deletion
                 const updateData = { ...data, coverImage: data.coverImage === "" ? null : data.coverImage };
-                await updateScrapbook(modalConfig.initialData.id ?? "", updateData as any);
+                await updateScrapbook(modalConfig.initialData.id ?? "", updateData as Partial<Scrapbook>);
                 setScrapbooks(prev => prev.map(s => s.id === modalConfig.initialData?.id ? { ...s, ...updateData } as Scrapbook : s));
             }
             setModalConfig({ ...modalConfig, isOpen: false });
@@ -119,15 +116,21 @@ export default function LibraryOverview() {
             console.error("Erreur", error);
             setError("Une erreur est survenue lors de l'enregistrement.");
         } finally {
-            setCreating(false);
+            // Nothing to reset for creating since it's removed
+        }
+    };
+
+    const handleDeleteScrapbook = async (id: string) => {
+        try {
+            await deleteScrapbook(id);
+            setScrapbooks(prev => prev.filter(s => s.id !== id));
+        } catch (error) {
+            console.error("Erreur lors de la suppression", error);
+            throw error; // Re-throw to be handled by modal
         }
     };
 
 
-    const getBinderStyle = (scrapbook: Scrapbook) => {
-        const color = scrapbook.binderColor || "#e8e4dc";
-        return { backgroundColor: color };
-    };
 
 
     return (
@@ -240,6 +243,7 @@ export default function LibraryOverview() {
                 isOpen={modalConfig.isOpen}
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 onConfirm={handleConfirmModal}
+                onDelete={handleDeleteScrapbook}
                 initialData={modalConfig.mode === "edit" ? modalConfig.initialData : undefined}
                 error={error}
             />
