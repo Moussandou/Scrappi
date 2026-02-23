@@ -344,7 +344,6 @@ export default function InfiniteCanvas({
                         borderDash={[4, 4]}
                         padding={10}
                         rotateAnchorOffset={30}
-                        shouldOverdrawWholeArea
                         onTransformEnd={() => {
                             if (!transformerRef.current) return;
                             const nodes = transformerRef.current.nodes();

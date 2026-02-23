@@ -81,11 +81,11 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
         });
     };
 
-    const handleDoubleClick = () => {
+    const handleDoubleClick = useCallback(() => {
         if (element.type === 'text') {
             setIsEditing(true);
         }
-    };
+    }, [element.type]);
 
     const fontFamily = element.fontFamily || DEFAULT_FONT;
 
@@ -119,7 +119,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     <Rect
                         width={element.width}
                         height={element.height || 50}
-                        fill={element.backgroundColor || "transparent"}
+                        fill={element.backgroundColor || "rgba(0,0,0,0.01)"}
                         cornerRadius={element.backgroundColor ? 8 : 0}
                         shadowColor={element.backgroundColor ? "rgba(0,0,0,0.1)" : undefined}
                         shadowBlur={element.backgroundColor ? 10 : 0}
@@ -342,7 +342,9 @@ function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEn
     // React to property changes without recreating the video
     useEffect(() => {
         if (!videoElement) return;
+        // eslint-disable-next-line react-hooks/immutability
         videoElement.loop = element.loop !== false;
+        // eslint-disable-next-line react-hooks/immutability
         videoElement.muted = element.muted !== false;
         if (element.autoPlay === false) {
             videoElement.pause();
