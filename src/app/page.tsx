@@ -108,9 +108,9 @@ export default function LandingPage() {
                 <div className="flex-1 w-full relative min-h-[500px] flex items-center justify-center lg:justify-end">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-sage/10 to-transparent rounded-full blur-3xl -z-10"></div>
 
-                  <div className="relative w-full max-w-[800px] lg:max-w-[1000px] aspect-[1/1.2] md:aspect-[16/9] flex items-center justify-center mt-[-20px] md:mt-0">
+                  <div className="relative w-full max-w-[800px] lg:max-w-[1000px] aspect-[1/1.2] sm:aspect-[4/3] md:aspect-[16/9] flex items-center justify-center mt-[-20px] sm:mt-0">
                     {/* CSS Canvas Mockup */}
-                    <div className="absolute lg:relative top-0 md:top-1/2 lg:top-auto md:-translate-y-1/2 lg:-translate-y-0 right-[-5%] md:right-0 lg:right-auto w-[95%] sm:w-[85%] md:w-[80%] lg:w-[90%] max-w-[700px] aspect-[4/3] bg-white rounded-2xl shadow-float border border-paper-dark overflow-hidden flex flex-col transform rotate-[2deg] transition-transform duration-700 hover:rotate-[0deg] z-0 mx-auto">
+                    <div className="absolute lg:relative top-0 sm:top-auto sm:relative w-[100%] sm:w-[85%] md:w-[80%] lg:w-[90%] max-w-[700px] aspect-[4/3] bg-white rounded-2xl shadow-float border border-paper-dark overflow-hidden flex flex-col transform rotate-[2deg] sm:rotate-[2deg] transition-transform duration-700 hover:rotate-[0deg] z-0 mx-auto">
                       {/* Header */}
                       <div className="h-10 md:h-12 border-b border-paper-dark bg-paper/50 backdrop-blur-sm flex items-center justify-between px-3 md:px-4 shrink-0">
                         <div className="flex gap-2 md:gap-3 items-center">
@@ -178,9 +178,9 @@ export default function LandingPage() {
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 flex flex-col items-start gap-10">
               <h2 className="text-sage font-medium tracking-wide text-sm uppercase bg-white/70 backdrop-blur-md inline-block px-4 py-1.5 rounded-full border border-white/40 shadow-sm">Organisation Visuelle</h2>
 
-              <div className="w-full flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12 lg:gap-16 relative">
+              <div className="w-full flex flex-col lg:flex-row items-center lg:items-start gap-10 md:gap-12 lg:gap-16 relative">
                 {/* Left Column: Text + Controls */}
-                <div className="flex-1 flex flex-col gap-8 text-center md:text-left">
+                <div className="flex-1 flex flex-col gap-8 text-center lg:text-left w-full max-w-2xl">
                   <div>
                     <div className="bg-white/70 backdrop-blur-md inline-block px-6 py-5 md:px-8 md:py-6 rounded-2xl border border-white/40 shadow-float max-w-md">
                       <p className="text-3xl lg:text-4xl font-serif font-medium tracking-tight text-ink leading-snug">Une infinité de classeurs <span className="text-sage italic">sur-mesure</span>.</p>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Controls Panel */}
-                  <div className="w-full max-w-[380px] bg-white/95 backdrop-blur-xl rounded-[2rem] p-5 lg:p-6 border border-white shadow-float flex flex-col gap-4 z-20 relative mx-auto md:mx-0">
+                  <div className="w-full max-w-[380px] bg-white/95 backdrop-blur-xl rounded-[2rem] p-5 lg:p-6 border border-white shadow-float flex flex-col gap-4 z-20 relative mx-auto lg:mx-0">
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] uppercase font-bold tracking-widest px-4 py-1 rounded-full shadow-md whitespace-nowrap">Personnalisation (Démo)</span>
 
                     <div className="flex flex-col gap-1.5">
@@ -258,7 +258,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Hand-drawn dashed line linking controls to binder */}
-                <div className="hidden md:block absolute left-[45%] lg:left-[42%] top-[55%] w-[12%] lg:w-[18%] z-20 opacity-60 pointer-events-none">
+                <div className="hidden lg:block absolute left-[45%] lg:left-[42%] top-[55%] w-[12%] lg:w-[18%] z-20 opacity-60 pointer-events-none">
                   <svg viewBox="0 0 120 60" fill="none" className="w-full" stroke="#6B8E6B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M0,35 C40,35 70,15 110,30" strokeDasharray="6 4" />
                     <path d="M100,23 L112,30 L102,38" />
@@ -341,7 +341,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="order-1 lg:order-2 relative h-[600px] w-full bg-paper rounded-2xl overflow-hidden border border-paper-dark shadow-inner group">
+                <div className="order-1 lg:order-2 relative h-[400px] md:h-[600px] w-full bg-paper rounded-2xl overflow-hidden border border-paper-dark shadow-inner group">
                   <div className="absolute inset-0 sketchbook-grid opacity-50"></div>
 
                   <div className="absolute top-[10%] left-[15%] w-72 h-44 bg-white p-3 shadow-2xl rotate-[-3deg] transition-all duration-700 hover:rotate-0 hover:scale-105 hover:shadow-float z-10 cursor-move border border-black/5">
@@ -389,7 +389,7 @@ export default function LandingPage() {
                 <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3">Esthétique</h2>
                 <h3 className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl">Une âme analogique</h3>
               </div>
-              <div className="grid lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="col-span-1 lg:col-span-2 bg-white rounded-3xl p-8 border border-paper-dark shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-12 bg-sage/5 rounded-bl-full -mr-16 -mt-16 z-0"></div>
                   <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
@@ -442,7 +442,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid lg:grid-cols-3 gap-8 mt-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                 <div className="bg-white rounded-3xl p-8 border border-paper-dark shadow-sm flex flex-col justify-between relative overflow-hidden">
                   <div className="relative z-10">
                     <div className="w-12 h-12 bg-sage/10 rounded-full flex items-center justify-center shadow-sm mb-6 text-sage">
@@ -546,8 +546,8 @@ export default function LandingPage() {
 
         <footer className="bg-white/80 backdrop-blur-md border border-paper-dark rounded-[2rem] mx-4 lg:mx-8 mb-4 pt-12 pb-8 shadow-sm">
           <div className="mx-auto max-w-7xl px-8 lg:px-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12">
-              <div className="flex flex-col gap-4 md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pb-12 text-center sm:text-left">
+              <div className="flex flex-col gap-4 sm:col-span-2 items-center sm:items-start">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage text-white shadow-sm">
                     <span className="material-symbols-outlined text-[18px]">brush</span>
@@ -561,7 +561,7 @@ export default function LandingPage() {
 
               <div className="flex flex-col gap-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Réseaux</h3>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-center sm:items-start gap-3">
                   <a href="https://github.com/Moussandou" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-ink-light hover:text-sage transition-colors group">
                     <svg className="w-4 h-4 fill-current group-hover:-translate-y-0.5 transition-transform" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
                     GitHub
@@ -583,7 +583,7 @@ export default function LandingPage() {
 
               <div className="flex flex-col gap-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-ink">Informations</h3>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-center sm:items-start gap-3">
                   <Link href="/credits" className="text-sm text-ink-light hover:text-sage transition-colors">Crédits</Link>
                   <Link href="/legal#mentions" className="text-sm text-ink-light hover:text-sage transition-colors">Mentions Légales</Link>
                   <Link href="/legal#privacy" className="text-sm text-ink-light hover:text-sage transition-colors">Confidentialité</Link>
@@ -591,7 +591,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="border-t border-paper-dark pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="border-t border-paper-dark pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center">
               <p className="text-[10px] uppercase tracking-widest text-ink-light">© 2026 Scrappi Inc. par Moussandou. Tous droits réservés.</p>
               <div className="flex gap-6">
                 <span className="text-[10px] text-ink-light/50 italic">Fait avec amour et papier numérique.</span>
