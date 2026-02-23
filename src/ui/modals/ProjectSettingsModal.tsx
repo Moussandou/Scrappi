@@ -408,41 +408,41 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, initialData, 
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Right Side: Immersive Preview */}
-                    <div className="relative z-10 hidden md:flex w-[400px] bg-paper-dark/40 border-l border-paper-dark/30 flex-col items-center justify-center p-12 overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white opacity-20 blur-[120px] rounded-full" />
+                {/* Right Side: Immersive Preview */}
+                <div className="relative z-10 hidden md:flex w-[400px] bg-paper-dark/40 border-l border-paper-dark/30 flex-col items-center justify-center p-12 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white opacity-20 blur-[120px] rounded-full" />
+                    </div>
+
+                    <div className="relative w-full max-w-[280px] z-10">
+                        <div className="text-center mb-12">
+                            <p className="text-[11px] font-bold text-ink-light/40 uppercase tracking-[0.3em]">Signature Digitale</p>
+                            <div className="h-px w-12 bg-sage/20 mx-auto mt-2" />
                         </div>
 
-                        <div className="relative w-full max-w-[280px] z-10">
-                            <div className="text-center mb-12">
-                                <p className="text-[11px] font-bold text-ink-light/40 uppercase tracking-[0.3em]">Signature Digitale</p>
-                                <div className="h-px w-12 bg-sage/20 mx-auto mt-2" />
-                            </div>
+                        <div className="relative w-full aspect-[3/4] mx-auto perspective-[2500px] rotate-[-2deg] hover:rotate-0 transition-transform duration-700 ease-out">
+                            <div className="absolute inset-0 bg-black/5 blur-2xl translate-y-8 translate-x-4 rounded-[1px] opacity-40 shadow-2xl" />
+                            <BookBinder
+                                scrapbook={{
+                                    title: projectTitle || "Mon Projet",
+                                    binderColor: selectedColor,
+                                    binderGrain: binderGrain,
+                                    coverImage: coverUrl || undefined,
+                                    coverZoom: coverZoom,
+                                    coverX: coverX,
+                                    coverY: coverY,
+                                    showPreview: showPreview
+                                }}
+                                showDetails={true}
+                                interactive={false}
+                                className="pointer-events-none drop-shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
+                            />
+                        </div>
 
-                            <div className="relative w-full aspect-[3/4] mx-auto perspective-[2500px] rotate-[-2deg] hover:rotate-0 transition-transform duration-700 ease-out">
-                                <div className="absolute inset-0 bg-black/5 blur-2xl translate-y-8 translate-x-4 rounded-[1px] opacity-40 shadow-2xl" />
-                                <BookBinder
-                                    scrapbook={{
-                                        title: projectTitle || "Mon Projet",
-                                        binderColor: selectedColor,
-                                        binderGrain: binderGrain,
-                                        coverImage: coverUrl || undefined,
-                                        coverZoom: coverZoom,
-                                        coverX: coverX,
-                                        coverY: coverY,
-                                        showPreview: showPreview
-                                    }}
-                                    showDetails={true}
-                                    interactive={false}
-                                    className="pointer-events-none drop-shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
-                                />
-                            </div>
-
-                            <div className="mt-16 text-center space-y-2">
-                                <p className="font-handwriting text-2xl text-sage/60 rotate-[-4deg]">Prêt pour l&apos;aventure ?</p>
-                            </div>
+                        <div className="mt-16 text-center space-y-2">
+                            <p className="font-handwriting text-2xl text-sage/60 rotate-[-4deg]">Prêt pour l&apos;aventure ?</p>
                         </div>
                     </div>
                 </div>
