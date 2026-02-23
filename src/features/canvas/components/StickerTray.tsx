@@ -106,7 +106,7 @@ export default function StickerTray({ isOpen, onClose, onSelectSticker }: Sticke
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-ink-light text-center px-4 space-y-2">
                         <span className="material-symbols-outlined text-4xl opacity-20">sentiment_dissatisfied</span>
-                        <p className="text-sm">Aucune illustration trouvée pour "{searchTerm}"</p>
+                        <p className="text-sm">Aucune illustration trouvée pour &quot;{searchTerm}&quot;</p>
                     </div>
                 )}
             </div>

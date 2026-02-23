@@ -49,7 +49,7 @@ export function MaintenanceGuard({ children }: MaintenanceGuardProps) {
                     </p>
                     {!user && (
                         <p className="text-[10px] text-ink-light/40 italic">
-                            Si vous etes administrateur, connectez-vous pour acceder a l'application.
+                            Si vous etes administrateur, connectez-vous pour acceder a l&apos;application.
                         </p>
                     )}
                 </div>

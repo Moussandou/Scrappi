@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, memo } from "react";
-import { Text, Image as KonvaImage, Transformer, Group, Rect, Line, Arrow } from "react-konva";
+import type Konva from "konva";
+import type { KonvaEventObject } from "konva/lib/Node";
+import { Text, Image as KonvaImage, Group, Rect, Line, Arrow } from "react-konva";
 import { Html } from "react-konva-utils";
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
@@ -15,12 +17,11 @@ interface ElementProps {
     onSelect: (id: string) => void;
     onChange: (id: string, newProps: Partial<CanvasElement>) => void;
     isDraggable: boolean;
-    onNodeRegister?: (id: string, node: any) => void;
+    onNodeRegister?: (id: string, node: Konva.Node) => void;
 }
 
 export const RenderElement = memo(function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const shapeRef = useRef<any>(null);
+    const shapeRef = useRef<Konva.Group | Konva.Shape | Konva.Line | Konva.Arrow | Konva.Image | null>(null);
     const isImageType = element.type === 'image' || element.type === 'sticker';
     const [resolvedSrc, setResolvedSrc] = useState(isImageType && !isLocalRef(element.content) ? element.content : '');
     const [img] = useImage(resolvedSrc, resolvedSrc ? 'anonymous' : undefined);
@@ -29,13 +30,23 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
     // Resolve local: URLs to blob URLs for image types
     useEffect(() => {
         if (!isImageType) return;
-        if (isLocalRef(element.content)) {
-            resolveLocalUrl(element.content)
-                .then(url => setResolvedSrc(url))
-                .catch(() => setResolvedSrc(''));
-        } else {
-            setResolvedSrc(element.content);
-        }
+        let aborted = false;
+
+        const load = async () => {
+            if (isLocalRef(element.content)) {
+                try {
+                    const url = await resolveLocalUrl(element.content);
+                    if (!aborted) setResolvedSrc(url);
+                } catch {
+                    if (!aborted) setResolvedSrc('');
+                }
+            } else {
+                if (!aborted) setResolvedSrc(element.content);
+            }
+        };
+
+        load();
+        return () => { aborted = true; };
     }, [element.content, isImageType]);
 
     // Register node for Transformer
@@ -45,8 +56,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
         }
     }, [onNodeRegister, element.id]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleDragEnd = (e: any) => {
+    const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
         onChange(element.id, {
             x: e.target.x(),
             y: e.target.y()
@@ -55,6 +65,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
 
     const handleTransformEnd = () => {
         const node = shapeRef.current;
+        if (!node) return;
         const scaleX = node.scaleX();
         const scaleY = node.scaleY();
 
@@ -65,7 +76,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
             x: node.x(),
             y: node.y(),
             width: Math.max(5, node.width() * scaleX),
-            height: Math.max(node.height() * scaleY),
+            height: Math.max(5, node.height() * scaleY),
             rotation: node.rotation()
         });
     };
@@ -89,7 +100,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
         <Group>
             {element.type === 'text' && (
                 <Group
-                    ref={shapeRef}
+                    ref={(node) => { shapeRef.current = node; }}
                     x={element.x}
                     y={element.y}
                     width={element.width}
@@ -171,7 +182,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
-                        shapeRef.current = node;
+                        shapeRef.current = node as Konva.Image;
                         onNodeRegister?.(element.id, node);
                     }}
                 />
@@ -185,7 +196,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
-                        shapeRef.current = node;
+                        shapeRef.current = node as Konva.Image;
                         onNodeRegister?.(element.id, node);
                     }}
                 />
@@ -193,7 +204,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
 
             {(element.type === 'image' || element.type === 'sticker') && (
                 <KonvaImage
-                    ref={shapeRef}
+                    ref={(node) => { shapeRef.current = node; }}
                     image={img}
                     x={element.x}
                     y={element.y}
@@ -211,7 +222,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
 
             {(element.type === 'line' || element.type === 'eraser') && (
                 <Line
-                    ref={shapeRef}
+                    ref={(node) => { shapeRef.current = node; }}
                     points={element.points || []}
                     stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
@@ -233,7 +244,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
 
             {element.type === 'arrow' && (
                 <Arrow
-                    ref={shapeRef}
+                    ref={(node) => { shapeRef.current = node; }}
                     points={element.points || []}
                     stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
                     strokeWidth={element.strokeWidth || 4}
@@ -275,18 +286,18 @@ interface MediaElementProps {
     element: CanvasElement;
     isDraggable: boolean;
     onSelect: () => void;
-    onDragEnd: (e: any) => void;
+    onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
     onTransformEnd: () => void;
-    onNodeRegister: (node: any) => void;
+    onNodeRegister: (node: Konva.Node) => void;
 }
 
 function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
-    const konvaImageRef = useRef<any>(null);
+    const konvaImageRef = useRef<Konva.Image | null>(null);
 
     // Callback ref: fires when KonvaImage mounts/updates its DOM node
-    const registerRef = useCallback((node: any) => {
+    const registerRef = useCallback((node: Konva.Image | null) => {
         konvaImageRef.current = node;
         if (node) onNodeRegister(node);
     }, [onNodeRegister]);
@@ -300,7 +311,7 @@ function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEn
         const handleCanPlay = () => {
             if (!aborted) setVideoElement(video);
         };
-        const handleError = (e: any) => {
+        const handleError = (e: unknown) => {
             console.error("Video failed to load:", e);
         };
 
@@ -375,9 +386,9 @@ function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEn
 // Sub-component to handle Animated GIF rendering
 function GifElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
     const [gifImage, setGifImage] = useState<HTMLImageElement | null>(null);
-    const konvaImageRef = useRef<any>(null);
+    const konvaImageRef = useRef<Konva.Image | null>(null);
 
-    const registerRef = useCallback((node: any) => {
+    const registerRef = useCallback((node: Konva.Image | null) => {
         konvaImageRef.current = node;
         if (node) onNodeRegister(node);
     }, [onNodeRegister]);

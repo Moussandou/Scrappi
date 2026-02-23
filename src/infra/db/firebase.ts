@@ -22,8 +22,8 @@ const app = (!getApps().length && isConfigValid)
     ? initializeApp(firebaseConfig)
     : (getApps().length > 0 ? getApp() : null);
 
-const db = app ? getFirestore(app) : null as any;
-const storage = app ? getStorage(app) : null as any;
-const auth = app ? getAuth(app) : null as any;
+const db = (app ? getFirestore(app) : null) as unknown as ReturnType<typeof getFirestore>;
+const storage = (app ? getStorage(app) : null) as unknown as ReturnType<typeof getStorage>;
+const auth = (app ? getAuth(app) : null) as unknown as ReturnType<typeof getAuth>;
 
 export { app, db, storage, auth };

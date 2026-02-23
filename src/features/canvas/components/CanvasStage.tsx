@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
+import type Konva from "konva";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
 import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
@@ -38,11 +39,9 @@ export default function InfiniteCanvas({
     setSelectedIds,
     onElementsChange
 }: InfiniteCanvasProps) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stageRef = useRef<any>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transformerRef = useRef<any>(null);
-    const nodesRef = useRef<Record<string, any>>({});
+    const stageRef = useRef<Konva.Stage | null>(null);
+    const transformerRef = useRef<Konva.Transformer | null>(null);
+    const nodesRef = useRef<Record<string, Konva.Node>>({});
 
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
@@ -82,23 +81,23 @@ export default function InfiniteCanvas({
         if (transformerRef.current) {
             const selectedNodes = selectedIds
                 .map(id => nodesRef.current[id])
-                .filter(node => !!node);
+                .filter(node => !!node) as Konva.Node[];
 
             transformerRef.current.nodes(selectedNodes);
-            transformerRef.current.getLayer().batchDraw();
+            transformerRef.current.getLayer()?.batchDraw();
         }
     }, [selectedIds, elements]); // also sync on elements change to handle z-index swaps
 
-    const handleNodeRegister = useCallback((id: string, node: any) => {
+    const handleNodeRegister = useCallback((id: string, node: Konva.Node) => {
         nodesRef.current[id] = node;
     }, []);
 
 
     const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
-        if (!stageRef.current) return;
-
         const stage = stageRef.current;
+        if (!stage) return;
+
         const oldScale = scale;
 
         // If ctrl or cmd is pressed, we zoom
@@ -128,12 +127,12 @@ export default function InfiniteCanvas({
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleMouseDown = (e: any) => {
+    const handleMouseDown = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
         const isPaint = activeTool === 'draw' || activeTool === 'eraser';
         const isArrow = activeTool === 'arrow';
 
         const stage = e.target.getStage();
+        if (!stage) return;
         const pointerPosition = stage.getPointerPosition();
         if (!pointerPosition) return;
 
@@ -166,9 +165,9 @@ export default function InfiniteCanvas({
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleMouseMove = (e: any) => {
+    const handleMouseMove = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
         const stage = e.target.getStage();
+        if (!stage) return;
         const pointerPosition = stage.getPointerPosition();
         if (!pointerPosition) return;
 
@@ -249,7 +248,7 @@ export default function InfiniteCanvas({
                 const elX = el.x;
                 const elY = el.y;
                 const elW = el.width || 0;
-                const elH = el.height || 0;
+                const elH = el.height || 50;
 
                 // For lines and arrows, check points (simplified)
                 if (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser') {
@@ -347,10 +346,12 @@ export default function InfiniteCanvas({
                         rotateAnchorOffset={30}
                         shouldOverdrawWholeArea
                         onTransformEnd={() => {
+                            if (!transformerRef.current) return;
                             const nodes = transformerRef.current.nodes();
                             // Update all selected elements based on their new node attributes
                             if (onElementChange) {
-                                nodes.forEach((node: any) => {
+                                nodes.forEach((node: Konva.Node) => {
+                                    if (!nodesRef.current) return;
                                     const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
                                     if (id) {
                                         const scaleX = node.scaleX();

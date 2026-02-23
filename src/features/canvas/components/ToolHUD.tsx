@@ -27,6 +27,18 @@ interface ToolHUDProps {
     storageMode: UseStorageModeReturn;
 }
 
+const SectionHeader = ({ id, label, expanded, onToggle }: { id: string, label: string, expanded: boolean, onToggle: (id: string) => void }) => (
+    <div
+        className="flex items-center justify-between cursor-pointer group/header"
+        onClick={() => onToggle(id)}
+    >
+        <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider">{label}</p>
+        <span className={`material-symbols-outlined text-[16px] text-ink-light transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`}>
+            expand_more
+        </span>
+    </div>
+);
+
 export default function ToolHUD({
     activeTool,
     elements,
@@ -131,28 +143,16 @@ export default function ToolHUD({
         setFontSearch("");
     };
 
-    const SectionHeader = ({ id, label }: { id: string, label: string }) => (
-        <div
-            className="flex items-center justify-between cursor-pointer group/header"
-            onClick={() => toggleSection(id)}
-        >
-            <p className="text-[10px] font-bold text-ink-light uppercase tracking-wider">{label}</p>
-            <span className={`material-symbols-outlined text-[16px] text-ink-light transition-transform duration-200 ${expandedSections[id] ? '' : '-rotate-90'}`}>
-                expand_more
-            </span>
-        </div>
-    );
-
     return (
         <div className="flex flex-col gap-2.5 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-black/5 shadow-xl animate-in fade-in slide-in-from-left-4 duration-200 pointer-events-auto w-36 h-fit relative max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
 
             {showStorage && (
                 <div className="flex flex-col gap-2">
-                    <SectionHeader id="storage" label="Stockage" />
+                    <SectionHeader id="storage" label="Stockage" expanded={expandedSections.storage} onToggle={toggleSection} />
                     {expandedSections.storage && (
                         <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
-                             {/* Toggle Cloud / Local */}
-                             <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1">
+                            {/* Toggle Cloud / Local */}
+                            <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1">
                                 <button
                                     onClick={() => storageMode.setMode("cloud")}
                                     className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${storageMode.mode === 'cloud' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink hover:bg-black/5'}`}
@@ -167,10 +167,10 @@ export default function ToolHUD({
                                 >
                                     Local
                                 </button>
-                             </div>
+                            </div>
 
-                             {/* Local Directory Info */}
-                             {storageMode.mode === 'local' && (
+                            {/* Local Directory Info */}
+                            {storageMode.mode === 'local' && (
                                 <div className="flex flex-col gap-1.5 mt-1">
                                     <div className="flex items-center justify-between px-1">
                                         <span className="text-[9px] font-bold text-ink-light">Dossier lié</span>
@@ -194,7 +194,7 @@ export default function ToolHUD({
                                         </p>
                                     )}
                                 </div>
-                             )}
+                            )}
                         </div>
                     )}
                     <div className="h-px w-full bg-ink/5 my-0.5" />
@@ -203,7 +203,7 @@ export default function ToolHUD({
 
             {showPaper && (
                 <div className="flex flex-col gap-2">
-                    <SectionHeader id="paper" label="Papier" />
+                    <SectionHeader id="paper" label="Papier" expanded={expandedSections.paper} onToggle={toggleSection} />
                     {expandedSections.paper && (
                         <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
                             <div className="grid grid-cols-2 gap-1.5">
@@ -247,7 +247,7 @@ export default function ToolHUD({
 
             {showVideo && firstVideo && (
                 <div className="flex flex-col gap-2">
-                    <SectionHeader id="video" label="Vidéo" />
+                    <SectionHeader id="video" label="Vidéo" expanded={expandedSections.video} onToggle={toggleSection} />
                     {expandedSections.video && (
                         <div className="flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                             <button
@@ -284,7 +284,7 @@ export default function ToolHUD({
 
             {showActions && (
                 <div className="flex flex-col gap-2">
-                    <SectionHeader id="layers" label="Ordre" />
+                    <SectionHeader id="layers" label="Ordre" expanded={expandedSections.layers} onToggle={toggleSection} />
                     {expandedSections.layers && (
                         <div className="grid grid-cols-2 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                             <button
@@ -323,7 +323,7 @@ export default function ToolHUD({
             {showColor && (
                 <div className="flex flex-col gap-2">
                     {(showActions || showStorage || showPaper) && <div className="h-px w-full bg-ink/5 my-0.5" />}
-                    <SectionHeader id="color" label={colorLabel} />
+                    <SectionHeader id="color" label={colorLabel} expanded={expandedSections.color} onToggle={toggleSection} />
                     {expandedSections.color && (
                         <div className="grid grid-cols-3 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                             {TOOL_HUD_COLORS.map(color => (
@@ -355,7 +355,7 @@ export default function ToolHUD({
             {showThickness && (
                 <div className="flex flex-col gap-2">
                     {(showActions || showColor || showStorage || showPaper) && <div className="h-px w-full bg-ink/5 my-0.5" />}
-                    <SectionHeader id="thickness" label={activeTool === 'eraser' || (selectedIds.length > 0 && selectedElements.every(el => el.type === 'eraser')) ? 'Gomme' : 'Taille'} />
+                    <SectionHeader id="thickness" label={activeTool === 'eraser' || (selectedIds.length > 0 && selectedElements.every(el => el.type === 'eraser')) ? 'Gomme' : 'Taille'} expanded={expandedSections.thickness} onToggle={toggleSection} />
                     {expandedSections.thickness && (
                         <div className="grid grid-cols-2 gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                             {[2, 4, 8, 16].map((w) => (
@@ -379,7 +379,7 @@ export default function ToolHUD({
             {showFont && (
                 <div className="flex flex-col gap-2">
                     {(showActions || showColor || showThickness) && <div className="h-px w-full bg-ink/5 my-0.5" />}
-                    <SectionHeader id="font" label="Police" />
+                    <SectionHeader id="font" label="Police" expanded={expandedSections.font} onToggle={toggleSection} />
                     {expandedSections.font && (
                         <div ref={fontPickerRef} className="relative animate-in fade-in zoom-in-95 duration-200">
                             <button
