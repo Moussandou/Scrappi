@@ -13,6 +13,7 @@ import {
 import "./globals.css";
 import { AuthProvider } from "@/infra/auth/authContext";
 import { MaintenanceGuard } from "@/ui/components/MaintenanceGuard";
+import { AppInitializer } from "@/ui/components/AppInitializer";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -70,15 +71,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.png" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body
         className={`${jakarta.variable} ${caveat.variable} ${dancing.variable} ${indie.variable} ${pacifico.variable} ${satisfy.variable} ${workSans.variable} ${playfair.variable} antialiased`}
       >
         <AuthProvider>
-          <MaintenanceGuard>
-            {children}
-          </MaintenanceGuard>
+          <AppInitializer>
+            <MaintenanceGuard>
+              {children}
+            </MaintenanceGuard>
+          </AppInitializer>
         </AuthProvider>
       </body>
     </html>

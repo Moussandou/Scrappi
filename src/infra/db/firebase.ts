@@ -14,6 +14,10 @@ const firebaseConfig = {
 
 const isConfigValid = !!firebaseConfig.apiKey;
 
+if (!isConfigValid && typeof window !== 'undefined') {
+    console.warn("⚠️ Firebase configuration is missing. Auth features will be disabled. Check your environment variables.");
+}
+
 const app = (!getApps().length && isConfigValid)
     ? initializeApp(firebaseConfig)
     : (getApps().length > 0 ? getApp() : null);
