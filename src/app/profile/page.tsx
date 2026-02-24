@@ -5,19 +5,83 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MainHeader from "@/ui/layout/MainHeader";
 import Link from "next/link";
+import { getUserSettings, updateUserSettings } from "@/infra/db/firestoreService";
 
 export default function ProfilePage() {
-    const { user, loading, deleteAccount } = useAuth();
+    const { user, loading, deleteAccount, updateProfileInfo } = useAuth();
     const router = useRouter();
+
+    // Account deletion state
     const [isDeleting, setIsDeleting] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    // Profile editing state
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState(user?.displayName || "");
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    // Settings state
+    const [settings, setSettings] = useState({
+        defaultStorageMode: 'local',
+        autoSave: true,
+        theme: 'light'
+    });
+    const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+
     const [error, setError] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     useEffect(() => {
         if (!loading && !user) {
             router.push("/login");
+        } else if (user) {
+            setNewName(user.displayName || "");
+            loadSettings();
         }
     }, [user, loading, router]);
+
+    const loadSettings = async () => {
+        if (!user) return;
+        try {
+            const fetched = await getUserSettings(user.uid);
+            setSettings(fetched as any);
+        } catch (err) {
+            console.error("Failed to load settings:", err);
+        } finally {
+            setIsSettingsLoading(false);
+        }
+    };
+
+    const handleUpdateSettings = async (updates: any) => {
+        if (!user) return;
+        const newSettings = { ...settings, ...updates };
+        setSettings(newSettings);
+        try {
+            await updateUserSettings(user.uid, newSettings);
+        } catch (err) {
+            console.error("Failed to update settings:", err);
+            setError("Erreur lors de la mise à jour des paramètres.");
+        }
+    };
+
+    const handleSaveName = async () => {
+        if (!newName.trim() || newName === user?.displayName) {
+            setIsEditingName(false);
+            return;
+        }
+        setIsSavingName(true);
+        setError(null);
+        try {
+            await updateProfileInfo(newName);
+            setSuccessMsg("Nom d'affichage mis à jour !");
+            setIsEditingName(false);
+            setTimeout(() => setSuccessMsg(null), 3000);
+        } catch (err) {
+            setError("Erreur lors de la mise à jour du nom.");
+        } finally {
+            setIsSavingName(false);
+        }
+    };
 
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
@@ -60,7 +124,7 @@ export default function ProfilePage() {
                     </Link>
 
                     <h1 className="font-serif text-4xl md:text-5xl font-bold text-ink mb-2">Mon Profil</h1>
-                    <p className="text-ink-light font-medium tracking-wide border-b border-paper-dark pb-4">Gérez vos informations et votre compte Scrappi</p>
+                    <p className="text-ink-light font-medium tracking-wide border-b border-paper-dark pb-4">Configurez votre atelier et gérez votre compte</p>
                 </div>
 
                 <div className="space-y-8">
@@ -77,31 +141,112 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="flex-1 text-center md:text-left">
-                                <h2 className="text-2xl font-bold text-ink mb-1">{user.displayName}</h2>
-                                <p className="text-ink-light font-medium mb-4">{user.email}</p>
+                                {isEditingName ? (
+                                    <div className="flex flex-col items-center md:items-start gap-2">
+                                        <input
+                                            type="text"
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            className="text-2xl font-bold text-ink bg-white/80 border-b-2 border-sage outline-none px-2 rounded-t-lg w-full max-w-xs"
+                                            autoFocus
+                                            maxLength={30}
+                                        />
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleSaveName}
+                                                disabled={isSavingName}
+                                                className="text-xs font-bold bg-sage text-white px-3 py-1 rounded-full hover:bg-sage/90 transition-colors"
+                                            >
+                                                Sauvegarder
+                                            </button>
+                                            <button
+                                                onClick={() => { setIsEditingName(false); setNewName(user.displayName || ""); }}
+                                                className="text-xs font-bold bg-paper-dark text-ink-light px-3 py-1 rounded-full hover:bg-paper-dark/80 transition-colors"
+                                            >
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center md:items-start group/name">
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-2xl font-bold text-ink mb-1">{user.displayName}</h2>
+                                            <button
+                                                onClick={() => setIsEditingName(true)}
+                                                className="opacity-0 group-hover/name:opacity-100 text-ink-light hover:text-sage transition-all p-1"
+                                                title="Modifier le nom"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                                            </button>
+                                        </div>
+                                        <p className="text-ink-light font-medium mb-4">{user.email}</p>
+                                    </div>
+                                )}
+
                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-sage/10 text-sage rounded-full text-xs font-bold uppercase tracking-wider">
                                     <span className="material-symbols-outlined text-[14px]">verified_user</span>
-                                    Compte Google Connecté
+                                    Compte Connecté
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Preferences / Stats (Placeholder for future) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white/40 rounded-3xl p-6 border border-black/5">
-                            <h3 className="text-sm font-bold text-ink-light uppercase tracking-wider mb-2">Statut</h3>
-                            <p className="text-ink font-medium">Membre depuis le test</p>
+                    {/* Success Message toast-like */}
+                    {successMsg && (
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-sage text-white px-6 py-3 rounded-full shadow-xl font-bold z-50 animate-in fade-in slide-in-from-bottom-4">
+                            {successMsg}
                         </div>
-                        <div className="bg-white/40 rounded-3xl p-6 border border-black/5">
-                            <h3 className="text-sm font-bold text-ink-light uppercase tracking-wider mb-2">Langue</h3>
-                            <p className="text-ink font-medium">Français (Auto)</p>
+                    )}
+
+                    {/* App Settings Section */}
+                    <div className="section-card bg-white/40 rounded-4xl p-8 border border-black/5">
+                        <h3 className="text-lg font-serif font-bold text-ink mb-6 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-sage">settings</span>
+                            Préférences de l'Atelier
+                        </h3>
+
+                        <div className="space-y-6">
+                            {/* Auto-save toggle */}
+                            <div className="flex items-center justify-between gap-4 pb-4 border-b border-black/[0.03]">
+                                <div>
+                                    <h4 className="font-bold text-ink">Sauvegarde automatique</h4>
+                                    <p className="text-sm text-ink-light">Enregistrer vos créations en temps réel pendant l'édition.</p>
+                                </div>
+                                <button
+                                    onClick={() => handleUpdateSettings({ autoSave: !settings.autoSave })}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.autoSave ? 'bg-sage' : 'bg-paper-dark'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.autoSave ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+
+                            {/* Storage Mode preference */}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h4 className="font-bold text-ink">Stockage par défaut</h4>
+                                    <p className="text-sm text-ink-light">Méthode d'enregistrement par défaut pour les nouveaux classeurs.</p>
+                                </div>
+                                <div className="flex p-1 bg-paper rounded-2xl border border-black/5">
+                                    <button
+                                        onClick={() => handleUpdateSettings({ defaultStorageMode: 'local' })}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${settings.defaultStorageMode === 'local' ? 'bg-white text-sage shadow-soft' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        Local
+                                    </button>
+                                    <button
+                                        onClick={() => handleUpdateSettings({ defaultStorageMode: 'cloud' })}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${settings.defaultStorageMode === 'cloud' ? 'bg-white text-sage shadow-soft' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        Cloud
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Danger Zone */}
                     <div className="mt-16 pt-8 border-t-2 border-dashed border-paper-dark">
-                        <h3 className="text-red-500 font-bold mb-4 flex items-center gap-2">
+                        <h3 className="text-red-500 font-bold mb-4 flex items-center gap-2 px-2">
                             <span className="material-symbols-outlined">warning</span>
                             Zone de danger
                         </h3>

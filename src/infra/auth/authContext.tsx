@@ -9,12 +9,13 @@ import {
     getRedirectResult,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signOut
+    signOut,
+    updateProfile
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth } from "@/infra/db/firebase";
 import { db } from "@/infra/db/firebase";
-import { deleteUserData } from "@/infra/db/firestoreService";
+import { deleteUserData, updateUserProfile } from "@/infra/db/firestoreService";
 
 interface AuthContextType {
     user: User | null;
@@ -25,6 +26,7 @@ interface AuthContextType {
     registerWithEmail: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     deleteAccount: () => Promise<void>;
+    updateProfileInfo: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -133,6 +135,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const updateProfileInfo = async (displayName: string) => {
+        if (!user) return;
+        try {
+            await updateProfile(user, { displayName });
+            // Sync to Firestore
+            await updateUserProfile(user.uid, { displayName });
+            // The Firebase User object is updated automatically in onAuthStateChanged
+        } catch (error) {
+            console.error("Profile update failed:", error);
+            throw error;
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -142,7 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             loginWithEmail,
             registerWithEmail,
             logout,
-            deleteAccount
+            deleteAccount,
+            updateProfileInfo
         }}>
             {children}
         </AuthContext.Provider>

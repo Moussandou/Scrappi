@@ -164,6 +164,41 @@ export const deleteUserData = async (userId: string): Promise<void> => {
 
     // 3. Delete the user profile document
     await deleteDoc(doc(db, "users", userId));
+
+    // 4. Delete the user settings document
+    await deleteDoc(doc(db, "users", userId, "config", "settings"));
+};
+
+export const getUserSettings = async (userId: string) => {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const docRef = doc(db, "users", userId, "config", "settings");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return docSnap.data();
+    } else {
+        // Return default settings
+        return {
+            defaultStorageMode: 'local',
+            autoSave: true,
+            theme: 'light'
+        };
+    }
+};
+
+export const updateUserSettings = async (userId: string, settings: any) => {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const docRef = doc(db, "users", userId, "config", "settings");
+    await setDoc(docRef, settings, { merge: true });
+};
+
+export const updateUserProfile = async (userId: string, data: { displayName?: string, photoURL?: string }) => {
+    if (!db) throw new Error("Firestore is not initialized.");
+    const docRef = doc(db, "users", userId);
+    await setDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
 };
 
 
