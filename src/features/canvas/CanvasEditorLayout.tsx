@@ -131,6 +131,36 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 const fetchedElements = await getElements(projectId);
                 setHistory([fetchedElements]);
                 setHistoryStep(0);
+
+                // Intelligent centering after data load - using setTimeout to ensure DOM is ready
+                setTimeout(() => {
+                    if (fetchedElements.length > 0) {
+                        const viewportWidth = window.innerWidth;
+                        const viewportHeight = window.innerHeight;
+
+                        const minX = Math.min(...fetchedElements.map(el => el.x));
+                        const minY = Math.min(...fetchedElements.map(el => el.y));
+                        const maxX = Math.max(...fetchedElements.map(el => el.x + (el.width || 0)));
+                        const maxY = Math.max(...fetchedElements.map(el => el.y + (el.height || 0)));
+
+                        const contentWidth = maxX - minX;
+                        const contentHeight = maxY - minY;
+
+                        const padding = 40;
+                        const scaleX = (viewportWidth - padding * 2) / contentWidth;
+                        const scaleY = (viewportHeight - padding * 2) / contentHeight;
+                        const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 1.5);
+
+                        setScale(newScale);
+                        setPosition({
+                            x: (viewportWidth / 2) - (minX + contentWidth / 2) * newScale,
+                            y: (viewportHeight / 2) - (minY + contentHeight / 2) * newScale
+                        });
+                    } else {
+                        setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+                        setScale(1);
+                    }
+                }, 100);
             } catch (error) {
                 console.error("Failed to load project data", error);
             } finally {
@@ -138,12 +168,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             }
         }
         if (projectId) {
-            loadData().then(() => {
-                // Initial centering after data load
-                if (typeof window !== "undefined") {
-                    setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-                }
-            });
+            loadData();
         }
     }, [projectId]);
 
