@@ -158,19 +158,24 @@ export default function EditorHeader({
                         <span className="material-symbols-outlined text-[14px] md:text-[16px]">{saveSuccess ? 'check' : 'save'}</span>
                         <span className="hidden xs:inline">{saving ? "..." : saveSuccess ? "Ok" : "Sauver"}</span>
                     </button>
-                    <div className="size-8 md:size-9 rounded-full bg-white backdrop-blur-md p-0.5 border border-black/5 shadow-soft shrink-0 overflow-hidden">
+
+                    <button
+                        onClick={() => router.push("/profile")}
+                        className="size-8 md:size-9 rounded-full bg-white backdrop-blur-md p-0.5 border border-black/5 shadow-soft shrink-0 overflow-hidden hover:ring-2 hover:ring-sage transition-all active:scale-95"
+                        title="Voir mon profil"
+                    >
                         {user?.photoURL ? (
                             <img
                                 src={user.photoURL}
                                 alt={user.displayName || "User"}
-                                className="w-full h-full rounded-full object-cover ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer"
+                                className="w-full h-full rounded-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full rounded-full bg-sage/20 flex items-center justify-center text-sage font-bold text-[10px] md:text-xs ring-2 ring-transparent hover:ring-sage transition-all cursor-pointer">
+                            <div className="w-full h-full rounded-full bg-sage/20 flex items-center justify-center text-sage font-bold text-[10px] md:text-xs">
                                 {user?.displayName?.charAt(0) || "U"}
                             </div>
                         )}
-                    </div>
+                    </button>
                 </div>
             </header>
         </div>

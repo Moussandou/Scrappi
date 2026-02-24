@@ -5,8 +5,7 @@ import {
     onAuthStateChanged,
     User,
     GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
@@ -54,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            console.log("Auth state change:", firebaseUser ? `User ${firebaseUser.email} logged in` : "User logged out");
             setUser(firebaseUser);
             if (firebaseUser) {
                 const tokenResult = await firebaseUser.getIdTokenResult();
@@ -67,22 +67,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
         });
 
-        // Handle redirect result
-        if (auth) {
-            getRedirectResult(auth).catch(e => console.error("Redirect login failed:", e));
-        }
-
         return () => unsubscribe();
     }, []);
 
     const loginWithGoogle = async () => {
-        if (!auth) throw new Error("Firebase Auth is not initialized. Check your environment variables.");
+        if (!auth) throw new Error("Firebase Auth is not initialized.");
         const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
         try {
-            // Switch to redirect mode for better universal support (bypass popup blockers)
-            await signInWithRedirect(auth, provider);
-        } catch (error) {
-            console.error("Login failed:", error);
+            console.log("Attempting Google Login (Popup)...");
+            const result = await signInWithPopup(auth, provider);
+            console.log("Google Login success:", result.user.email);
+        } catch (error: any) {
+            console.error("Google Login failure:", error.code, error.message);
+            if (error.code === 'auth/popup-blocked') {
+                throw new Error("Le bloqueur de fenêtres empêche la connexion Google. Veuillez l'autoriser.");
+            }
             throw error;
         }
     };
