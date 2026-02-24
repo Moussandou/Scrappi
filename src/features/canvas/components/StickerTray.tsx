@@ -45,7 +45,7 @@ export default function StickerTray({ isOpen, onClose, onSelectSticker }: Sticke
     if (!isOpen) return null;
 
     return (
-        <div className="absolute right-8 top-24 bottom-24 w-80 bg-white/80 backdrop-blur-md rounded-2xl shadow-soft border border-black/5 flex flex-col z-50 overflow-hidden animate-in slide-in-from-right-8 duration-300 pointer-events-auto">
+        <div className="fixed inset-x-4 top-20 bottom-24 md:absolute md:left-auto md:right-8 md:top-24 md:bottom-24 md:w-80 bg-white/80 backdrop-blur-md rounded-2xl shadow-soft border border-black/5 flex flex-col z-50 overflow-hidden animate-in slide-in-from-right-8 duration-300 pointer-events-auto">
             <header className="px-5 py-4 border-b border-black/5 shrink-0 bg-white/50 space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

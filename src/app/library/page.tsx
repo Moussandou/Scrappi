@@ -142,9 +142,9 @@ export default function LibraryOverview() {
             <main className="py-24 relative overflow-hidden">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-                        <div>
-                            <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-3 text-center md:text-left">Bibliothèque</h2>
-                            <p className="text-4xl font-serif font-medium tracking-tight text-ink sm:text-5xl text-center md:text-left">Vos Classeurs</p>
+                        <div className="flex-1">
+                            <h2 className="text-sage font-medium tracking-wide text-sm uppercase mb-2 text-center md:text-left">Bibliothèque</h2>
+                            <p className="text-3xl sm:text-4xl md:text-5xl font-serif font-medium tracking-tight text-ink text-center md:text-left">Vos Classeurs</p>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
@@ -189,7 +189,7 @@ export default function LibraryOverview() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {/* Create New Card */}
                         <div
                             onClick={handleOpenCreate}

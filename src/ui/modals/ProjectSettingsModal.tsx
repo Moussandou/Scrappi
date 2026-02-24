@@ -149,15 +149,15 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, onDelete, ini
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden bg-black/5 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.1)_100%)]">
             <div className="absolute inset-0 backdrop-blur-md animate-in fade-in duration-500" onClick={onClose} />
 
-            <div className="relative w-full max-w-5xl h-full max-h-[850px] flex flex-col md:flex-row bg-paper rounded-[40px] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] overflow-hidden border border-paper-dark animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 ease-out">
+            <div className="relative w-full max-w-5xl h-full max-h-[850px] flex flex-col md:flex-row bg-paper rounded-[30px] sm:rounded-[40px] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] overflow-hidden border border-paper-dark animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 ease-out">
                 <div className="paper-grain opacity-60"></div>
 
                 {/* Left Side: Creation Space */}
-                <div className="p-10 relative z-10 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-                    <div className="flex justify-between items-start mb-10">
+                <div className="p-6 sm:p-10 relative z-10 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+                    <div className="flex justify-between items-start mb-6 sm:mb-10">
                         <div>
-                            <h2 className="font-serif text-4xl font-bold text-ink mb-2">{title}</h2>
-                            <p className="text-sm text-ink-light/60 font-serif italic">Personnalisez votre espace de création</p>
+                            <h2 className="font-serif text-2xl sm:text-4xl font-bold text-ink mb-2">{title}</h2>
+                            <p className="text-xs sm:text-sm text-ink-light/60 font-serif italic">Personnalisez votre espace de création</p>
                         </div>
                         <button onClick={onClose} className="size-12 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors group">
                             <span className="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform duration-300">close</span>
@@ -184,7 +184,7 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, onDelete, ini
                                         if (errorMessage) setErrorMessage(null);
                                     }}
                                     placeholder="Libellé de votre projet..."
-                                    className="w-full bg-white/50 border border-black/5 rounded-2xl py-5 px-6 outline-none focus:bg-white focus:border-sage/40 focus:ring-4 focus:ring-sage/5 transition-all text-2xl font-serif italic text-ink shadow-inner whitespace-nowrap overflow-hidden text-ellipsis"
+                                    className="w-full bg-white/50 border border-black/5 rounded-2xl py-4 sm:py-5 px-6 outline-none focus:bg-white focus:border-sage/40 focus:ring-4 focus:ring-sage/5 transition-all text-xl sm:text-2xl font-serif italic text-ink shadow-inner whitespace-nowrap overflow-hidden text-ellipsis"
                                 />
                                 <span className="absolute right-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-ink/10 group-focus-within:text-sage/40 transition-colors">edit</span>
                             </div>

@@ -15,7 +15,7 @@ export function ToolbarButton({
     className,
     ...props
 }: ToolbarButtonProps) {
-    const baseClasses = "size-11 rounded-xl flex items-center justify-center pointer-events-auto transition-all duration-200";
+    const baseClasses = "size-9 md:size-11 rounded-lg md:rounded-xl flex items-center justify-center pointer-events-auto transition-all duration-200";
 
     const variantClasses = {
         tool: clsx(
