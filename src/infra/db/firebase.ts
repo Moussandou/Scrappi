@@ -12,10 +12,15 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-const isConfigValid = !!firebaseConfig.apiKey;
+const isConfigValid = !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
 
 if (!isConfigValid && typeof window !== 'undefined') {
-    console.warn("⚠️ Firebase configuration is missing. Auth features will be disabled. Check your environment variables.");
+    console.warn("⚠️ Firebase configuration is missing or incomplete:", {
+        hasApiKey: !!firebaseConfig.apiKey,
+        hasProjectId: !!firebaseConfig.projectId,
+        hasAppId: !!firebaseConfig.appId,
+        env: process.env.NODE_ENV
+    });
 }
 
 const app = (!getApps().length && isConfigValid)
