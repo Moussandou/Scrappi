@@ -72,6 +72,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
       </head>
       <body
         className={`${jakarta.variable} ${caveat.variable} ${dancing.variable} ${indie.variable} ${pacifico.variable} ${satisfy.variable} ${workSans.variable} ${playfair.variable} antialiased`}
