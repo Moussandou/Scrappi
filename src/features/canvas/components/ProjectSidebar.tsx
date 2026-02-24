@@ -34,6 +34,7 @@ export default function ProjectSidebar({
     isStickerTrayOpen
 }: ProjectSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showStorageWarning, setShowStorageWarning] = useState(false);
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         storage: true,
         paper: true
@@ -109,21 +110,62 @@ export default function ProjectSidebar({
                         <SectionHeader id="storage" label="Stockage" expanded={expandedSections.storage} onToggle={toggleSection} />
                         {expandedSections.storage && (
                             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <div className="p-1 bg-black/5 rounded-2xl flex gap-1">
+                                <div className="p-1 bg-black/5 rounded-2xl flex gap-1 relative overflow-hidden">
                                     <button
-                                        onClick={() => storageMode.setMode("cloud")}
-                                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all ${storageMode.mode === 'cloud' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'}`}
+                                        onClick={() => {
+                                            storageMode.setMode("cloud");
+                                            setShowStorageWarning(false);
+                                        }}
+                                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all z-10 ${storageMode.mode === 'cloud' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'}`}
                                     >
                                         Cloud
                                     </button>
                                     <button
-                                        onClick={() => storageMode.setMode("local")}
-                                        disabled={!storageMode.isLocalSupported}
-                                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all ${storageMode.mode === 'local' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'} ${!storageMode.isLocalSupported ? 'opacity-30' : ''}`}
+                                        onClick={() => {
+                                            if (storageMode.mode === 'cloud') {
+                                                setShowStorageWarning(true);
+                                            } else {
+                                                storageMode.setMode("local");
+                                            }
+                                        }}
+                                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all z-10 ${storageMode.mode === 'local' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'} ${!storageMode.isLocalSupported ? 'opacity-30 cursor-not-allowed' : ''}`}
                                     >
                                         Local
                                     </button>
                                 </div>
+
+                                {showStorageWarning && (
+                                    <div className="bg-sage/10 border border-sage/20 rounded-2xl p-4 space-y-3 animate-in zoom-in-95 duration-200">
+                                        <div className="flex items-center gap-2 text-sage">
+                                            <span className="material-symbols-outlined text-[18px]">info</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Mode Local</span>
+                                        </div>
+                                        <p className="text-[10px] leading-relaxed text-ink/70">
+                                            En mode **Local**, vos images sont stockées sur votre ordinateur.
+                                            <br /><br />
+                                            ✅ **Confidentialité totale** & pas de limite de taille.
+                                            <br />
+                                            ❌ **Non synchronisé** : vos images ne seront pas visibles sur d'autres appareils.
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setShowStorageWarning(false)}
+                                                className="flex-1 py-1.5 rounded-lg border border-black/5 text-[9px] font-bold text-ink hover:bg-black/5 transition-colors"
+                                            >
+                                                Annuler
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    storageMode.setMode("local");
+                                                    setShowStorageWarning(false);
+                                                }}
+                                                className="flex-1 py-1.5 rounded-lg bg-sage text-white text-[9px] font-bold shadow-sm hover:brightness-110 transition-all"
+                                            >
+                                                Activer
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {storageMode.mode === 'local' && (
                                     <button
@@ -138,6 +180,12 @@ export default function ProjectSidebar({
                                             {storageMode.directoryReady ? 'folder_managed' : 'folder_off'}
                                         </span>
                                     </button>
+                                )}
+
+                                {!storageMode.isLocalSupported && (
+                                    <p className="text-[9px] text-ink-light/60 px-2 italic text-center">
+                                        Navigateur non compatible (utilisez Chrome ou Edge pour le mode local)
+                                    </p>
                                 )}
                             </div>
                         )}
