@@ -49,7 +49,6 @@ export default function ProfilePage() {
         <div className="min-h-screen bg-paper relative overflow-hidden font-sans">
             {/* Background Texture & Grid */}
             <div className="fixed inset-0 pointer-events-none opacity-40 z-0 sketchbook-grid"></div>
-            <div className="fixed inset-0 pointer-events-none z-10 paper-grain-800dpi opacity-50"></div>
 
             <MainHeader />
 
