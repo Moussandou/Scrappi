@@ -10,7 +10,8 @@ import { useAuth } from "@/infra/auth/authContext";
 
 import EditorHeader from "./components/EditorHeader";
 import Toolbar from "./components/Toolbar";
-import ToolHUD from "./components/ToolHUD";
+import ProjectSidebar from "./components/ProjectSidebar";
+import FloatingContextHUD from "./components/FloatingContextHUD";
 import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
@@ -781,10 +782,17 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 </div>
                             </div>
                         )}
-                        <ToolHUD
-                            activeTool={activeTool}
-                            elements={elements}
-                            selectedIds={selectedIds}
+                        <ProjectSidebar
+                            paperType={paperType}
+                            onPaperTypeChange={setPaperType}
+                            paperColor={paperColor}
+                            onPaperColorChange={setPaperColor}
+                            storageMode={storageMode}
+                            isStickerTrayOpen={isStickerTrayOpen}
+                        />
+
+                        <FloatingContextHUD
+                            selectedElements={elements.filter(el => selectedIds.includes(el.id))}
                             activeColor={activeColor}
                             activeStrokeWidth={activeStrokeWidth}
                             activeFontFamily={activeFontFamily}
@@ -794,11 +802,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onDelete={handleDeleteSelected}
                             onMoveZ={handleMoveZ}
                             onUpdateElement={handleElementChange}
-                            paperType={paperType}
-                            onPaperTypeChange={setPaperType}
-                            paperColor={paperColor}
-                            onPaperColorChange={setPaperColor}
-                            storageMode={storageMode}
                         />
                     </div>
 
