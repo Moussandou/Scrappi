@@ -19,6 +19,7 @@
   },
   "hosting": {
     "site": "scrappi-app",
+    "appId": "1:878263338436:web:079c26576f36a46fd7d091",
     "source": ".",
     "ignore": [
       "firebase.json",
