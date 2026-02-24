@@ -24,7 +24,16 @@ if (!isConfigValid && typeof window !== 'undefined') {
 }
 
 const app = (!getApps().length && isConfigValid)
-    ? initializeApp(firebaseConfig)
+    ? (() => {
+        // Debug check for the newline issue
+        if (typeof window !== 'undefined') {
+            const needsTrim = Object.entries(firebaseConfig).some(([_, v]) => typeof v === 'string' && v.trim() !== v);
+            if (needsTrim) {
+                console.warn("🛡️ Scrappi: Sanitized Firebase configuration (removed trailing whitespace/newlines).");
+            }
+        }
+        return initializeApp(firebaseConfig);
+    })()
     : (getApps().length > 0 ? getApp() : null);
 
 const db = (app ? getFirestore(app) : null) as unknown as ReturnType<typeof getFirestore>;

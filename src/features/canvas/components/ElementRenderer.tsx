@@ -173,7 +173,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                                     fontWeight: element.fontWeight || 'normal',
                                     fontStyle: element.fontStyle || 'normal',
                                     textDecoration: element.textDecoration || 'none',
-                                    textAlign: element.textAlign || 'left' as any,
+                                    textAlign: (element.textAlign || 'left') as 'left' | 'center' | 'right',
                                 }}
                             />
                         </Html>

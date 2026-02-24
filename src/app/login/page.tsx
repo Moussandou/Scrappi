@@ -26,8 +26,8 @@ export default function LoginPage() {
         setError(null);
         try {
             await loginWithGoogle();
-        } catch (error: any) {
-            console.error(error);
+        } catch (err: unknown) {
+            console.error(err);
             setError("Erreur de connexion avec Google.");
             setIsLoading(false);
         }

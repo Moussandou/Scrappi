@@ -89,7 +89,7 @@ export function useStorageMode(): UseStorageModeReturn {
             if (!handle) {
                 try {
                     handle = await pickDirectory();
-                } catch (_e) {
+                } catch {
                     // User cancelled
                     console.log("Selection cancelled");
                     return;

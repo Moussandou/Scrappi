@@ -22,7 +22,11 @@ export default function ProfilePage() {
     const [isSavingName, setIsSavingName] = useState(false);
 
     // Settings state
-    const [settings, setSettings] = useState({
+    const [settings, setSettings] = useState<{
+        defaultStorageMode: 'local' | 'cloud';
+        autoSave: boolean;
+        theme: string;
+    }>({
         defaultStorageMode: 'local',
         autoSave: true,
         theme: 'light'
@@ -51,7 +55,7 @@ export default function ProfilePage() {
         }
     }, [user, loading, router, loadSettings]);
 
-    const handleUpdateSettings = async (updates: any) => {
+    const handleUpdateSettings = async (updates: Partial<typeof settings>) => {
         if (!user) return;
         const newSettings = { ...settings, ...updates };
         setSettings(newSettings);
@@ -75,7 +79,7 @@ export default function ProfilePage() {
             setSuccessMsg("Nom d'affichage mis à jour !");
             setIsEditingName(false);
             setTimeout(() => setSuccessMsg(null), 3000);
-        } catch (err) {
+        } catch {
             setError("Erreur lors de la mise à jour du nom.");
         } finally {
             setIsSavingName(false);
