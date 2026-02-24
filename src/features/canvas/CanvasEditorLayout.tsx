@@ -138,7 +138,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             }
         }
         if (projectId) {
-            loadData();
+            loadData().then(() => {
+                // Initial centering after data load
+                if (typeof window !== "undefined") {
+                    setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+                }
+            });
         }
     }, [projectId]);
 
@@ -250,8 +255,37 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     };
 
     const handleRecenter = () => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
+        if (typeof window === "undefined") return;
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        if (elements.length > 0) {
+            // Calculate bounding box of all elements
+            const minX = Math.min(...elements.map(el => el.x));
+            const minY = Math.min(...elements.map(el => el.y));
+            const maxX = Math.max(...elements.map(el => el.x + (el.width || 0)));
+            const maxY = Math.max(...elements.map(el => el.y + (el.height || 0)));
+
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+
+            // Fit content in viewport with some padding
+            const padding = 40;
+            const scaleX = (viewportWidth - padding * 2) / contentWidth;
+            const scaleY = (viewportHeight - padding * 2) / contentHeight;
+            const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 1.5);
+
+            setScale(newScale);
+            setPosition({
+                x: (viewportWidth / 2) - (minX + contentWidth / 2) * newScale,
+                y: (viewportHeight / 2) - (minY + contentHeight / 2) * newScale
+            });
+        } else {
+            // Just center the origin
+            setScale(1);
+            setPosition({ x: viewportWidth / 2, y: viewportHeight / 2 });
+        }
     };
 
     const handleAddElement = (newElement: CanvasElement) => {

@@ -42,6 +42,7 @@ export default function InfiniteCanvas({
     const stageRef = useRef<Konva.Stage | null>(null);
     const transformerRef = useRef<Konva.Transformer | null>(null);
     const nodesRef = useRef<Record<string, Konva.Node>>({});
+    const lastTouchRef = useRef<{ dist: number, center: { x: number, y: number } } | null>(null);
 
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
@@ -141,6 +142,14 @@ export default function InfiniteCanvas({
             y: (pointerPosition.y - stage.y()) / scale,
         };
 
+        // Handle multi-touch for zoom/pan
+        if ('touches' in e.evt && e.evt.touches.length >= 2) {
+            // Stop any drawing/selection if we start multi-touch
+            setCurrentLine(null);
+            setSelectionBox(null);
+            return;
+        }
+
         if (isPaint || isArrow) {
             setCurrentLine({
                 id: crypto.randomUUID(),
@@ -175,6 +184,58 @@ export default function InfiniteCanvas({
             x: (pointerPosition.x - stage.x()) / scale,
             y: (pointerPosition.y - stage.y()) / scale,
         };
+
+        // Multi-touch handling (Pinch-to-zoom and Pan)
+        if ('touches' in e.evt && e.evt.touches.length === 2) {
+            e.evt.preventDefault();
+            const touch1 = e.evt.touches[0];
+            const touch2 = e.evt.touches[1];
+
+            // Distance for zoom
+            const dist = Math.sqrt(
+                Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+
+            // Center point for zoom-towards-center
+            const center = {
+                x: (touch1.clientX + touch2.clientX) / 2,
+                y: (touch1.clientY + touch2.clientY) / 2
+            };
+
+            if (!lastTouchRef.current) {
+                lastTouchRef.current = { dist, center };
+                return;
+            }
+
+            const { dist: lastDist, center: lastCenter } = lastTouchRef.current;
+
+            // Zoom logic
+            const scaleBy = dist / lastDist;
+            const newScale = scale * scaleBy;
+
+            // Limit scale
+            const limitedScale = Math.min(Math.max(newScale, 0.05), 10);
+            setScale(limitedScale);
+
+            // Pan logic (smooth follow fingers)
+            const dx = center.x - lastCenter.x;
+            const dy = center.y - lastCenter.y;
+
+            const mousePointTo = {
+                x: center.x / scale - stage.x() / scale,
+                y: center.y / scale - stage.y() / scale,
+            };
+
+            setPosition({
+                x: (-(mousePointTo.x - center.x / limitedScale) * limitedScale) + dx,
+                y: (-(mousePointTo.y - center.y / limitedScale) * limitedScale) + dy,
+            });
+
+            // Update last values
+            lastTouchRef.current = { dist, center };
+            return;
+        }
 
         if (currentLine) {
             if (currentLine.type === 'arrow') {
@@ -233,6 +294,7 @@ export default function InfiniteCanvas({
     }, [onElementsChange, onElementChange]);
 
     const handleMouseUp = () => {
+        lastTouchRef.current = null;
         if (currentLine) {
             if (onAddElement) onAddElement(currentLine);
             setCurrentLine(null);
@@ -290,6 +352,7 @@ export default function InfiniteCanvas({
             y={position.y}
             ref={stageRef}
             className={`absolute inset-0 z-0 ${activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'arrow' ? 'cursor-crosshair' : (activeTool === 'hand' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
+            style={{ touchAction: 'none' }}
         >
             <Layer>
                 <Rect
