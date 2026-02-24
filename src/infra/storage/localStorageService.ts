@@ -117,8 +117,8 @@ export async function restoreDirectory(): Promise<FileSystemDirectoryHandle | nu
             currentDirHandle = handle;
             return handle;
         }
-    } catch (_e) {
-        console.error("Failed to restore directory handle:", _e);
+    } catch {
+        console.error("Failed to restore directory handle");
     }
 
     return null;
@@ -226,7 +226,7 @@ export async function resolveLocalUrl(localRef: string): Promise<string> {
         if (!part) continue;
         try {
             targetDir = await targetDir.getDirectoryHandle(part);
-        } catch (_e) {
+        } catch {
             throw new Error(`Directory not found: ${part}`);
         }
     }
@@ -240,7 +240,7 @@ export async function resolveLocalUrl(localRef: string): Promise<string> {
         // Cache it
         blobUrlCache.set(localRef, blobUrl);
         return blobUrl;
-    } catch (_e) {
+    } catch {
         throw new Error(`File not found: ${filename}`);
     }
 }

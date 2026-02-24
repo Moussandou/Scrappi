@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (firebaseUser) {
                 const tokenResult = await firebaseUser.getIdTokenResult();
                 setIsAdmin(tokenResult.claims.admin === true);
-                syncUserProfile(firebaseUser).catch(e =>
-                    console.warn("Profile sync failed:", e)
+                syncUserProfile(firebaseUser).catch(() =>
+                    console.warn("Profile sync failed")
                 );
             } else {
                 setIsAdmin(false);

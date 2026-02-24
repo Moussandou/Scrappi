@@ -12,7 +12,7 @@ describe('googleFontsService', () => {
         process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY = 'test-api-key';
 
         // Mock document
-        (globalThis as any).document = {
+        (globalThis as unknown as { document: any }).document = {
             head: {
                 appendChild: mock.fn()
             },
@@ -26,8 +26,8 @@ describe('googleFontsService', () => {
     afterEach(() => {
         process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY = originalApiKey;
         globalThis.fetch = originalFetch;
-        (globalThis as any).document = originalDocument;
-        (console.error as any).mock?.restore();
+        (globalThis as unknown as { document: any }).document = originalDocument;
+        (console.error as unknown as { mock: { restore: () => void } }).mock?.restore();
     });
 
     describe('fetchHandwritingFonts', () => {
@@ -44,7 +44,7 @@ describe('googleFontsService', () => {
                 return {
                     ok: true,
                     json: async () => ({ items: mockFonts })
-                };
+                } as Response;
             });
 
             const fonts = await fetchHandwritingFonts();
@@ -61,18 +61,18 @@ describe('googleFontsService', () => {
 
             const fonts = await fetchHandwritingFonts();
             assert.deepStrictEqual(fonts, []);
-            assert.strictEqual((console.error as any).mock.calls.length, 1);
+            assert.strictEqual((console.error as unknown as { mock: { calls: any[] } }).mock.calls.length, 1);
         });
 
         test('should return empty array if fetch fails', async () => {
             mock.method(globalThis, 'fetch', async () => ({
                 ok: false,
                 statusText: 'Not Found'
-            }));
+            } as Response));
 
             const fonts = await fetchHandwritingFonts();
             assert.deepStrictEqual(fonts, []);
-            assert.strictEqual((console.error as any).mock.calls.length, 1);
+            assert.strictEqual((console.error as unknown as { mock: { calls: any[] } }).mock.calls.length, 1);
         });
 
         test('should use cached results on subsequent calls', async () => {
@@ -80,7 +80,7 @@ describe('googleFontsService', () => {
             const fetchMock = mock.method(globalThis, 'fetch', async () => ({
                 ok: true,
                 json: async () => ({ items: mockFonts })
-            }));
+            } as Response));
 
             await fetchHandwritingFonts();
             const fonts = await fetchHandwritingFonts();
@@ -93,7 +93,7 @@ describe('googleFontsService', () => {
             mock.method(globalThis, 'fetch', async () => ({
                 ok: true,
                 json: async () => ({ items: [] })
-            }));
+            } as Response));
 
             const fonts = await fetchHandwritingFonts();
             assert.deepStrictEqual(fonts, []);
@@ -103,7 +103,7 @@ describe('googleFontsService', () => {
             mock.method(globalThis, 'fetch', async () => ({
                 ok: true,
                 json: async () => ({})
-            }));
+            } as Response));
 
             const fonts = await fetchHandwritingFonts();
             assert.deepStrictEqual(fonts, []);
@@ -114,7 +114,7 @@ describe('googleFontsService', () => {
         test('should inject a link tag for a new font', () => {
             loadFont('Dancing Script');
 
-            const doc = globalThis.document as any;
+            const doc = globalThis.document as unknown as { createElement: { mock: { calls: any[] } }, head: { appendChild: { mock: { calls: any[] } } } };
             assert.strictEqual(doc.createElement.mock.calls.length, 1);
             assert.strictEqual(doc.head.appendChild.mock.calls.length, 1);
 
@@ -127,14 +127,14 @@ describe('googleFontsService', () => {
             loadFont('Dancing Script');
             loadFont('Dancing Script');
 
-            const doc = globalThis.document as any;
+            const doc = globalThis.document as unknown as { createElement: { mock: { calls: any[] } } };
             assert.strictEqual(doc.createElement.mock.calls.length, 1);
         });
 
         test('should do nothing for empty family', () => {
             loadFont('');
 
-            const doc = globalThis.document as any;
+            const doc = globalThis.document as unknown as { createElement: { mock: { calls: any[] } } };
             assert.strictEqual(doc.createElement.mock.calls.length, 0);
         });
     });

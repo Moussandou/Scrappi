@@ -44,7 +44,7 @@ describe('pixabayService', () => {
       ok: true,
       json: async () => ({ hits: mockImages }),
     };
-    (global.fetch as any).mockResolvedValue(mockResponse);
+    vi.mocked(global.fetch).mockResolvedValue(mockResponse as Response);
 
     const result = await pixabayService.searchImages('');
 
@@ -58,7 +58,7 @@ describe('pixabayService', () => {
       ok: true,
       json: async () => ({ hits: mockImages }),
     };
-    (global.fetch as any).mockResolvedValue(mockResponse);
+    vi.mocked(global.fetch).mockResolvedValue(mockResponse as Response);
 
     const query = 'cats';
     const page = 2;
@@ -66,7 +66,7 @@ describe('pixabayService', () => {
     const result = await pixabayService.searchImages(query, page, perPage);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    const url = (global.fetch as any).mock.calls[0][0] as string;
+    const url = vi.mocked(global.fetch).mock.calls[0][0] as string;
     expect(url).toContain(`q=${query}`);
     expect(url).toContain(`page=${page}`);
     expect(url).toContain(`per_page=${perPage}`);
@@ -78,9 +78,9 @@ describe('pixabayService', () => {
       ok: false,
       status: 500,
     };
-    (global.fetch as any).mockResolvedValue(mockResponse);
+    vi.mocked(global.fetch).mockResolvedValue(mockResponse as Response);
 
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
     const result = await pixabayService.searchImages('error');
 
@@ -90,8 +90,8 @@ describe('pixabayService', () => {
   });
 
   it('should handle network errors (fetch throws) and return empty array', async () => {
-    (global.fetch as any).mockRejectedValue(new Error('Network error'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
     const result = await pixabayService.searchImages('network error');
 
@@ -102,9 +102,9 @@ describe('pixabayService', () => {
   it('should return empty array if response has no hits', async () => {
     const mockResponse = {
       ok: true,
-      json: async () => ({ }), // Missing hits
+      json: async () => ({}), // Missing hits
     };
-    (global.fetch as any).mockResolvedValue(mockResponse);
+    vi.mocked(global.fetch).mockResolvedValue(mockResponse as Response);
 
     const result = await pixabayService.searchImages('empty');
 
