@@ -8,23 +8,23 @@ export const LoadingScreen = () => {
             <div className="paper-grain opacity-60"></div>
 
             <div className="relative z-10 flex flex-col items-center">
-                {/* Artistic Loader */}
-                <div className="w-20 h-20 relative mb-8">
-                    <div className="absolute inset-0 border-4 border-paper-dark/20 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
-                    <div className="absolute inset-4 bg-paper rounded-full flex items-center justify-center shadow-inner">
-                        <span className="text-2xl">✒️</span>
+                {/* Artistic Loader - Speeded up */}
+                <div className="w-16 h-16 relative mb-6 transition-all duration-300">
+                    <div className="absolute inset-0 border-2 border-paper-dark/10 rounded-full"></div>
+                    <div className="absolute inset-0 border-2 border-sage rounded-full border-t-transparent animate-[spin_0.6s_linear_infinite]"></div>
+                    <div className="absolute inset-3 bg-paper rounded-full flex items-center justify-center shadow-inner">
+                        <span className="text-xl">✒️</span>
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2">
-                    <h2 className="text-xl font-display text-paper-dark font-medium tracking-tight animate-pulse">
+                <div className="flex flex-col items-center gap-1.5">
+                    <h2 className="text-lg font-display text-ink-light font-bold tracking-widest uppercase text-[10px]">
                         Scrappi
                     </h2>
                     <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce"></div>
+                        <div className="w-1 h-1 rounded-full bg-sage/40 animate-bounce [animation-duration:0.6s] [animation-delay:-0.2s]"></div>
+                        <div className="w-1 h-1 rounded-full bg-sage/40 animate-bounce [animation-duration:0.6s] [animation-delay:-0.1s]"></div>
+                        <div className="w-1 h-1 rounded-full bg-sage/40 animate-bounce [animation-duration:0.6s]"></div>
                     </div>
                 </div>
             </div>

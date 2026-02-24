@@ -160,7 +160,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                         setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
                         setScale(1);
                     }
-                }, 100);
+                }, 50);
             } catch (error) {
                 console.error("Failed to load project data", error);
             } finally {

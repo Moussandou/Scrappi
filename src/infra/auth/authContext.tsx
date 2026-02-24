@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             setUser(firebaseUser);
             if (firebaseUser) {
-                const tokenResult = await firebaseUser.getIdTokenResult(true);
+                const tokenResult = await firebaseUser.getIdTokenResult();
                 setIsAdmin(tokenResult.claims.admin === true);
                 syncUserProfile(firebaseUser).catch(e =>
                     console.warn("Profile sync failed:", e)
