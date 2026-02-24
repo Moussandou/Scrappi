@@ -5,19 +5,26 @@ import {
     onAuthStateChanged,
     User,
     GoogleAuthProvider,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth } from "@/infra/db/firebase";
 import { db } from "@/infra/db/firebase";
+import { deleteUserData } from "@/infra/db/firestoreService";
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     isAdmin: boolean;
     loginWithGoogle: () => Promise<void>;
+    loginWithEmail: (email: string, password: string) => Promise<void>;
+    registerWithEmail: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,15 +64,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             setLoading(false);
         });
+
+        // Handle redirect result
+        getRedirectResult(auth).catch(e => console.error("Redirect login failed:", e));
+
         return () => unsubscribe();
     }, []);
 
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
+            // Switch to redirect mode for better universal support (bypass popup blockers)
+            await signInWithRedirect(auth, provider);
         } catch (error) {
             console.error("Login failed:", error);
+            throw error;
+        }
+    };
+
+    const loginWithEmail = async (email: string, password: string) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Email login failed:", error);
+            throw error;
+        }
+    };
+
+    const registerWithEmail = async (email: string, password: string) => {
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Email registration failed:", error);
+            throw error;
         }
     };
 
@@ -77,8 +108,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const deleteAccount = async () => {
+        if (!user) return;
+
+        try {
+            // 1. Delete Firestore data first while authenticated
+            await deleteUserData(user.uid);
+
+            // 2. Delete the Firebase Auth account
+            await user.delete();
+
+            // Note: Firebase delete() automatically signs out on success
+        } catch (error: any) {
+            console.error("Account deletion failed:", error);
+            if (error.code === 'auth/requires-recent-login') {
+                throw new Error("REAUTH_REQUIRED");
+            }
+            throw error;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, isAdmin, loginWithGoogle, logout }}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            isAdmin,
+            loginWithGoogle,
+            loginWithEmail,
+            registerWithEmail,
+            logout,
+            deleteAccount
+        }}>
             {children}
         </AuthContext.Provider>
     );

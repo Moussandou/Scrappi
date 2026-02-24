@@ -149,6 +149,20 @@ export const deleteScrapbook = async (id: string): Promise<void> => {
     }
 };
 
+export const deleteUserData = async (userId: string): Promise<void> => {
+    // 1. Get all scrapbooks for the user
+    const q = query(collection(db, "scrapbooks"), where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+
+    // 2. Delete each scrapbook (which also deletes its elements subcollection)
+    for (const doc of snapshot.docs) {
+        await deleteScrapbook(doc.id);
+    }
+
+    // 3. Delete the user profile document
+    await deleteDoc(doc(db, "users", userId));
+};
+
 
 export const saveElements = async (scrapbookId: string, elements: CanvasElement[], userId: string) => {
     const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");

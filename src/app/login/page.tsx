@@ -7,9 +7,13 @@ import Link from "next/link";
 import MainHeader from "@/ui/layout/MainHeader";
 
 export default function LoginPage() {
-    const { user, loginWithGoogle } = useAuth();
+    const { user, loginWithGoogle, loginWithEmail, registerWithEmail } = useAuth();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -19,10 +23,39 @@ export default function LoginPage() {
 
     const handleGoogleLogin = async () => {
         setIsLoading(true);
+        setError(null);
         try {
             await loginWithGoogle();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            setError("Erreur de connexion avec Google.");
+            setIsLoading(false);
+        }
+    };
+
+    const handleEmailAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) return;
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            if (isRegistering) {
+                await registerWithEmail(email, password);
+            } else {
+                await loginWithEmail(email, password);
+            }
+        } catch (error: any) {
+            console.error(error);
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                setError("Email ou mot de passe incorrect.");
+            } else if (error.code === 'auth/email-already-in-use') {
+                setError("Cet email est déjà utilisé.");
+            } else if (error.code === 'auth/weak-password') {
+                setError("Le mot de passe doit faire au moins 6 caractères.");
+            } else {
+                setError("Une erreur est survenue. Veuillez réessayer.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -41,7 +74,7 @@ export default function LoginPage() {
                 <div className="absolute bottom-[-10%] left-[-10%] w-[40%] aspect-square bg-sage/5 rounded-full blur-3xl -z-10"></div>
 
                 <div className="w-full max-w-md z-10">
-                    <div className="flex flex-col items-center mb-12">
+                    <div className="flex flex-col items-center mb-10">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage text-white shadow-lg mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
                             <span className="material-symbols-outlined text-[32px]">brush</span>
                         </div>
@@ -79,20 +112,23 @@ export default function LoginPage() {
                                     style={{ fill: "#EA4335" }}
                                 />
                             </svg>
-                            {isLoading ? "Connexion en cours..." : "Continuer avec Google"}
+                            {isLoading ? "Veuillez patienter..." : "Continuer avec Google"}
                         </button>
 
-                        <div className="relative py-4 flex items-center justify-center">
+                        <div className="relative py-2 flex items-center justify-center">
                             <div className="absolute inset-x-0 h-px bg-black/5"></div>
-                            <span className="relative px-4 bg-white/0 text-[10px] uppercase tracking-widest text-ink-light font-bold">ou</span>
+                            <span className="relative px-4 bg-white/0 text-[10px] uppercase tracking-widest text-ink-light font-bold italic">ou</span>
                         </div>
 
-                        <div className="space-y-4">
+                        <form onSubmit={handleEmailAuth} className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-ink-light uppercase tracking-wider ml-1">Email</label>
                                 <input
                                     type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="atelier@creatif.fr"
+                                    required
                                     className="w-full bg-black/5 border border-transparent rounded-2xl py-4 px-6 outline-none focus:bg-white focus:border-sage/30 transition-all text-ink placeholder:text-ink-light/50"
                                 />
                             </div>
@@ -100,15 +136,38 @@ export default function LoginPage() {
                                 <label className="text-[10px] font-bold text-ink-light uppercase tracking-wider ml-1">Mot de passe</label>
                                 <input
                                     type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    required
                                     className="w-full bg-black/5 border border-transparent rounded-2xl py-4 px-6 outline-none focus:bg-white focus:border-sage/30 transition-all text-ink placeholder:text-ink-light/50"
                                 />
                             </div>
+
+                            {error && (
+                                <p className="text-red-500 text-xs font-medium ml-1 animate-pulse">
+                                    {error}
+                                </p>
+                            )}
+
                             <button
-                                disabled
-                                className="w-full bg-ink text-white py-4 rounded-2xl font-semibold opacity-30 cursor-not-allowed hover:bg-ink/90 transition-all"
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-ink text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-ink/90 shadow-ink/10 transition-all active:scale-[0.98] disabled:opacity-50"
                             >
-                                Se connecter
+                                {isLoading ? "Chargement..." : (isRegistering ? "Créer mon compte" : "Se connecter")}
+                            </button>
+                        </form>
+
+                        <div className="text-center pt-2">
+                            <button
+                                onClick={() => {
+                                    setIsRegistering(!isRegistering);
+                                    setError(null);
+                                }}
+                                className="text-sm text-ink-light hover:text-sage transition-colors"
+                            >
+                                {isRegistering ? "Déjà un compte ? Connectez-vous" : "Pas encore de compte ? Inscrivez-vous"}
                             </button>
                         </div>
                     </div>

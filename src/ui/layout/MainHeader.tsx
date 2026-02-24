@@ -46,10 +46,10 @@ export default function Header() {
                             <>
                                 {user ? (
                                     <>
-                                        <div className="flex items-center gap-2 md:gap-3 pr-2 md:pr-4 border-r border-paper-dark">
+                                        <Link href="/profile" className="flex items-center gap-2 md:gap-3 pr-2 md:pr-4 border-r border-paper-dark hover:opacity-80 transition-opacity">
                                             <img src={user.photoURL || ""} alt="" className="size-7 md:size-8 rounded-full border border-black/5" />
                                             <span className="text-xs font-medium text-ink-light hidden lg:block">{user.displayName}</span>
-                                        </div>
+                                        </Link>
                                         <button
                                             onClick={handleLogout}
                                             className="text-xs md:text-sm font-light text-ink-light hover:text-ink transition-colors hidden sm:block"
