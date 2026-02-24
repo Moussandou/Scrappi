@@ -66,12 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Handle redirect result
-        getRedirectResult(auth).catch(e => console.error("Redirect login failed:", e));
+        if (auth) {
+            getRedirectResult(auth).catch(e => console.error("Redirect login failed:", e));
+        }
 
         return () => unsubscribe();
     }, []);
 
     const loginWithGoogle = async () => {
+        if (!auth) throw new Error("Firebase Auth is not initialized. Check your environment variables.");
         const provider = new GoogleAuthProvider();
         try {
             // Switch to redirect mode for better universal support (bypass popup blockers)
@@ -83,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithEmail = async (email: string, password: string) => {
+        if (!auth) throw new Error("Firebase Auth is not initialized.");
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
@@ -92,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const registerWithEmail = async (email: string, password: string) => {
+        if (!auth) throw new Error("Firebase Auth is not initialized.");
         try {
             await createUserWithEmailAndPassword(auth, email, password);
         } catch (error) {
