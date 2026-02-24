@@ -88,7 +88,7 @@ export default function FloatingContextHUD({
     };
 
     return (
-        <div className="fixed left-1/2 -translate-x-1/2 bottom-32 z-[100] transition-all animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-32 z-[100] transition-all animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
             <div className="bg-white/90 backdrop-blur-xl border border-black/5 shadow-2xl rounded-2xl p-2 flex items-center gap-1.5 pointer-events-auto">
 
                 {/* Z-Index Controls */}

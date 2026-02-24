@@ -706,7 +706,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
 
 
-            <div className="relative z-50 flex flex-col h-screen pointer-events-none">
+            <div className="fixed inset-0 z-50 pointer-events-none">
                 <EditorHeader
                     scrapbook={scrapbook}
                     isEditingTitle={isEditingTitle}
@@ -727,7 +727,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     logout={logout}
                 />
 
-                <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none">
                     <div className="flex-1 flex items-start justify-start gap-4 px-8 mt-4">
                         <Toolbar
                             activeTool={activeTool}
@@ -805,18 +805,19 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                         />
                     </div>
 
-                    <div className="pointer-events-auto p-8 flex justify-end items-center gap-3">
-                        <div className="relative" ref={helpRef}>
+                    {/* Bottom Right Controls (Help & Recenter) - Moved to top on mobile for visibility */}
+                    <div className="absolute top-24 md:top-auto md:bottom-8 right-4 md:right-8 pointer-events-none flex flex-col md:flex-row items-center gap-3 z-[70]">
+                        <div className="relative pointer-events-auto" ref={helpRef}>
                             <button
                                 onClick={() => setIsHelpOpen(!isHelpOpen)}
-                                className={`size-12 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center text-ink-light hover:text-ink transition-all hover:scale-110 active:scale-95 ${isHelpOpen ? 'bg-white shadow-md' : ''}`}
+                                className={`size-10 md:size-12 rounded-full bg-white/60 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center text-ink-light hover:text-ink transition-all hover:scale-110 active:scale-95 ${isHelpOpen ? 'bg-white shadow-md' : ''}`}
                                 title="Raccourcis clavier"
                             >
-                                <span className="material-symbols-outlined text-[24px]">help_outline</span>
+                                <span className="material-symbols-outlined text-[20px] md:text-[24px]">help_outline</span>
                             </button>
 
                             {isHelpOpen && (
-                                <div className="absolute bottom-14 right-0 w-64 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-black/5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 z-50">
+                                <div className="absolute bottom-12 md:bottom-14 right-0 w-64 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-black/5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 z-50">
                                     <h4 className="text-xs font-bold text-ink mb-3 uppercase tracking-wider flex items-center gap-2">
                                         <span className="material-symbols-outlined text-sm">keyboard</span>
                                         Raccourcis
@@ -845,10 +846,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
                         <button
                             onClick={handleRecenter}
-                            className="size-12 rounded-full bg-white/80 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center text-ink-light hover:text-ink hover:bg-white transition-all hover:scale-110 active:scale-95"
+                            className="size-10 md:size-12 rounded-full bg-white/80 backdrop-blur-md border border-black/5 shadow-soft flex items-center justify-center pointer-events-auto text-ink-light hover:text-ink hover:bg-white transition-all hover:scale-110 active:scale-95"
                             title="Recadrer au centre"
                         >
-                            <span className="material-symbols-outlined">center_focus_strong</span>
+                            <span className="material-symbols-outlined text-[20px] md:text-[24px]">center_focus_strong</span>
                         </button>
                     </div>
                 </div>
