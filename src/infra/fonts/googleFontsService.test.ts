@@ -1,6 +1,6 @@
 import test, { describe, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert';
-import { fetchHandwritingFonts, loadFont, isFontLoaded, _resetCache } from './googleFontsService.ts';
+import { fetchHandwritingFonts, loadFont, isFontLoaded, _resetCache } from './googleFontsService';
 
 describe('googleFontsService', () => {
     const originalApiKey = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY;
@@ -20,7 +20,7 @@ describe('googleFontsService', () => {
         };
 
         // Mock console.error to avoid cluttering test output
-        mock.method(console, 'error', () => {});
+        mock.method(console, 'error', () => { });
     });
 
     afterEach(() => {

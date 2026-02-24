@@ -44,7 +44,7 @@ describe('aggregateUsers', () => {
         coverY: 50,
         showPreview: true,
         binderColor: '#000000',
-        binderGrain: 'leather'
+        binderGrain: 0.1
       },
     ];
     const profiles = new Map<string, UserProfile>([
@@ -78,7 +78,7 @@ describe('aggregateUsers', () => {
         coverY: 50,
         showPreview: true,
         binderColor: '#000000',
-        binderGrain: 'leather'
+        binderGrain: 0.1
       },
       {
         id: 'sb2',
@@ -92,7 +92,7 @@ describe('aggregateUsers', () => {
         coverY: 50,
         showPreview: true,
         binderColor: '#000000',
-        binderGrain: 'leather'
+        binderGrain: 0.1
       },
     ];
     const profiles = new Map<string, UserProfile>([
@@ -162,7 +162,7 @@ describe('aggregateUsers', () => {
         coverY: 50,
         showPreview: true,
         binderColor: '#000000',
-        binderGrain: 'leather'
+        binderGrain: 0.1
       },
     ];
     const profiles = new Map<string, UserProfile>();
@@ -194,7 +194,7 @@ describe('aggregateUsers', () => {
         coverY: 50,
         showPreview: true,
         binderColor: '#000000',
-        binderGrain: 'leather'
+        binderGrain: 0.1
       },
     ];
     const profiles = new Map<string, UserProfile>();

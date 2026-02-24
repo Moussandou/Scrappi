@@ -13,7 +13,7 @@ export const MiniCanvasPreview: React.FC<MiniCanvasPreviewProps> = ({ scrapbookI
 
     useEffect(() => {
         let mounted = true;
-        if (isActive && scrapbookId && elements.length === 0) {
+        if (isActive && scrapbookId && elements.length === 0 && !loading) {
             setLoading(true);
             getElements(scrapbookId).then((fetchedElems) => {
                 if (mounted) {

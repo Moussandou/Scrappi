@@ -43,14 +43,11 @@ async function syncUserProfile(user: User) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!auth);
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        if (!auth) {
-            setLoading(false);
-            return;
-        }
+        if (!auth) return;
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             console.log("Auth state change:", firebaseUser ? `User ${firebaseUser.email} logged in` : "User logged out");
