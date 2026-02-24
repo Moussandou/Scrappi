@@ -14,6 +14,7 @@ export const createScrapbook = async (
     showPreview?: boolean,
     storageMode?: 'cloud' | 'local'
 ): Promise<Scrapbook> => {
+    if (!db) throw new Error("Firestore is not initialized. Check your environment variables.");
     const newDocRef = doc(collection(db, "scrapbooks"));
     const now = Timestamp.now();
     const finalStorageMode = storageMode || 'local';
@@ -52,6 +53,7 @@ export const createScrapbook = async (
 };
 
 export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
+    if (!db) throw new Error("Firestore is not initialized.");
     const q = query(
         collection(db, "scrapbooks"),
         where("userId", "==", userId),
@@ -79,6 +81,7 @@ export const getScrapbooks = async (userId: string): Promise<Scrapbook[]> => {
 };
 
 export const getScrapbook = async (id: string): Promise<Scrapbook | null> => {
+    if (!db) throw new Error("Firestore is not initialized.");
     const docRef = doc(db, "scrapbooks", id);
     const docSnap = await getDoc(docRef);
 

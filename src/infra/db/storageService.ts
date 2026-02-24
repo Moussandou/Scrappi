@@ -6,6 +6,7 @@ export const uploadImage = async (
     directory: string = "uploads",
     onProgress?: (progress: number) => void
 ): Promise<string> => {
+    if (!storage) throw new Error("Firebase Storage is not initialized.");
     return new Promise((resolve, reject) => {
         // Create a unique filename
         const filename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
