@@ -40,7 +40,7 @@ export default function ProfilePage() {
         if (!user) return;
         try {
             const fetched = await getUserSettings(user.uid);
-            if (fetched) setSettings(fetched as { defaultStorageMode: string; autoSave: boolean; theme: string });
+            if (fetched) setSettings(fetched as { defaultStorageMode: 'local' | 'cloud'; autoSave: boolean; theme: string });
         } catch {
             // Error logged in loadSettings if needed
         }
