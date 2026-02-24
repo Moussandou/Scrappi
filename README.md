@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scrappi 📖🎨
 
-## Getting Started
+Une application moderne et artistique de création de "scrapbooks" (carnets de collages) numériques, conçue avec une esthétique premium de papier texturé et une expérience utilisateur fluide.
 
-First, run the development server:
+## ✨ Caractéristiques
 
+- **Éditeur de Canvas Artistique** : Glissez-déposez des images, du texte et des éléments décoratifs.
+- **Esthétique Premium** : Design minimaliste basé sur des textures de papier, des ombres douces et une typographie soignée.
+- **Gestion Multi-Support** : Mode Cloud (Firebase) pour la synchronisation ou mode Local pour la rapidité.
+- **Authentification Hybride** : Connexion via Google (Redirect) ou par Email/Mot de passe.
+- **Profil Utilisateur** : Gestion des informations personnelles et suppression sécurisée des données.
+- **Responsive Design** : Optimisé pour PC, tablettes et mobiles avec gestes tactiles (zoom/pan).
+
+## 🚀 Technologies
+
+- **Frontend** : Next.js 15+ (App Router), React 19, Tailwind CSS.
+- **Graphismes** : Konva.js / React-Konva pour le rendu du canvas.
+- **Backend / Infrastructure** : Firebase (Auth, Firestore, Storage, Hosting).
+- **Images** : Intégration API Pixabay pour la recherche d'images.
+- **Qualité** : TypeScript, ESLint, Vitest.
+
+## 🛠 Installation et Configuration
+
+### 1. Prérequis
+- Node.js 18+
+- Un projet Firebase configuré
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Variables d'Environnement
+Créez un fichier `.env.local` à la racine et remplissez les valeurs suivantes :
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_PIXABAY_API_KEY=...
+NEXT_PUBLIC_GOOGLE_FONTS_API_KEY=...
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Lancement
+```bash
+# Mode développement
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Construction production
+npm run build
+```
 
-## Learn More
+## 📦 Déploiement
 
-To learn more about Next.js, take a look at the following resources:
+Le projet est configuré pour un déploiement automatique sur **Firebase Hosting** via GitHub Actions lors d'un push sur la branche `main`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Commandes manuelles (si besoin) :
+```bash
+firebase deploy
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📜 Licence
+Privé - Tous droits réservés.
