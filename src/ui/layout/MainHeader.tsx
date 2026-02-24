@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/infra/auth/authContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -47,7 +48,16 @@ export default function Header() {
                                 {user ? (
                                     <>
                                         <Link href="/profile" className="flex items-center gap-2 md:gap-3 pr-2 md:pr-4 border-r border-paper-dark hover:opacity-80 transition-opacity">
-                                            <img src={user.photoURL || ""} alt="" className="size-7 md:size-8 rounded-full border border-black/5" />
+                                            {user.photoURL && (
+                                                <Image
+                                                    src={user.photoURL}
+                                                    alt={user.displayName || "User"}
+                                                    width={32}
+                                                    height={32}
+                                                    className="size-7 md:size-8 rounded-full border border-black/5 object-cover"
+                                                    unoptimized
+                                                />
+                                            )}
                                             <span className="text-xs font-medium text-ink-light hidden lg:block">{user.displayName}</span>
                                         </Link>
                                         <button

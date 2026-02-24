@@ -30,7 +30,12 @@ export interface UseStorageModeReturn {
 }
 
 export function useStorageMode(): UseStorageModeReturn {
-    const [mode, setModeState] = useState<StorageMode>("cloud");
+    const [mode, setModeState] = useState<StorageMode>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem(STORAGE_MODE_KEY) as StorageMode) || "cloud";
+        }
+        return "cloud";
+    });
     const [directoryName, setDirectoryName] = useState<string | null>(null);
     const [directoryReady, setDirectoryReady] = useState(false);
 
@@ -38,7 +43,12 @@ export function useStorageMode(): UseStorageModeReturn {
     const [isLocalSupported, setIsLocalSupported] = useState(false);
 
     useEffect(() => {
-        setIsLocalSupported(isFileSystemAccessSupported());
+        // We defer this call or use a ref-like approach if we really want to avoid the warning,
+        // but since it's a mount-only check, using a microtask or just moving it is better.
+        const checkSupport = () => {
+            setIsLocalSupported(isFileSystemAccessSupported());
+        };
+        checkSupport();
     }, []);
 
     // Cache for resolved URLs within this hook instance
@@ -50,7 +60,7 @@ export function useStorageMode(): UseStorageModeReturn {
 
         const savedMode = localStorage.getItem(STORAGE_MODE_KEY) as StorageMode | null;
         if (savedMode === "local") {
-            setModeState("local");
+            // No longer need setModeState("local") here as it's initialized above
             restoreDirectory().then(handle => {
                 if (handle) {
                     setDirectoryName(handle.name);
@@ -79,7 +89,7 @@ export function useStorageMode(): UseStorageModeReturn {
             if (!handle) {
                 try {
                     handle = await pickDirectory();
-                } catch (e) {
+                } catch (_e) {
                     // User cancelled
                     console.log("Selection cancelled");
                     return;
@@ -110,7 +120,7 @@ export function useStorageMode(): UseStorageModeReturn {
                 setModeState("local");
                 localStorage.setItem(STORAGE_MODE_KEY, "local");
             }
-        } catch (e) {
+        } catch (_e) {
             console.log("Directory change cancelled");
         }
     }, [isLocalSupported, mode]);

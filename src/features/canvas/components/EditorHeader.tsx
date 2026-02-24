@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Scrapbook } from "@/domain/entities";
 
 interface EditorHeaderProps {
@@ -165,10 +166,13 @@ export default function EditorHeader({
                         title="Voir mon profil"
                     >
                         {user?.photoURL ? (
-                            <img
+                            <Image
                                 src={user.photoURL}
                                 alt={user.displayName || "User"}
+                                width={36}
+                                height={36}
                                 className="w-full h-full rounded-full object-cover"
+                                unoptimized
                             />
                         ) : (
                             <div className="w-full h-full rounded-full bg-sage/20 flex items-center justify-center text-sage font-bold text-[10px] md:text-xs">

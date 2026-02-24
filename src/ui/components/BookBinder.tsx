@@ -23,7 +23,6 @@ export const BookBinder: React.FC<BookBinderProps> = ({
     showDetails = false
 }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
 
     const handleClick = () => {
         if (!interactive || isOpen) return;

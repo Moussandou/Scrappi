@@ -117,8 +117,8 @@ export async function restoreDirectory(): Promise<FileSystemDirectoryHandle | nu
             currentDirHandle = handle;
             return handle;
         }
-    } catch (e) {
-        console.error("Failed to restore directory handle:", e);
+    } catch (_e) {
+        console.error("Failed to restore directory handle:", _e);
     }
 
     return null;
@@ -169,7 +169,6 @@ export async function saveFileLocally(
     const fileHandle = await targetDir.getFileHandle(filename, { create: true });
 
     // Write the file
-    // @ts-ignore - TypeScript might not know createWritable on FileSystemFileHandle yet
     const writable = await fileHandle.createWritable();
 
     const stream = file.stream();
@@ -192,7 +191,7 @@ export async function saveFileLocally(
         // Cleanup if write fails
         try {
             await writable.close();
-        } catch {}
+        } catch { }
         // Optionally delete the partial file
         // await targetDir.removeEntry(filename);
         throw e;
@@ -227,8 +226,8 @@ export async function resolveLocalUrl(localRef: string): Promise<string> {
         if (!part) continue;
         try {
             targetDir = await targetDir.getDirectoryHandle(part);
-        } catch (e) {
-             throw new Error(`Directory not found: ${part}`);
+        } catch (_e) {
+            throw new Error(`Directory not found: ${part}`);
         }
     }
 
@@ -241,7 +240,7 @@ export async function resolveLocalUrl(localRef: string): Promise<string> {
         // Cache it
         blobUrlCache.set(localRef, blobUrl);
         return blobUrl;
-    } catch (e) {
+    } catch (_e) {
         throw new Error(`File not found: ${filename}`);
     }
 }

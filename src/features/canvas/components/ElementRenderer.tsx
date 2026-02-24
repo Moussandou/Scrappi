@@ -131,6 +131,9 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                         height={element.height}
                         fontSize={24}
                         fontFamily={fontFamily}
+                        fontStyle={`${element.fontStyle || 'normal'} ${element.fontWeight || 'normal'}`}
+                        textDecoration={element.textDecoration || 'none'}
+                        align={element.textAlign || 'left'}
                         fill={element.strokeColor || DEFAULT_STROKE_COLOR} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
@@ -167,6 +170,10 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                                     backgroundColor: element.backgroundColor || 'var(--color-paper)',
                                     color: element.strokeColor || DEFAULT_STROKE_COLOR,
                                     fontFamily: `"${fontFamily}", cursive`,
+                                    fontWeight: element.fontWeight || 'normal',
+                                    fontStyle: element.fontStyle || 'normal',
+                                    textDecoration: element.textDecoration || 'none',
+                                    textAlign: element.textAlign || 'left' as any,
                                 }}
                             />
                         </Html>

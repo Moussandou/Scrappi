@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Scrapbook, ScrapbookConfig } from '@/domain/entities';
 import { useAuth } from '@/infra/auth/authContext';
 import { uploadImage } from '@/infra/db/storageService';
@@ -337,10 +338,13 @@ export default function ProjectModal({ isOpen, onClose, onConfirm, onDelete, ini
                                                         transform: 'translate(-50%, -50%) rotate(-1deg)',
                                                     }}
                                                 >
-                                                    <img
+                                                    <Image
                                                         src={coverUrl}
                                                         alt="Cover preview"
+                                                        width={300}
+                                                        height={400}
                                                         className="w-full h-auto block pointer-events-none rounded-[1px]"
+                                                        unoptimized
                                                     />
                                                 </div>
                                                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">

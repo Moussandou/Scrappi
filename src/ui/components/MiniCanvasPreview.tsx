@@ -14,21 +14,25 @@ export const MiniCanvasPreview: React.FC<MiniCanvasPreviewProps> = ({ scrapbookI
     useEffect(() => {
         let mounted = true;
         if (isActive && scrapbookId && elements.length === 0 && !loading) {
-            setLoading(true);
-            getElements(scrapbookId).then((fetchedElems) => {
-                if (mounted) {
-                    setElements(fetchedElems);
-                    setLoading(false);
+            const loadData = async () => {
+                setLoading(true);
+                try {
+                    const fetchedElems = await getElements(scrapbookId);
+                    if (mounted) {
+                        setElements(fetchedElems);
+                        setLoading(false);
+                    }
+                } catch (err) {
+                    console.error(`[MiniCanvasPreview] Error fetching elements:`, err);
+                    if (mounted) setLoading(false);
                 }
-            }).catch((err) => {
-                console.error(`[MiniCanvasPreview] Error fetching elements:`, err);
-                if (mounted) setLoading(false);
-            });
+            };
+            loadData();
         }
         return () => {
             mounted = false;
         };
-    }, [isActive, scrapbookId, elements.length]);
+    }, [isActive, scrapbookId, elements.length, loading]); // Removed getElements
 
     const getBoundingBox = (elements: CanvasElement[]) => {
         if (elements.length === 0) return { minX: 0, minY: 0, width: 1920, height: 1080 };

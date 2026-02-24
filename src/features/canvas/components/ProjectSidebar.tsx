@@ -31,7 +31,6 @@ export default function ProjectSidebar({
     paperColor,
     onPaperColorChange,
     storageMode,
-    isStickerTrayOpen
 }: ProjectSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showStorageWarning, setShowStorageWarning] = useState(false);
@@ -145,7 +144,7 @@ export default function ProjectSidebar({
                                             <br /><br />
                                             ✅ **Confidentialité totale** & pas de limite de taille.
                                             <br />
-                                            ❌ **Non synchronisé** : vos images ne seront pas visibles sur d'autres appareils.
+                                            ❌ **Non synchronisé** : vos images ne seront pas visibles sur d&apos;autres appareils.
                                         </p>
                                         <div className="flex gap-2">
                                             <button

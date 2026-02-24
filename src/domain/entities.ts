@@ -50,6 +50,10 @@ export interface CanvasElement {
     strokeColor?: string;
     strokeWidth?: number;
     fontFamily?: string;
+    fontWeight?: 'normal' | 'bold';
+    fontStyle?: 'normal' | 'italic';
+    textDecoration?: 'none' | 'underline';
+    textAlign?: 'left' | 'center' | 'right';
     // Video properties
     muted?: boolean;
     loop?: boolean;

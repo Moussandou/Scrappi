@@ -13,11 +13,11 @@ export default function CreditsPage() {
                 <div className="mb-16">
                     <Link href="/" className="inline-flex items-center text-sm font-medium text-ink-light hover:text-sage transition-colors mb-8 group">
                         <span className="material-symbols-outlined mr-2 text-[18px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                        Retour à l'accueil
+                        Retour à l&apos;accueil
                     </Link>
                     <h1 className="text-5xl md:text-6xl font-serif tracking-tight text-ink mb-6">Crédits</h1>
                     <p className="text-xl text-ink-light font-light max-w-2xl leading-relaxed">
-                        Ce projet n'aurait pas pu voir le jour sans une poignée d'outils incroyables et quelques nuits blanches.
+                        Ce projet n&apos;aurait pas pu voir le jour sans une poignée d&apos;outils incroyables et quelques nuits blanches.
                     </p>
                 </div>
 
@@ -27,7 +27,7 @@ export default function CreditsPage() {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-sage/5 rounded-bl-full -mr-16 -mt-16 pointer-events-none"></div>
                         <h2 className="text-sm font-bold uppercase tracking-widest text-ink mb-8 flex items-center gap-3">
                             <span className="w-8 h-px bg-sage"></span>
-                            L'Équipe
+                            L&apos;Équipe
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -90,7 +90,7 @@ export default function CreditsPage() {
                             <span className="material-symbols-outlined text-2xl text-orange-400">local_cafe</span>
                         </div>
                         <p className="font-handwriting text-3xl text-ink max-w-lg mx-auto leading-relaxed">
-                            Développé avec passion, beaucoup de café, et l'envie de redonner de la matière au digital.
+                            Développé avec passion, beaucoup de café, et l&apos;envie de redonner de la matière au digital.
                         </p>
                     </section>
                 </div>

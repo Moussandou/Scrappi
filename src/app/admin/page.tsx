@@ -14,6 +14,7 @@ import {
 import type { AdminUser } from "@/infra/db/adminService";
 import { Scrapbook } from "@/domain/entities";
 import Link from "next/link";
+import Image from "next/image";
 
 type Tab = "overview" | "users" | "scrapbooks" | "system";
 
@@ -279,7 +280,14 @@ function UsersTab({
                                 <td className="px-5 py-3">
                                     <div className="flex items-center gap-3">
                                         {u.photoURL ? (
-                                            <img src={u.photoURL} alt="" className="size-7 rounded-full object-cover" />
+                                            <Image
+                                                src={u.photoURL}
+                                                alt=""
+                                                width={28}
+                                                height={28}
+                                                className="size-7 rounded-full object-cover"
+                                                unoptimized
+                                            />
                                         ) : (
                                             <div className="size-7 rounded-full bg-sage/20 flex items-center justify-center">
                                                 <span className="material-symbols-outlined text-[14px] text-sage">person</span>

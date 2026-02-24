@@ -186,7 +186,13 @@ export const getUserSettings = async (userId: string) => {
     }
 };
 
-export const updateUserSettings = async (userId: string, settings: any) => {
+interface UserSettings {
+    defaultStorageMode?: 'local' | 'cloud';
+    autoSave?: boolean;
+    theme?: string;
+}
+
+export const updateUserSettings = async (userId: string, settings: UserSettings) => {
     if (!db) throw new Error("Firestore is not initialized.");
     const docRef = doc(db, "users", userId, "config", "settings");
     await setDoc(docRef, settings, { merge: true });

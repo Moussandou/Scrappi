@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { CanvasElement } from "@/domain/entities";
-import { TOOL_HUD_COLORS, DEFAULT_FONT } from "../constants";
+import { DEFAULT_FONT } from "../constants";
 import { fetchHandwritingFonts, loadFont, loadFonts, GoogleFont } from "@/infra/fonts/googleFontsService";
 
 interface FloatingContextHUDProps {
@@ -33,7 +33,6 @@ export default function FloatingContextHUD({
     const [fontPickerOpen, setFontPickerOpen] = useState(false);
     const [fonts, setFonts] = useState<GoogleFont[]>([]);
     const [fontSearch, setFontSearch] = useState("");
-    const [fontsLoading, setFontsLoading] = useState(false);
     const fontPickerRef = useRef<HTMLDivElement>(null);
 
     // Close font picker on click outside
@@ -68,11 +67,9 @@ export default function FloatingContextHUD({
     const openFontPicker = async () => {
         setFontPickerOpen(true);
         if (fonts.length === 0) {
-            setFontsLoading(true);
             const result = await fetchHandwritingFonts();
             setFonts(result);
-            setFontsLoading(false);
-            loadFonts(result.slice(0, 20).map(f => f.family));
+            loadFonts(result.slice(0, 20).map((f: GoogleFont) => f.family));
         }
     };
 
@@ -118,40 +115,87 @@ export default function FloatingContextHUD({
 
                 {/* Font Picker */}
                 {showFont && (
-                    <div className="relative border-r border-black/5 pr-2 mr-1" ref={fontPickerRef}>
-                        <button
-                            onClick={fontPickerOpen ? () => setFontPickerOpen(false) : openFontPicker}
-                            className="h-8 px-3 rounded-xl bg-black/5 hover:bg-black/10 transition-all text-[11px] font-bold text-ink flex items-center gap-2 min-w-[100px]"
-                            style={{ fontFamily: `"${currentFont}", cursive` }}
-                        >
-                            <span className="truncate">{currentFont}</span>
-                            <span className="material-symbols-outlined text-[14px]">expand_more</span>
-                        </button>
+                    <div className="flex items-center border-r border-black/5 pr-2 mr-1 gap-1">
+                        <div className="relative" ref={fontPickerRef}>
+                            <button
+                                onClick={fontPickerOpen ? () => setFontPickerOpen(false) : openFontPicker}
+                                className="h-8 px-3 rounded-xl bg-black/5 hover:bg-black/10 transition-all text-[11px] font-bold text-ink flex items-center gap-2 min-w-[100px]"
+                                style={{ fontFamily: `"${currentFont}", cursive` }}
+                            >
+                                <span className="truncate">{currentFont}</span>
+                                <span className="material-symbols-outlined text-[14px]">expand_more</span>
+                            </button>
 
-                        {fontPickerOpen && (
-                            <div className="absolute bottom-full left-0 mb-3 w-48 bg-white/95 backdrop-blur-xl rounded-2xl border border-black/5 shadow-2xl p-2 flex flex-col gap-1 z-[101] max-h-[300px]">
-                                <input
-                                    type="text"
-                                    placeholder="Chercher..."
-                                    value={fontSearch}
-                                    onChange={(e) => setFontSearch(e.target.value)}
-                                    className="w-full px-2 py-1.5 text-xs border border-paper-dark rounded-xl bg-paper/30 outline-none focus:border-sage transition-colors mb-1"
-                                    autoFocus
-                                />
-                                <div className="overflow-y-auto flex flex-col gap-0.5 max-h-[240px] scrollbar-thin">
-                                    {filteredFonts.map(font => (
-                                        <button
-                                            key={font.family}
-                                            onClick={() => selectFont(font.family)}
-                                            className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${currentFont === font.family ? 'bg-sage/10 text-sage font-semibold' : 'hover:bg-paper/60 text-ink'}`}
-                                            style={{ fontFamily: `"${font.family}", cursive` }}
-                                        >
-                                            {font.family}
-                                        </button>
-                                    ))}
+                            {fontPickerOpen && (
+                                <div className="absolute bottom-full left-0 mb-3 w-48 bg-white/95 backdrop-blur-xl rounded-2xl border border-black/5 shadow-2xl p-2 flex flex-col gap-1 z-[101] max-h-[300px]">
+                                    <input
+                                        type="text"
+                                        placeholder="Chercher..."
+                                        value={fontSearch}
+                                        onChange={(e) => setFontSearch(e.target.value)}
+                                        className="w-full px-2 py-1.5 text-xs border border-paper-dark rounded-xl bg-paper/30 outline-none focus:border-sage transition-colors mb-1"
+                                        autoFocus
+                                    />
+                                    <div className="overflow-y-auto flex flex-col gap-0.5 max-h-[240px] scrollbar-thin">
+                                        {filteredFonts.map(font => (
+                                            <button
+                                                key={font.family}
+                                                onClick={() => selectFont(font.family)}
+                                                className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${currentFont === font.family ? 'bg-sage/10 text-sage font-semibold' : 'hover:bg-paper/60 text-ink'}`}
+                                                style={{ fontFamily: `"${font.family}", cursive` }}
+                                            >
+                                                {font.family}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+
+                        {/* Formatting Controls */}
+                        <div className="flex items-center gap-0.5 bg-black/5 rounded-xl p-0.5 ml-1">
+                            {selectedElements[0] && (
+                                <>
+                                    <button
+                                        onClick={() => onUpdateElement?.(selectedElements[0].id, { fontWeight: selectedElements[0].fontWeight === 'bold' ? 'normal' : 'bold' })}
+                                        className={`size-7 rounded-lg flex items-center justify-center transition-all ${selectedElements[0].fontWeight === 'bold' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'}`}
+                                        title="Gras"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">format_bold</span>
+                                    </button>
+                                    <button
+                                        onClick={() => onUpdateElement?.(selectedElements[0].id, { fontStyle: selectedElements[0].fontStyle === 'italic' ? 'normal' : 'italic' })}
+                                        className={`size-7 rounded-lg flex items-center justify-center transition-all ${selectedElements[0].fontStyle === 'italic' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'}`}
+                                        title="Italique"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">format_italic</span>
+                                    </button>
+                                    <button
+                                        onClick={() => onUpdateElement?.(selectedElements[0].id, { textDecoration: selectedElements[0].textDecoration === 'underline' ? 'none' : 'underline' })}
+                                        className={`size-7 rounded-lg flex items-center justify-center transition-all ${selectedElements[0].textDecoration === 'underline' ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink'}`}
+                                        title="Souligné"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">format_underlined</span>
+                                    </button>
+                                    <div className="w-[1px] h-4 bg-black/10 mx-0.5" />
+                                    <button
+                                        onClick={() => {
+                                            const alignments: ('left' | 'center' | 'right')[] = ['left', 'center', 'right'];
+                                            const current = selectedElements[0].textAlign || 'left';
+                                            const next = alignments[(alignments.indexOf(current) + 1) % alignments.length];
+                                            onUpdateElement?.(selectedElements[0].id, { textAlign: next });
+                                        }}
+                                        className="size-7 rounded-lg flex items-center justify-center transition-all text-ink-light hover:text-ink"
+                                        title="Alignement"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">
+                                            {selectedElements[0].textAlign === 'center' ? 'format_align_center' :
+                                                selectedElements[0].textAlign === 'right' ? 'format_align_right' : 'format_align_left'}
+                                        </span>
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
 

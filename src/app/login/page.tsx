@@ -45,7 +45,8 @@ export default function LoginPage() {
             } else {
                 await loginWithEmail(email, password);
             }
-        } catch (error: any) {
+        } catch (e: unknown) {
+            const error = e as { code?: string };
             console.error(error);
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 setError("Email ou mot de passe incorrect.");

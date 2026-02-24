@@ -76,9 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log("Attempting Google Login (Popup)...");
             const result = await signInWithPopup(auth, provider);
             console.log("Google Login success:", result.user.email);
-        } catch (error: any) {
-            console.error("Google Login failure:", error.code, error.message);
-            if (error.code === 'auth/popup-blocked') {
+        } catch (error: unknown) {
+            const firebaseError = error as { code?: string; message?: string };
+            console.error("Google Login failure:", firebaseError.code, firebaseError.message);
+            if (firebaseError.code === 'auth/popup-blocked') {
                 throw new Error("Le bloqueur de fenêtres empêche la connexion Google. Veuillez l'autoriser.");
             }
             throw error;
@@ -124,9 +125,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await user.delete();
 
             // Note: Firebase delete() automatically signs out on success
-        } catch (error: any) {
-            console.error("Account deletion failed:", error);
-            if (error.code === 'auth/requires-recent-login') {
+        } catch (error: unknown) {
+            const firebaseError = error as { code?: string; message?: string };
+            console.error("Account deletion failed:", firebaseError);
+            if (firebaseError.code === 'auth/requires-recent-login') {
                 throw new Error("REAUTH_REQUIRED");
             }
             throw error;

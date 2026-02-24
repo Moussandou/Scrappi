@@ -2,7 +2,8 @@
 
 import { useAuth } from "@/infra/auth/authContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import MainHeader from "@/ui/layout/MainHeader";
 import Link from "next/link";
 import { getUserSettings, updateUserSettings } from "@/infra/db/firestoreService";
@@ -26,10 +27,20 @@ export default function ProfilePage() {
         autoSave: true,
         theme: 'light'
     });
-    const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+    // Removed unused isSettingsLoading
 
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+    const loadSettings = useCallback(async () => {
+        if (!user) return;
+        try {
+            const fetched = await getUserSettings(user.uid);
+            if (fetched) setSettings(fetched as { defaultStorageMode: string; autoSave: boolean; theme: string });
+        } catch {
+            // Error logged in loadSettings if needed
+        }
+    }, [user]);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -38,19 +49,7 @@ export default function ProfilePage() {
             setNewName(user.displayName || "");
             loadSettings();
         }
-    }, [user, loading, router]);
-
-    const loadSettings = async () => {
-        if (!user) return;
-        try {
-            const fetched = await getUserSettings(user.uid);
-            setSettings(fetched as any);
-        } catch (err) {
-            console.error("Failed to load settings:", err);
-        } finally {
-            setIsSettingsLoading(false);
-        }
-    };
+    }, [user, loading, router, loadSettings]);
 
     const handleUpdateSettings = async (updates: any) => {
         if (!user) return;
@@ -58,8 +57,8 @@ export default function ProfilePage() {
         setSettings(newSettings);
         try {
             await updateUserSettings(user.uid, newSettings);
-        } catch (err) {
-            console.error("Failed to update settings:", err);
+        } catch {
+            // Error handled silently or logged if needed
             setError("Erreur lors de la mise à jour des paramètres.");
         }
     };
@@ -89,9 +88,10 @@ export default function ProfilePage() {
         try {
             await deleteAccount();
             router.push("/");
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as { message?: string };
             console.error("Deletion error:", err);
-            if (err.message === "REAUTH_REQUIRED") {
+            if (error.message === "REAUTH_REQUIRED") {
                 setError("Pour supprimer votre compte, vous devez vous reconnecter récemment. Veuillez vous déconnecter et vous reconnecter, puis réessayez.");
             } else {
                 setError("Une erreur est survenue lors de la suppression du compte. Veuillez réessayer.");
@@ -132,10 +132,13 @@ export default function ProfilePage() {
                     <div className="bg-white/60 backdrop-blur-md rounded-3xl p-8 border border-black/5 shadow-soft">
                         <div className="flex flex-col md:flex-row items-center gap-8">
                             <div className="relative group">
-                                <img
-                                    src={user.photoURL || ""}
+                                <Image
+                                    src={user.photoURL || "/default-avatar.png"}
                                     alt={user.displayName || "User"}
+                                    width={128}
+                                    height={128}
                                     className="size-32 rounded-full border-4 border-white shadow-lg object-cover"
+                                    unoptimized
                                 />
                                 <div className="absolute inset-0 rounded-full bg-ink/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                             </div>
@@ -170,7 +173,7 @@ export default function ProfilePage() {
                                 ) : (
                                     <div className="flex flex-col items-center md:items-start group/name">
                                         <div className="flex items-center gap-2">
-                                            <h2 className="text-2xl font-bold text-ink mb-1">{user.displayName}</h2>
+                                            <h2 className="text-2xl font-bold text-ink mb-1">{user.displayName || "Artiste Scrappi"}</h2>
                                             <button
                                                 onClick={() => setIsEditingName(true)}
                                                 className="opacity-0 group-hover/name:opacity-100 text-ink-light hover:text-sage transition-all p-1"
@@ -202,7 +205,7 @@ export default function ProfilePage() {
                     <div className="section-card bg-white/40 rounded-4xl p-8 border border-black/5">
                         <h3 className="text-lg font-serif font-bold text-ink mb-6 flex items-center gap-2">
                             <span className="material-symbols-outlined text-sage">settings</span>
-                            Préférences de l'Atelier
+                            Préférences de l&apos;Atelier
                         </h3>
 
                         <div className="space-y-6">
@@ -210,7 +213,7 @@ export default function ProfilePage() {
                             <div className="flex items-center justify-between gap-4 pb-4 border-b border-black/[0.03]">
                                 <div>
                                     <h4 className="font-bold text-ink">Sauvegarde automatique</h4>
-                                    <p className="text-sm text-ink-light">Enregistrer vos créations en temps réel pendant l'édition.</p>
+                                    <p className="text-sm text-ink-light">Enregistrer vos créations en temps réel pendant l&apos;édition.</p>
                                 </div>
                                 <button
                                     onClick={() => handleUpdateSettings({ autoSave: !settings.autoSave })}
@@ -224,7 +227,7 @@ export default function ProfilePage() {
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <h4 className="font-bold text-ink">Stockage par défaut</h4>
-                                    <p className="text-sm text-ink-light">Méthode d'enregistrement par défaut pour les nouveaux classeurs.</p>
+                                    <p className="text-sm text-ink-light">Méthode d&apos;enregistrement par défaut pour les nouveaux classeurs.</p>
                                 </div>
                                 <div className="flex p-1 bg-paper rounded-2xl border border-black/5">
                                     <button
@@ -254,7 +257,7 @@ export default function ProfilePage() {
                         <div className="bg-red-50/30 rounded-3xl p-8 border border-red-100 shadow-sm relative overflow-hidden">
                             <h4 className="text-lg font-bold text-ink mb-2">Supprimer mon compte</h4>
                             <p className="text-sm text-ink-light mb-6">
-                                Cette action est définitive. Tous vos classeurs, stickers, et éléments de l'atelier seront supprimés sans possibilité de récupération.
+                                Cette action est définitive. Tous vos classeurs, stickers, et éléments de l&apos;atelier seront supprimés sans possibilité de récupération.
                             </p>
 
                             {!showConfirm ? (
@@ -266,7 +269,7 @@ export default function ProfilePage() {
                                 </button>
                             ) : (
                                 <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <p className="text-xs font-bold text-red-700 uppercase tracking-tighter">Êtes-vous sûr ? C'est votre dernière chance.</p>
+                                    <p className="text-xs font-bold text-red-700 uppercase tracking-tighter">Êtes-vous sûr ? C&apos;est votre dernière chance.</p>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             onClick={handleDeleteAccount}

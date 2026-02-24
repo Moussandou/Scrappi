@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { CanvasElement, Scrapbook } from "@/domain/entities";
@@ -15,7 +15,7 @@ import FloatingContextHUD from "./components/FloatingContextHUD";
 import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
-import { PaperSelector, PaperType } from "./components/PaperSelector";
+import { PaperType } from "./components/PaperSelector";
 import { resizeDimensions } from "./utils";
 
 // Dynamic import for Konva canvas to avoid SSR issues
@@ -26,19 +26,22 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const { user, loading: authLoading, logout } = useAuth();
     const [history, setHistory] = useState<CanvasElement[][]>([[]]);
     const [historyStep, setHistoryStep] = useState(0);
-    const elements = history[historyStep] || [];
+    const elements = useMemo(() => history[historyStep] || [], [history, historyStep]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-    const setElements = (action: CanvasElement[] | ((prev: CanvasElement[]) => CanvasElement[])) => {
-        const currentState = history[historyStep] || [];
+    const setElements = useCallback((action: CanvasElement[] | ((prev: CanvasElement[]) => CanvasElement[])) => {
+        const currentState = elements;
         const nextState = typeof action === 'function' ? action(currentState) : action;
 
         if (JSON.stringify(currentState) === JSON.stringify(nextState)) return;
 
-        const newHistory = history.slice(0, historyStep + 1);
-        newHistory.push(nextState);
-        setHistory(newHistory);
-        setHistoryStep(newHistory.length - 1);
-    };
+        setHistory(prev => {
+            const nextHistory = prev.slice(0, historyStep + 1);
+            nextHistory.push(nextState);
+            return nextHistory;
+        });
+        setHistoryStep(historyStep + 1);
+    }, [elements, historyStep]);
 
     // Auth protection
     useEffect(() => {
@@ -47,17 +50,17 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         }
     }, [user, authLoading, router]);
 
-    const handleUndo = () => {
+    const handleUndo = useCallback(() => {
         if (historyStep > 0) {
             setHistoryStep(historyStep - 1);
         }
-    };
+    }, [historyStep]);
 
-    const handleRedo = () => {
+    const handleRedo = useCallback(() => {
         if (historyStep < history.length - 1) {
             setHistoryStep(historyStep + 1);
         }
-    };
+    }, [historyStep, history.length]);
 
     const storageMode = useStorageMode();
 
@@ -70,7 +73,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [uploadLabel, setUploadLabel] = useState('');
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState("");
 
@@ -227,7 +229,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             document.removeEventListener("mousedown", handleClickOutsideHelp);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isHelpOpen]);
+    }, [isHelpOpen, handleUndo, handleRedo, setElements]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -593,10 +595,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 const maxIdx = Math.max(...selectedIndices);
                 if (maxIdx < next.length - 1) {
                     // Pull the element at maxIdx + 1 down, move selection up
-                    const targetIdx = maxIdx + 1;
-                    const itemToShift = next[targetIdx];
                     const selectedSet = new Set(selectedIdsRef.current);
-                    const remaining = next.filter((el, i) => !selectedSet.has(el.id));
 
                     // Insert the target item before the selection in the new order
                     // Actually, simpler: find the next non-selected index

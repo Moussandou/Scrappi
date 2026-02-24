@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
-
+export function middleware(_request: NextRequest) {
     // We'll use a session cookie to check for auth status in middleware
     // For now, since Firebase is client-side, we'll handle redirects in the layout or pages
     // But standard practice is to use a cookie.

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/infra/auth/authContext";
 import MainHeader from "@/ui/layout/MainHeader";
@@ -22,7 +23,16 @@ const renderMarqueeRow = (reverse = false) => (
   <div className={`flex gap-4 md:gap-8 whitespace-nowrap opacity-[0.15] ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} w-max py-4`}>
     {[...dummyBinders, ...dummyBinders, ...dummyBinders, ...dummyBinders].map((b, i) => (
       <div key={i} className="w-24 md:w-32 lg:w-40 xl:w-48 aspect-[3/4] rounded-r-lg rounded-l-sm shadow-[0_10px_20px_rgba(0,0,0,0.2)] border-l-[6px] border-black/30 relative overflow-hidden shrink-0" style={{ backgroundColor: b.c }}>
-        {b.i && <img src={b.i} className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-multiply" alt="" />}
+        {b.i && (
+          <Image
+            src={b.i}
+            className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-multiply"
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100px, 150px"
+            unoptimized
+          />
+        )}
         <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-black/20 to-transparent" />
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/leather.png')] opacity-20 mix-blend-overlay"></div>
       </div>
@@ -143,7 +153,13 @@ export default function LandingPage() {
                         </div>
                         <div className="absolute bottom-4 md:bottom-8 right-6 md:right-12 w-36 md:w-52 lg:w-64 h-40 md:h-56 lg:h-72 bg-white shadow-lg rotate-[6deg] p-1 md:p-2 border border-black/5 transition-transform hover:scale-105 hover:rotate-2 cursor-pointer z-10">
                           <div className="w-full h-full bg-gray-100 overflow-hidden relative">
-                            <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&fit=crop" className="w-full h-full object-cover sepia-[.2]" alt="" />
+                            <Image
+                              src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&fit=crop"
+                              className="w-full h-full object-cover sepia-[.2]"
+                              alt=""
+                              fill
+                              unoptimized
+                            />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                           </div>
                         </div>
@@ -247,9 +263,19 @@ export default function LandingPage() {
                           <button
                             key={idx}
                             onClick={() => setGalleryBinderImage(img)}
-                            className={`w-11 h-11 rounded-xl overflow-hidden transition-all bg-paper-dark flex items-center justify-center ${galleryBinderImage === img ? 'ring-2 ring-sage scale-105 shadow-md' : 'hover:opacity-100 hover:scale-105 opacity-80 shadow-sm'}`}
+                            className={`w-11 h-11 rounded-xl overflow-hidden transition-all bg-paper-dark flex items-center justify-center relative ${galleryBinderImage === img ? 'ring-2 ring-sage scale-105 shadow-md' : 'hover:opacity-100 hover:scale-105 opacity-80 shadow-sm'}`}
                           >
-                            {img ? <img src={img} alt="texture" className="w-full h-full object-cover" /> : <span className="material-symbols-outlined text-ink/30 text-[18px]">block</span>}
+                            {img ? (
+                              <Image
+                                src={img}
+                                alt="texture"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <span className="material-symbols-outlined text-ink/30 text-[18px]">block</span>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -344,9 +370,15 @@ export default function LandingPage() {
                 <div className="order-1 lg:order-2 relative h-[400px] md:h-[600px] w-full bg-paper rounded-2xl overflow-hidden border border-paper-dark shadow-inner group">
                   <div className="absolute inset-0 sketchbook-grid opacity-50"></div>
 
-                  <div className="absolute top-[10%] left-[15%] w-72 h-44 bg-white p-3 shadow-2xl rotate-[-3deg] transition-all duration-700 hover:rotate-0 hover:scale-105 hover:shadow-float z-10 cursor-move border border-black/5">
-                    <img alt="Moodboard texture" className="w-full h-full object-cover filter sepia-[.1]" src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=600&fit=crop" />
-                    <div className="absolute -top-3 left-6 w-16 h-8 bg-white/70 backdrop-blur-sm rotate-[-8deg] shadow-sm flex items-center justify-center"><div className="w-12 h-4 bg-gray-200/50"></div></div>
+                  <div className="absolute top-[10%] left-[15%] w-72 h-44 bg-white p-3 shadow-2xl rotate-[-3deg] transition-all duration-700 hover:rotate-0 hover:scale-105 hover:shadow-float z-10 cursor-move border border-black/5 relative">
+                    <Image
+                      alt="Moodboard texture"
+                      className="object-cover filter sepia-[.1]"
+                      src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=600&fit=crop"
+                      fill
+                      unoptimized
+                    />
+                    <div className="absolute -top-3 left-6 w-16 h-8 bg-white/70 backdrop-blur-sm rotate-[-8deg] shadow-sm flex items-center justify-center z-10"><div className="w-12 h-4 bg-gray-200/50"></div></div>
                   </div>
 
                   <div className="absolute top-[40%] right-[10%] w-60 h-auto bg-[#e8f5e9] p-5 shadow-xl rotate-[6deg] transition-all duration-500 hover:rotate-[3deg] hover:scale-105 z-20 cursor-move border border-[#c8e6c9]">
@@ -438,7 +470,13 @@ export default function LandingPage() {
                     <p className="text-sm text-ink-light">Scans haute résolution de papiers rares : Canson, aquarelle, Kraft, et plus encore.</p>
                   </div>
                   <div className="mt-8 relative h-32 w-full rounded-lg overflow-hidden shadow-inner border border-gray-200/50">
-                    <img alt="Texture papier zoom" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc8tAkaINvGiyMendbdq3b6OSlE4swTgc5hwDULXgMHIdqLHclEpDw7SOjcwXYirOMFeYJ6PdZ2Pyk8PJJlMxXUdEE6jTcU_0Di2UkDDmjTlqly1AGyTnZSjqdz6b_r6GYqIUWw-s8e_pxGjF0pHT7FnswGaEgbquvmFhrZYXh5fr-5NxFybGY6VLFvYIxFzs_MQUvDGklPHAmXYshfXuxCeUIs5aNq4KGQ3vA10ocdxNEzXvufFXWg1qnuyXQkUNzr5oz5hjspyJK" />
+                    <Image
+                      alt="Texture papier zoom"
+                      className="object-cover"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc8tAkaINvGiyMendbdq3b6OSlE4swTgc5hwDULXgMHIdqLHclEpDw7SOjcwXYirOMFeYJ6PdZ2Pyk8PJJlMxXUdEE6jTcU_0Di2UkDDmjTlqly1AGyTnZSjqdz6b_r6GYqIUWw-s8e_pxGjF0pHT7FnswGaEgbquvmFhrZYXh5fr-5NxFybGY6VLFvYIxFzs_MQUvDGklPHAmXYshfXuxCeUIs5aNq4KGQ3vA10ocdxNEzXvufFXWg1qnuyXQkUNzr5oz5hjspyJK"
+                      fill
+                      unoptimized
+                    />
                   </div>
                 </div>
               </div>
@@ -487,8 +525,14 @@ export default function LandingPage() {
                     <div className="bg-yellow-200 px-4 py-1 rounded-full shadow-md rotate-[3deg] hover:rotate-0 transition-transform duration-300 border border-yellow-300/50">
                       <span className="font-handwriting font-bold text-yellow-800">Important !</span>
                     </div>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg rotate-12 hover:rotate-0 transition-transform duration-300">
-                      <img alt="texture" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W0K44iD_5eD8yWfQF5Y_u1H4Io_QM8igfS66uhHTf-AEtIglT7SMXfKDHXSDD2V4bEhJPDqQnddsNl9rRBLTFWdSEv-a4haCU156Lf7xsBaGCtFkKGZzyYmd-ttXh5MxGZKRimA8U32wBqun8UgaX5wDLcaYfEUf71SEiWHQP_mC8ghWZbLU4hOSrluWGOd0sicF1EwXCgmQyTJ3igVsCnOavh4a6EyiwD4diYZc9tv2W1-O8k47ldf57kHrbkZNJHGDVOl2ew9" />
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg rotate-12 hover:rotate-0 transition-transform duration-300 relative">
+                      <Image
+                        alt="texture"
+                        className="object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W0K44iD_5eD8yWfQF5Y_u1H4Io_QM8igfS66uhHTf-AEtIglT7SMXfKDHXSDD2V4bEhJPDqQnddsNl9rRBLTFWdSEv-a4haCU156Lf7xsBaGCtFkKGZzyYmd-ttXh5MxGZKRimA8U32wBqun8UgaX5wDLcaYfEUf71SEiWHQP_mC8ghWZbLU4hOSrluWGOd0sicF1EwXCgmQyTJ3igVsCnOavh4a6EyiwD4diYZc9tv2W1-O8k47ldf57kHrbkZNJHGDVOl2ew9"
+                        fill
+                        unoptimized
+                      />
                     </div>
                     <div className="bg-blue-100 p-2 rounded shadow-md rotate-[-3deg] hover:rotate-0 transition-transform duration-300">
                       <span className="material-symbols-outlined text-4xl text-blue-400">flight</span>

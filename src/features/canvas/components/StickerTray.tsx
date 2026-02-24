@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { pixabayService, PixabayImage } from "@/infra/pixabay/pixabayService";
 
 interface StickerTrayProps {
@@ -92,12 +93,13 @@ export default function StickerTray({ isOpen, onClose, onSelectSticker }: Sticke
                                 className="aspect-square relative rounded-xl border border-black/5 bg-white shadow-soft hover:shadow-md hover:scale-105 transition-all overflow-hidden group p-2"
                                 title={img.tags}
                             >
-                                <img
+                                <Image
                                     src={img.previewURL}
                                     alt={img.tags}
+                                    width={150}
+                                    height={150}
                                     className="w-full h-full object-contain"
-                                    loading="lazy"
-                                    crossOrigin="anonymous"
+                                    unoptimized
                                 />
                                 <div className="absolute inset-0 bg-sage/0 group-hover:bg-sage/5 transition-colors" />
                             </button>
