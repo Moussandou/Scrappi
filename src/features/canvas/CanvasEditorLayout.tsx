@@ -28,37 +28,56 @@ import { CanvasStageRef } from "./components/CanvasStage";
 // Dynamic import for Konva canvas to avoid SSR issues
 const Canvas = dynamic(() => import("./components/CanvasStage"), { ssr: false }) as any;
 
+const EMPTY_ARRAY: any[] = [];
+const DEFAULT_POSITION = { x: 0, y: 0 };
+
+const NO_OP = () => { };
+
 export default function CanvasEditorLayout({ projectId }: { projectId: string }) {
     const router = useRouter();
     const { user, loading: authLoading, logout } = useAuth();
     const storageMode = useStorageMode();
 
     // -- Zustand Store --
-    const elements = useCanvasStore(state => state.elements);
-    const selectedIds = useCanvasStore(state => state.selectedIds);
-    const setElements = useCanvasStore(state => state.setElements);
-    const addElement = useCanvasStore(state => state.addElement);
-    const updateElement = useCanvasStore(state => state.updateElement);
-    const removeElements = useCanvasStore(state => state.removeElements);
-    const currentLastAction = useCanvasStore(state => state.lastAction);
+    // We use selectors for data to ensure reactivity
+    const elements = useCanvasStore(state => state?.elements) || EMPTY_ARRAY;
+    const selectedIds = useCanvasStore(state => state?.selectedIds) || EMPTY_ARRAY;
 
-    const activeTool = useCanvasStore(state => state.activeTool);
-    const setActiveTool = useCanvasStore(state => state.setActiveTool);
-    const activeColor = useCanvasStore(state => state.activeColor);
-    const setActiveColor = useCanvasStore(state => state.setActiveColor);
-    const activeStrokeWidth = useCanvasStore(state => state.activeStrokeWidth);
-    const setActiveStrokeWidth = useCanvasStore(state => state.setActiveStrokeWidth);
+    // Actions retrieved individually to avoid "getSnapshot" infinite loop
+    const setElements = useCanvasStore(state => state?.setElements) || NO_OP;
+    const addElement = useCanvasStore(state => state?.addElement) || NO_OP;
+    const updateElement = useCanvasStore(state => state?.updateElement) || NO_OP;
+    const removeElements = useCanvasStore(state => state?.removeElements) || NO_OP;
+    const groupElements = useCanvasStore(state => state?.groupElements) || NO_OP;
+    const ungroupElements = useCanvasStore(state => state?.ungroupElements) || NO_OP;
+    const setActiveTool = useCanvasStore(state => state?.setActiveTool) || NO_OP;
+    const setActiveColor = useCanvasStore(state => state?.setActiveColor) || NO_OP;
+    const setActiveStrokeWidth = useCanvasStore(state => state?.setActiveStrokeWidth) || NO_OP;
+    const setSelectedIds = useCanvasStore(state => state?.setSelectedIds) || NO_OP;
+    const setScale = useCanvasStore(state => state?.setScale) || NO_OP;
+    const setPosition = useCanvasStore(state => state?.setPosition) || NO_OP;
+    const resetStore = useCanvasStore(state => state?.resetStore) || NO_OP;
+    const setProjectLoading = useCanvasStore(state => state?.setProjectLoading) || NO_OP;
 
-    const scale = useCanvasStore(state => state.scale);
-    const setScale = useCanvasStore(state => state.setScale);
-    const position = useCanvasStore(state => state.position);
-    const setPosition = useCanvasStore(state => state.setPosition);
+    const currentLastAction = useCanvasStore(state => state?.lastAction);
+    const activeTool = useCanvasStore(state => state?.activeTool) || 'select';
+    const activeColor = useCanvasStore(state => state?.activeColor) || '#1a1e26';
+    const activeStrokeWidth = useCanvasStore(state => state?.activeStrokeWidth) || 2;
+    const scale = useCanvasStore(state => state?.scale) ?? 1;
+    const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
 
-    // -- Zundo history tracking --
-    const undo = useCanvasStore.temporal.getState().undo;
-    const redo = useCanvasStore.temporal.getState().redo;
-    const pastStates = useStore(useCanvasStore.temporal, (state) => state.pastStates);
-    const futureStates = useStore(useCanvasStore.temporal, (state) => state.futureStates);
+    // -- History tracking --
+    const undo = useCanvasStore(state => state?.undo) || NO_OP;
+    const redo = useCanvasStore(state => state?.redo) || NO_OP;
+    const pastStates = useCanvasStore(state => state?.pastStates) || EMPTY_ARRAY;
+    const futureStates = useCanvasStore(state => state?.futureStates) || EMPTY_ARRAY;
+    const clearHistory = useCanvasStore(state => state?.clearHistory) || NO_OP;
+
+    useEffect(() => {
+        if (pastStates.length > 0) {
+            console.log(`History Step ${pastStates.length}/${pastStates.length + futureStates.length + 1} | Last action: ${currentLastAction}`);
+        }
+    }, [pastStates, futureStates, currentLastAction]);
 
     // -- Local State --
     const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
@@ -76,6 +95,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const helpRef = useRef<HTMLDivElement>(null);
     const lastSavedElementsRef = useRef<CanvasElement[]>([]);
     const stageRef = useRef<CanvasStageRef>(null);
+    const inFlightRef = useRef<string | boolean>(false);
 
     // -- Custom Hooks --
     useCanvasShortcuts(isHelpOpen, isEditingTitle, helpRef, setIsHelpOpen);
@@ -108,59 +128,75 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     // Data Loading
     useEffect(() => {
         async function loadData() {
+            // Use projectId as unique loader key
+            if (inFlightRef.current === projectId) return;
+            inFlightRef.current = projectId as string | boolean;
+
             setLoading(true);
+            const store = useCanvasStore.getState();
+            store.setProjectLoading(true);
+
             try {
+                // Reset store completely and clear history
+                store.resetStore();
+                store.clearHistory();
+
                 const fetchedScrapbook = await getScrapbook(projectId);
                 setScrapbook(fetchedScrapbook);
                 if (fetchedScrapbook?.backgroundColor) setPaperColor(fetchedScrapbook.backgroundColor);
                 if (fetchedScrapbook?.paperType) setPaperType(fetchedScrapbook.paperType as PaperType);
 
                 const fetchedElements = await getElements(projectId);
-                setElements(fetchedElements);
+                store.setElements(fetchedElements);
                 lastSavedElementsRef.current = JSON.parse(JSON.stringify(fetchedElements));
 
-                // Clear initial history from Zundo after data load
-                useCanvasStore.temporal.getState().clear();
-
                 // Intelligent centering
-                setTimeout(() => {
-                    if (fetchedElements.length > 0) {
-                        const viewportWidth = window.innerWidth;
-                        const viewportHeight = window.innerHeight;
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
 
-                        const minX = Math.min(...fetchedElements.map(el => el.x));
-                        const minY = Math.min(...fetchedElements.map(el => el.y));
-                        const maxX = Math.max(...fetchedElements.map(el => el.x + (el.width || 0)));
-                        const maxY = Math.max(...fetchedElements.map(el => el.y + (el.height || 0)));
+                if (fetchedElements.length > 0) {
+                    const minX = Math.min(...fetchedElements.map(el => el.x));
+                    const minY = Math.min(...fetchedElements.map(el => el.y));
+                    const maxX = Math.max(...fetchedElements.map(el => el.x + (el.width || 0)));
+                    const maxY = Math.max(...fetchedElements.map(el => el.y + (el.height || 0)));
 
-                        const contentWidth = maxX - minX;
-                        const contentHeight = maxY - minY;
+                    const contentWidth = maxX - minX;
+                    const contentHeight = maxY - minY;
 
-                        const padding = 40;
-                        const scaleX = (viewportWidth - padding * 2) / contentWidth;
-                        const scaleY = (viewportHeight - padding * 2) / contentHeight;
-                        const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 1.5);
+                    const padding = 40;
+                    const scaleX = (viewportWidth - padding * 2) / contentWidth;
+                    const scaleY = (viewportHeight - padding * 2) / contentHeight;
+                    const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 1.5);
 
-                        setScale(newScale);
-                        setPosition({
-                            x: (viewportWidth / 2) - (minX + contentWidth / 2) * newScale,
-                            y: (viewportHeight / 2) - (minY + contentHeight / 2) * newScale
-                        });
-                    } else {
-                        setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-                        setScale(1);
-                    }
-                }, 50);
+                    store.setScale(newScale);
+                    store.setPosition({
+                        x: (viewportWidth / 2) - (minX + contentWidth / 2) * newScale,
+                        y: (viewportHeight / 2) - (minY + contentHeight / 2) * newScale
+                    });
+                } else {
+                    store.setPosition({ x: viewportWidth / 2, y: viewportHeight / 2 });
+                    store.setScale(1);
+                }
+
+                store.clearHistory(); // Final explicit clear to ensure no startup states recorded
+                store.setProjectLoading(false);
+
             } catch (error) {
                 console.error("Failed to load project data", error);
+                inFlightRef.current = false;
             } finally {
                 setLoading(false);
             }
         }
+
         if (projectId) {
             loadData();
         }
-    }, [projectId, setElements, setScale, setPosition]);
+
+        return () => {
+            // Optional cleanup
+        };
+    }, [projectId]); // ONLY depend on projectId
 
     const handleSave = async () => {
         setSaving(true);
@@ -450,6 +486,9 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     setTempTitle={setTempTitle}
                     setIsEditingTitle={setIsEditingTitle}
                     handleTitleUpdate={handleTitleUpdate}
+                    handleSave={handleSave}
+                    saving={saving}
+                    saveSuccess={saveSuccess}
                     handleUndo={undo}
                     handleRedo={redo}
                     historyStep={pastStates.length}
@@ -459,9 +498,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     currentLastAction={currentLastAction}
                     scale={scale}
                     setScale={setScale}
-                    handleSave={handleSave}
-                    saving={saving}
-                    saveSuccess={saveSuccess}
                     user={user}
                     logout={logout}
                     handleExport={handleExport}
@@ -555,6 +591,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 handleStrokeWidthChange={handleStrokeWidthChange}
                                 handleFontChange={handleFontChange}
                                 onDelete={() => removeElements(selectedIds)}
+                                onGroup={() => groupElements?.(selectedIds)}
+                                onUngroup={() => ungroupElements?.(selectedIds)}
                                 onMoveZ={handleMoveZ}
                                 onUpdateElement={updateElement}
                             />

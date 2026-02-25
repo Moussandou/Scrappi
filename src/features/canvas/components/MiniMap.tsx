@@ -6,11 +6,14 @@ import { useCanvasStore } from '../store/useCanvasStore';
 const MINIMAP_SIZE = 150; // Max width or height of the minimap
 const PADDING = 100; // Padding around the edges
 
+const EMPTY_ARRAY: any[] = [];
+const DEFAULT_POSITION = { x: 0, y: 0 };
+
 export default function MiniMap() {
-    const elements = useCanvasStore(state => state.elements);
-    const scale = useCanvasStore(state => state.scale);
-    const position = useCanvasStore(state => state.position);
-    const setPosition = useCanvasStore(state => state.setPosition);
+    const elements = useCanvasStore(state => state?.elements) || EMPTY_ARRAY;
+    const scale = useCanvasStore(state => state?.scale) ?? 1;
+    const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
+    const setPosition = useCanvasStore(state => state?.setPosition) || (() => { });
 
     const [viewport, setViewport] = useState({ w: 0, h: 0 });
     const minimapRef = useRef<HTMLDivElement>(null);

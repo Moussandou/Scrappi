@@ -8,12 +8,16 @@ interface StorageMode {
     uploadFile: (file: File, path: string, onProgress?: (p: number) => void) => Promise<string>;
 }
 
+const DEFAULT_POSITION = { x: 0, y: 0 };
+
+const NO_OP = () => { };
+
 export function useMediaManager(projectId: string, storageMode: StorageMode) {
-    const addElement = useCanvasStore(state => state.addElement);
-    const scale = useCanvasStore(state => state.scale);
-    const position = useCanvasStore(state => state.position);
+    const addElement = useCanvasStore(state => state?.addElement) || NO_OP;
+    const scale = useCanvasStore(state => state?.scale) ?? 1;
+    const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
     // Using useCanvasStore.getState() might be better for non-reactive reads, but this ensures reactivity when count changes.
-    const elementsCount = useCanvasStore(state => state.elements.length);
+    const elementsCount = useCanvasStore(state => state?.elements?.length) || 0;
 
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);

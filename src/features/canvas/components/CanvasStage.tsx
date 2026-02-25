@@ -14,24 +14,30 @@ export interface CanvasStageRef {
     exportToPNG: (filename: string, paperColor?: string) => void;
 }
 
+const EMPTY_ARRAY: any[] = [];
+const DEFAULT_POSITION = { x: 0, y: 0 };
+
+const NO_OP = () => { };
+
 const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     const { guidelines, setGuidelines, getSnappingOffset } = useSnapping();
-    const elements = useCanvasStore(state => state.elements);
-    const selectedIds = useCanvasStore(state => state.selectedIds);
-    const scale = useCanvasStore(state => state.scale);
-    const setScale = useCanvasStore(state => state.setScale);
-    const position = useCanvasStore(state => state.position);
-    const setPosition = useCanvasStore(state => state.setPosition);
+    const elements = useCanvasStore(state => state?.elements) || EMPTY_ARRAY;
+    const selectedIds = useCanvasStore(state => state?.selectedIds) || EMPTY_ARRAY;
+    const scale = useCanvasStore(state => state?.scale) ?? 1;
+    const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
 
-    const activeTool = useCanvasStore(state => state.activeTool);
-    const updateElement = useCanvasStore(state => state.updateElement);
-    const updateElements = useCanvasStore(state => state.updateElements);
-    const addElement = useCanvasStore(state => state.addElement);
+    // Actions retrieved individually to avoid "getSnapshot" infinite loop
+    const setScale = useCanvasStore(state => state?.setScale) || NO_OP;
+    const setPosition = useCanvasStore(state => state?.setPosition) || NO_OP;
+    const updateElement = useCanvasStore(state => state?.updateElement) || NO_OP;
+    const updateElements = useCanvasStore(state => state?.updateElements) || NO_OP;
+    const addElement = useCanvasStore(state => state?.addElement) || NO_OP;
+    const setSelectedIds = useCanvasStore(state => state?.setSelectedIds) || NO_OP;
+    const removeElements = useCanvasStore(state => state?.removeElements) || NO_OP;
 
-    const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
-    const activeColor = useCanvasStore(state => state.activeColor);
-    const activeStrokeWidth = useCanvasStore(state => state.activeStrokeWidth);
-    const removeElements = useCanvasStore(state => state.removeElements);
+    const activeTool = useCanvasStore(state => state?.activeTool) || 'select';
+    const activeColor = useCanvasStore(state => state?.activeColor) || '#000000';
+    const activeStrokeWidth = useCanvasStore(state => state?.activeStrokeWidth) || 2;
 
     const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage | null>(null);
@@ -435,6 +441,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     }, [setSelectedIds]);
 
     const handleElementChange = useCallback((id: string, newProps: Partial<CanvasElement>) => {
+        console.log("CanvasStage: handleElementChange called for", id, Object.keys(newProps));
         const currentSelectedIds = selectedIdsRef.current;
         const currentElements = elementsRef.current;
 
@@ -515,6 +522,25 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             setSelectionBox(null);
         }
     };
+
+    const handleDragStart = useCallback((id: string, e: KonvaEventObject<DragEvent>) => {
+        const currentSelected = selectedIdsRef.current;
+        if (!currentSelected.includes(id)) {
+            const el = elementsRef.current.find(e => e.id === id);
+            if (el) {
+                if (el.groupId) {
+                    const groupIds = elementsRef.current
+                        .filter(e => e.groupId === el.groupId)
+                        .map(e => e.id);
+                    setSelectedIds(groupIds);
+                    selectedIdsRef.current = groupIds;
+                } else {
+                    setSelectedIds([id]);
+                    selectedIdsRef.current = [id];
+                }
+            }
+        }
+    }, [setSelectedIds]);
 
     const handleDragMove = useCallback((id: string, e: KonvaEventObject<DragEvent>) => {
         if (!selectedIdsRef.current.includes(id)) return;
@@ -633,6 +659,18 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
 
     const visibleElements = getVisibleElements();
 
+    // Debug: track visibility issues
+    if (elements.length > 0 && visibleElements.length === 0) {
+        console.warn("CANVAS EMPTY: 5 elements in store, but 0 are visible. Viewport:", {
+            scale,
+            posX: position.x,
+            posY: position.y,
+            viewportW: dimensions.width,
+            viewportH: dimensions.height
+        });
+        if (elements[0]) console.log("Example element coords:", { x: elements[0].x, y: elements[0].y });
+    }
+
     if (dimensions.width === 0) return null;
 
     return (
@@ -671,10 +709,11 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                             element={el}
                             isSelected={selectedIds.includes(el.id)}
                             onSelect={handleSelect}
-                            onChange={handleElementChange}
+                            onChange={updateElement}
                             isDraggable={activeTool === 'select'}
-                            onNodeRegister={handleNodeRegister}
+                            onDragStart={handleDragStart}
                             onDragMove={handleDragMove}
+                            onNodeRegister={handleNodeRegister}
                         />
                     ))}
                     {guidelines.map((guide, i) => {
@@ -724,6 +763,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                             rotateAnchorOffset={40}
                             rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
                             onTransformEnd={() => {
+                                console.log("CanvasStage: Transformer.onTransformEnd fired");
                                 if (!transformerRef.current) return;
                                 const nodes = transformerRef.current.nodes();
                                 // Update all selected elements based on their new node attributes
@@ -736,6 +776,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                                         node.scaleX(1);
                                         node.scaleY(1);
 
+                                        console.log("CanvasStage: Updating element via transformer", id);
                                         updateElement(id, {
                                             x: node.x(),
                                             y: node.y(),

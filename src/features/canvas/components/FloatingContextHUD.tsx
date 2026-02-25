@@ -14,6 +14,8 @@ interface FloatingContextHUDProps {
     handleStrokeWidthChange: (width: number) => void;
     handleFontChange: (font: string) => void;
     onDelete: () => void;
+    onGroup?: () => void;
+    onUngroup?: () => void;
     onMoveZ: (direction: 'forward' | 'backward' | 'front' | 'back') => void;
     onUpdateElement?: (id: string, props: Partial<CanvasElement>) => void;
 }
@@ -27,6 +29,8 @@ export default function FloatingContextHUD({
     handleStrokeWidthChange,
     handleFontChange,
     onDelete,
+    onGroup,
+    onUngroup,
     onMoveZ,
     onUpdateElement
 }: FloatingContextHUDProps) {
@@ -88,6 +92,21 @@ export default function FloatingContextHUD({
         <div className="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-32 z-[100] transition-all animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
             <div className="bg-white/90 backdrop-blur-xl border border-black/5 shadow-2xl rounded-2xl p-2 flex items-center gap-1.5 pointer-events-auto">
 
+                {/* Grouping Controls */}
+                {(selectedElements.length > 1 || selectedElements.some(el => !!el.groupId)) && (
+                    <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
+                        {selectedElements.length > 1 && !selectedElements.every(el => !!el.groupId && el.groupId === selectedElements[0].groupId) && (
+                            <button onClick={onGroup} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-sage" title="Grouper (Ctrl+G)">
+                                <span className="material-symbols-outlined text-[18px]">group</span>
+                            </button>
+                        )}
+                        {selectedElements.some(el => !!el.groupId) && (
+                            <button onClick={onUngroup} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-red-500" title="Dégrouper (Ctrl+Shift+G)">
+                                <span className="material-symbols-outlined text-[18px]">group_off</span>
+                            </button>
+                        )}
+                    </div>
+                )}
                 {/* Z-Index Controls */}
                 <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
                     <button onClick={() => onMoveZ('front')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Premier plan">

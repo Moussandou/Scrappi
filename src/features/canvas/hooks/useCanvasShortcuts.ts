@@ -1,23 +1,27 @@
 import { useEffect, useRef } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 
+const EMPTY_ARRAY: any[] = [];
+const NO_OP = () => { };
+
 export function useCanvasShortcuts(
     isHelpOpen: boolean,
     isEditingTitle: boolean,
     helpRef: React.RefObject<HTMLDivElement | null>,
     setIsHelpOpen: (isOpen: boolean) => void
 ) {
-    const elements = useCanvasStore(state => state.elements);
-    const selectedIds = useCanvasStore(state => state.selectedIds);
-    const setActiveTool = useCanvasStore(state => state.setActiveTool);
-    const removeElements = useCanvasStore(state => state.removeElements);
-    const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
-    const groupElements = useCanvasStore(state => state.groupElements);
-    const ungroupElements = useCanvasStore(state => state.ungroupElements);
+    const elements = useCanvasStore(state => state?.elements) || EMPTY_ARRAY;
+    const selectedIds = useCanvasStore(state => state?.selectedIds) || EMPTY_ARRAY;
 
-    // Temporal actions from zundo
-    const undo = useCanvasStore.temporal.getState().undo;
-    const redo = useCanvasStore.temporal.getState().redo;
+    const setActiveTool = useCanvasStore(state => state?.setActiveTool) || NO_OP;
+    const removeElements = useCanvasStore(state => state?.removeElements) || NO_OP;
+    const setSelectedIds = useCanvasStore(state => state?.setSelectedIds) || NO_OP;
+    const groupElements = useCanvasStore(state => state?.groupElements) || NO_OP;
+    const ungroupElements = useCanvasStore(state => state?.ungroupElements) || NO_OP;
+
+    // Custom History actions directly from store
+    const undo = useCanvasStore(state => state?.undo) || NO_OP;
+    const redo = useCanvasStore(state => state?.redo) || NO_OP;
 
     const elementsRef = useRef(elements);
     const selectedIdsRef = useRef(selectedIds);
@@ -45,43 +49,44 @@ export function useCanvasShortcuts(
 
             if (isTyping || isEditingTitleRef.current) return;
 
-            const isMod = e.metaKey || e.ctrlKey;
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const isMod = isMac ? e.metaKey : e.ctrlKey;
 
             if (isMod) {
                 if (e.key.toLowerCase() === 'g') {
                     e.preventDefault();
                     if (e.shiftKey) {
-                        ungroupElements(selectedIdsRef.current);
+                        ungroupElements?.(selectedIdsRef.current);
                     } else {
-                        groupElements(selectedIdsRef.current);
+                        groupElements?.(selectedIdsRef.current);
                     }
                 } else if (e.key.toLowerCase() === 'a') {
                     e.preventDefault();
-                    setSelectedIds(elementsRef.current.map(el => el.id));
+                    setSelectedIds?.(elementsRef.current.map(el => el.id));
                 } else if (e.key.toLowerCase() === 'z') {
                     e.preventDefault();
-                    if (e.shiftKey) redo();
-                    else undo();
+                    if (e.shiftKey) redo?.();
+                    else undo?.();
                 } else if (e.key.toLowerCase() === 'y') {
                     e.preventDefault();
-                    redo();
+                    redo?.();
                     return;
                 }
             }
 
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (selectedIdsRef.current.length > 0) {
-                    removeElements(selectedIdsRef.current);
+                    removeElements?.(selectedIdsRef.current);
                 }
                 return;
             }
 
             const key = e.key.toLowerCase();
-            if (key === 'v') setActiveTool('select');
-            else if (key === 'h') setActiveTool('hand');
-            else if (key === 'b') setActiveTool('draw');
-            else if (key === 'a') setActiveTool('arrow');
-            else if (key === 'e') setActiveTool('eraser');
+            if (key === 'v') setActiveTool?.('select');
+            else if (key === 'h') setActiveTool?.('hand');
+            else if (key === 'b') setActiveTool?.('draw');
+            else if (key === 'a') setActiveTool?.('arrow');
+            else if (key === 'e') setActiveTool?.('eraser');
         };
 
         window.addEventListener("keydown", handleKeyDown);
