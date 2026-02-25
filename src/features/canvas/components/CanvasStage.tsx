@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type Konva from "konva";
@@ -9,22 +9,29 @@ import { RenderElement } from "./ElementRenderer";
 import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
 import { useCanvasStore } from "../store/useCanvasStore";
 
-export default function InfiniteCanvas() {
+export interface CanvasStageRef {
+    exportToPNG: (filename: string) => void;
+}
+
+const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     const elements = useCanvasStore(state => state.elements);
     const selectedIds = useCanvasStore(state => state.selectedIds);
     const scale = useCanvasStore(state => state.scale);
-    const position = useCanvasStore(state => state.position);
-    const activeTool = useCanvasStore(state => state.activeTool);
-    const activeColor = useCanvasStore(state => state.activeColor);
-    const activeStrokeWidth = useCanvasStore(state => state.activeStrokeWidth);
-
     const setScale = useCanvasStore(state => state.setScale);
+    const position = useCanvasStore(state => state.position);
     const setPosition = useCanvasStore(state => state.setPosition);
-    const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
+
+    const activeTool = useCanvasStore(state => state.activeTool);
     const updateElement = useCanvasStore(state => state.updateElement);
     const updateElements = useCanvasStore(state => state.updateElements);
     const addElement = useCanvasStore(state => state.addElement);
 
+    const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
+    const activeColor = useCanvasStore(state => state.activeColor);
+    const activeStrokeWidth = useCanvasStore(state => state.activeStrokeWidth);
+    const removeElements = useCanvasStore(state => state.removeElements);
+
+    const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage | null>(null);
     const transformerRef = useRef<Konva.Transformer | null>(null);
     const nodesRef = useRef<Record<string, Konva.Node>>({});
@@ -33,6 +40,151 @@ export default function InfiniteCanvas() {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [currentLine, setCurrentLine] = useState<CanvasElement | null>(null);
     const [selectionBox, setSelectionBox] = useState<{ x1: number, y1: number, x2: number, y2: number } | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+
+    useImperativeHandle(ref, () => ({
+        exportToPNG: async (title: string) => {
+            if (!containerRef.current || !stageRef.current) return;
+            const stage = stageRef.current;
+
+            if (elementsRef.current.length === 0) return;
+
+            // Deselect all slightly before rendering to hide Transformer
+            const prevSelection = [...selectedIdsRef.current];
+            setSelectedIds([]);
+            setIsExporting(true);
+
+            setTimeout(async () => {
+                const oldScale = stage.scaleX();
+                const oldPos = stage.position();
+
+                try {
+                    // Temporarily un-scale the stage to take a 1:1 picture
+                    stage.scale({ x: 1, y: 1 });
+                    stage.position({ x: 0, y: 0 });
+                    stage.draw();
+
+                    // Minimum wait for React & Konva to sync, rendering all un-culled elements
+                    await new Promise(resolve => setTimeout(resolve, 150));
+
+                    // Get precise bounding box of content from elements data (safe from Konva artifacts)
+                    let minX = Infinity;
+                    let minY = Infinity;
+                    let maxX = -Infinity;
+                    let maxY = -Infinity;
+
+                    elementsRef.current.forEach(el => {
+                        let ex1 = el.x;
+                        let ey1 = el.y;
+                        let ex2 = el.x + (el.width || 0);
+                        let ey2 = el.y + (el.height || 0);
+
+                        if (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser') {
+                            if (el.points && el.points.length > 0) {
+                                const xs = el.points.filter((_, i) => i % 2 === 0);
+                                const ys = el.points.filter((_, i) => i % 2 === 1);
+                                ex1 = el.x + Math.min(...xs);
+                                ey1 = el.y + Math.min(...ys);
+                                ex2 = el.x + Math.max(...xs);
+                                ey2 = el.y + Math.max(...ys);
+                            }
+                        }
+
+                        // Safeguard: ignore elements placed abnormally far or abnormally large to prevent memory crash
+                        if (
+                            Math.abs(ex1) > 20000 || Math.abs(ey1) > 20000 ||
+                            Math.abs(ex2) > 20000 || Math.abs(ey2) > 20000 ||
+                            isNaN(ex1) || isNaN(ey1) || isNaN(ex2) || isNaN(ey2)
+                        ) return;
+
+                        if (ex1 < minX) minX = ex1;
+                        if (ey1 < minY) minY = ey1;
+                        if (ex2 > maxX) maxX = ex2;
+                        if (ey2 > maxY) maxY = ey2;
+                    });
+
+                    if (minX === Infinity) {
+                        throw new Error("Canvas vide ou limite spatiale dépassée (éléments trop éloignés).");
+                    }
+
+                    const box = {
+                        x: minX,
+                        y: minY,
+                        width: maxX - minX,
+                        height: maxY - minY
+                    };
+
+                    // Apply padding
+                    const padding = 50;
+                    const exportConfig = {
+                        x: box.x - padding,
+                        y: box.y - padding,
+                        width: box.width + padding * 2,
+                        height: box.height + padding * 2,
+                        pixelRatio: 2 // High resolution
+                    };
+
+                    console.log("Export Box:", box);
+
+                    // Hardware limits for canvas area usually around ~16M pixels (4096x4096) on mobile/Safari
+                    // or MAX dimension 8192.
+                    const MAX_PIXELS = 16_000_000;
+                    let targetArea = exportConfig.width * exportConfig.height * Math.pow(exportConfig.pixelRatio, 2);
+
+                    if (targetArea > MAX_PIXELS) {
+                        exportConfig.pixelRatio = Math.sqrt(MAX_PIXELS / (exportConfig.width * exportConfig.height));
+                        console.warn("Canvas area too large, downgrading pixelRatio to", exportConfig.pixelRatio);
+                    }
+
+                    // Failsafe for absurd bounds
+                    if (exportConfig.pixelRatio < 0.05) {
+                        exportConfig.pixelRatio = 0.05;
+                    }
+
+                    console.log("Export Config:", exportConfig);
+
+                    const dataURL = stage.toDataURL(exportConfig);
+                    console.log("DataURL generated length:", dataURL.length);
+
+                    const arr = dataURL.split(',');
+                    if (arr.length < 2 || arr[1].length === 0) {
+                        throw new Error(`DataURL incomplet (CORS ou dimensions excessives). Entête: ${dataURL.substring(0, 30)}`);
+                    }
+
+                    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while (n--) {
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    const blob = new Blob([u8arr], { type: mime });
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    // Trigger download
+                    const link = document.createElement('a');
+                    link.download = `${title || 'scrappi_export'}.png`;
+                    link.href = blobUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+
+                } catch (err) {
+                    console.error("Export Error:", err);
+                    alert("Une erreur est survenue lors de l'exportation. L'image est peut-être trop grande ou des éléments bloquent l'export (CORS).");
+                } finally {
+                    // Restore stage state
+                    stage.scale({ x: oldScale, y: oldScale });
+                    stage.position(oldPos);
+                    stage.draw();
+                    setSelectedIds(prevSelection);
+                    setIsExporting(false);
+                }
+            }, 50);
+        }
+    }));
 
     // Refs for stable callbacks
     const elementsRef = useRef(elements);
@@ -319,6 +471,8 @@ export default function InfiniteCanvas() {
     };
 
     const getVisibleElements = () => {
+        if (isExporting) return elements;
+
         if (!process.env.NEXT_PUBLIC_ENABLE_CULLING) {
             // Let developers toggle if wanted, or we just force it below:
         }
@@ -360,110 +514,114 @@ export default function InfiniteCanvas() {
     if (dimensions.width === 0) return null;
 
     return (
-        <Stage
-            width={dimensions.width}
-            height={dimensions.height}
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onTouchMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onTouchEnd={handleMouseUp}
-            draggable={activeTool === 'hand'}
-            scaleX={scale}
-            scaleY={scale}
-            x={position.x}
-            y={position.y}
-            ref={stageRef}
-            className={`absolute inset-0 z-0 ${activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'arrow' ? 'cursor-crosshair' : (activeTool === 'hand' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
-            style={{ touchAction: 'none' }}
-        >
-            <Layer>
-                <Rect
-                    name="background-rect"
-                    x={-50000}
-                    y={-50000}
-                    width={100000}
-                    height={100000}
-                    fill="transparent"
-                />
-                {visibleElements.map((el) => (
-                    <RenderElement
-                        key={el.id}
-                        element={el}
-                        isSelected={selectedIds.includes(el.id)}
-                        onSelect={handleSelect}
-                        onChange={handleElementChange}
-                        isDraggable={activeTool === 'select'}
-                        onNodeRegister={handleNodeRegister}
-                    />
-                ))}
-                {currentLine && (
-                    <RenderElement
-                        element={currentLine}
-                        isSelected={false}
-                        onSelect={() => { }}
-                        onChange={() => { }}
-                        isDraggable={false}
-                    />
-                )}
-                {selectionBox && (
+        <div ref={containerRef} className="absolute inset-0 z-0 overflow-hidden">
+            <Stage
+                width={dimensions.width}
+                height={dimensions.height}
+                onWheel={handleWheel}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onTouchMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onTouchEnd={handleMouseUp}
+                draggable={activeTool === 'hand'}
+                scaleX={scale}
+                scaleY={scale}
+                x={position.x}
+                y={position.y}
+                ref={stageRef}
+                className={`w-full h-full ${activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'arrow' ? 'cursor-crosshair' : (activeTool === 'hand' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
+                style={{ touchAction: 'none' }}
+            >
+                <Layer>
                     <Rect
-                        x={Math.min(selectionBox.x1, selectionBox.x2)}
-                        y={Math.min(selectionBox.y1, selectionBox.y2)}
-                        width={Math.abs(selectionBox.x2 - selectionBox.x1)}
-                        height={Math.abs(selectionBox.y2 - selectionBox.y1)}
-                        fill={SELECTION_FILL_COLOR}
-                        stroke={SELECTION_STROKE_COLOR}
-                        strokeWidth={1}
-                        dash={[5, 5]}
+                        name="background-rect"
+                        x={-50000}
+                        y={-50000}
+                        width={100000}
+                        height={100000}
+                        fill="transparent"
                     />
-                )}
-                {activeTool === 'select' && selectedIds.length > 0 && (
-                    <Transformer
-                        ref={transformerRef}
-                        anchorFill={SELECTION_STROKE_COLOR}
-                        anchorStroke="#ffffff"
-                        anchorSize={10}
-                        anchorCornerRadius={3}
-                        borderStroke={SELECTION_STROKE_COLOR}
-                        borderStrokeWidth={2}
-                        borderDash={[4, 4]}
-                        padding={10}
-                        rotateAnchorOffset={30}
-                        onTransformEnd={() => {
-                            if (!transformerRef.current) return;
-                            const nodes = transformerRef.current.nodes();
-                            // Update all selected elements based on their new node attributes
-                            nodes.forEach((node: Konva.Node) => {
-                                if (!nodesRef.current) return;
-                                const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
-                                if (id) {
-                                    const scaleX = node.scaleX();
-                                    const scaleY = node.scaleY();
-                                    node.scaleX(1);
-                                    node.scaleY(1);
+                    {visibleElements.map((el) => (
+                        <RenderElement
+                            key={el.id}
+                            element={el}
+                            isSelected={selectedIds.includes(el.id)}
+                            onSelect={handleSelect}
+                            onChange={handleElementChange}
+                            isDraggable={activeTool === 'select'}
+                            onNodeRegister={handleNodeRegister}
+                        />
+                    ))}
+                    {currentLine && (
+                        <RenderElement
+                            element={currentLine}
+                            isSelected={false}
+                            onSelect={() => { }}
+                            onChange={() => { }}
+                            isDraggable={false}
+                        />
+                    )}
+                    {selectionBox && (
+                        <Rect
+                            x={Math.min(selectionBox.x1, selectionBox.x2)}
+                            y={Math.min(selectionBox.y1, selectionBox.y2)}
+                            width={Math.abs(selectionBox.x2 - selectionBox.x1)}
+                            height={Math.abs(selectionBox.y2 - selectionBox.y1)}
+                            fill={SELECTION_FILL_COLOR}
+                            stroke={SELECTION_STROKE_COLOR}
+                            strokeWidth={1}
+                            dash={[5, 5]}
+                        />
+                    )}
+                    {activeTool === 'select' && selectedIds.length > 0 && (
+                        <Transformer
+                            ref={transformerRef}
+                            anchorFill={SELECTION_STROKE_COLOR}
+                            anchorStroke="#ffffff"
+                            anchorSize={10}
+                            anchorCornerRadius={3}
+                            borderStroke={SELECTION_STROKE_COLOR}
+                            borderStrokeWidth={2}
+                            borderDash={[4, 4]}
+                            padding={10}
+                            rotateAnchorOffset={30}
+                            onTransformEnd={() => {
+                                if (!transformerRef.current) return;
+                                const nodes = transformerRef.current.nodes();
+                                // Update all selected elements based on their new node attributes
+                                nodes.forEach((node: Konva.Node) => {
+                                    if (!nodesRef.current) return;
+                                    const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
+                                    if (id) {
+                                        const scaleX = node.scaleX();
+                                        const scaleY = node.scaleY();
+                                        node.scaleX(1);
+                                        node.scaleY(1);
 
-                                    updateElement(id, {
-                                        x: node.x(),
-                                        y: node.y(),
-                                        width: Math.max(5, node.width() * scaleX),
-                                        height: Math.max(5, node.height() * scaleY),
-                                        rotation: node.rotation()
-                                    });
+                                        updateElement(id, {
+                                            x: node.x(),
+                                            y: node.y(),
+                                            width: Math.max(5, node.width() * scaleX),
+                                            height: Math.max(5, node.height() * scaleY),
+                                            rotation: node.rotation()
+                                        });
+                                    }
+                                });
+                            }}
+                            boundBoxFunc={(oldBox, newBox) => {
+                                if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
+                                    return oldBox;
                                 }
-                            });
-                        }}
-                        boundBoxFunc={(oldBox, newBox) => {
-                            if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
-                                return oldBox;
-                            }
-                            return newBox;
-                        }}
-                    />
-                )}
-            </Layer>
-        </Stage>
+                                return newBox;
+                            }}
+                        />
+                    )}
+                </Layer>
+            </Stage>
+        </div >
     );
-}
+});
+
+export default InfiniteCanvas;

@@ -27,6 +27,7 @@ interface EditorHeaderProps {
         photoURL?: string | null;
     } | null;
     logout: () => Promise<void>;
+    handleExport: () => void;
 }
 
 export default function EditorHeader({
@@ -46,7 +47,8 @@ export default function EditorHeader({
     saving,
     saveSuccess,
     user,
-    logout
+    logout,
+    handleExport
 }: EditorHeaderProps) {
     const router = useRouter();
     const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
@@ -150,6 +152,14 @@ export default function EditorHeader({
                 <div className="h-6 md:h-8 w-px bg-ink/10 mx-1"></div>
 
                 <div className="flex items-center gap-2 md:gap-3">
+                    <button
+                        onClick={handleExport}
+                        className="px-2 md:px-4 py-1.5 md:py-2 rounded-full text-ink hover:text-ink bg-black/5 hover:bg-black/10 transition-all text-[10px] md:text-xs font-bold flex items-center gap-1.5 md:gap-2"
+                        title="Exporter en image haute définition"
+                    >
+                        <span className="material-symbols-outlined text-[14px] md:text-[16px]">download</span>
+                        <span className="hidden xs:inline">Exporter</span>
+                    </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}

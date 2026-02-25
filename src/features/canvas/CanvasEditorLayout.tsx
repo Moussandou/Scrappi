@@ -22,8 +22,10 @@ import { useCanvasStore } from "./store/useCanvasStore";
 import { useCanvasShortcuts } from "./hooks/useCanvasShortcuts";
 import { useMediaManager } from "./hooks/useMediaManager";
 
+import { CanvasStageRef } from "./components/CanvasStage";
+
 // Dynamic import for Konva canvas to avoid SSR issues
-const Canvas = dynamic(() => import("./components/CanvasStage"), { ssr: false });
+const Canvas = dynamic(() => import("./components/CanvasStage"), { ssr: false }) as any;
 
 export default function CanvasEditorLayout({ projectId }: { projectId: string }) {
     const router = useRouter();
@@ -71,6 +73,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
     const helpRef = useRef<HTMLDivElement>(null);
     const lastSavedElementsRef = useRef<CanvasElement[]>([]);
+    const stageRef = useRef<CanvasStageRef>(null);
 
     // -- Custom Hooks --
     useCanvasShortcuts(isHelpOpen, isEditingTitle, helpRef, setIsHelpOpen);
@@ -370,6 +373,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         }
     };
 
+    const handleExport = () => {
+        if (stageRef.current) {
+            stageRef.current.exportToPNG(scrapbook?.title || 'scrappi_export');
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center h-screen bg-paper">
             <div className="text-secondary animate-pulse font-serif text-xl italic">Chargement de votre atelier...</div>
@@ -396,7 +405,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             <div className={`fixed inset-0 pointer-events-none z-10 ${getPaperClass()}`}></div>
 
             <div className="absolute inset-0 z-20">
-                <Canvas />
+                <Canvas ref={stageRef} />
             </div>
 
             <div className="fixed inset-0 z-50 pointer-events-none">
@@ -418,6 +427,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     saveSuccess={saveSuccess}
                     user={user}
                     logout={logout}
+                    handleExport={handleExport}
                 />
 
                 <div className="absolute inset-0 pointer-events-none">
