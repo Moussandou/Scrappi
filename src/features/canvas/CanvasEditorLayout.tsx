@@ -16,6 +16,7 @@ import FloatingContextHUD from "./components/FloatingContextHUD";
 import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
+import MiniMap from "./components/MiniMap";
 import { PaperType } from "./components/PaperSelector";
 
 import { useCanvasStore } from "./store/useCanvasStore";
@@ -39,6 +40,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const addElement = useCanvasStore(state => state.addElement);
     const updateElement = useCanvasStore(state => state.updateElement);
     const removeElements = useCanvasStore(state => state.removeElements);
+    const currentLastAction = useCanvasStore(state => state.lastAction);
 
     const activeTool = useCanvasStore(state => state.activeTool);
     const setActiveTool = useCanvasStore(state => state.setActiveTool);
@@ -454,6 +456,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     historyLength={pastStates.length + futureStates.length + 1}
                     pastStates={pastStates}
                     futureStates={futureStates}
+                    currentLastAction={currentLastAction}
                     scale={scale}
                     setScale={setScale}
                     handleSave={handleSave}
@@ -606,6 +609,9 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     </div>
                 </div>
             </div>
+
+            {/* Mini-Map */}
+            <MiniMap />
         </div>
     );
 }

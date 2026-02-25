@@ -18,6 +18,7 @@ interface EditorHeaderProps {
     historyLength: number;
     pastStates: any[];
     futureStates: any[];
+    currentLastAction?: string;
     scale: number;
     setScale: (scale: number) => void;
     handleSave: () => Promise<void>;
@@ -45,6 +46,7 @@ export default function EditorHeader({
     historyLength,
     pastStates,
     futureStates,
+    currentLastAction,
     scale,
     setScale,
     handleSave,
@@ -123,7 +125,15 @@ export default function EditorHeader({
                             <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-8 md:size-9 border-r border-l border-ink/10 flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Rétablir (Ctrl+Y)">
                                 <span className="material-symbols-outlined text-[18px] md:text-[20px]">redo</span>
                             </button>
-                            <button onClick={() => setIsHistoryMenuOpen(!isHistoryMenuOpen)} disabled={historyLength <= 1} className="w-6 md:w-8 rounded-r-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Historique">
+                            <button
+                                onClick={() => {
+                                    setIsHistoryMenuOpen(!isHistoryMenuOpen);
+                                    if (!isHistoryMenuOpen) setIsZoomMenuOpen(false);
+                                }}
+                                disabled={historyLength <= 1}
+                                className="w-6 md:w-8 rounded-r-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30"
+                                title="Historique"
+                            >
                                 <span className="material-symbols-outlined text-[14px] md:text-[16px]">history</span>
                             </button>
                         </div>
@@ -138,14 +148,16 @@ export default function EditorHeader({
 
                                     let actionName = "État initial";
                                     if (actualIndex > 0) {
-                                        if (actualIndex <= pastStates.length) {
-                                            actionName = pastStates[actualIndex - 1]?.state?.lastAction || `Action ${actualIndex}`;
+                                        if (actualIndex < historyStep) {
+                                            actionName = pastStates[actualIndex]?.lastAction || `Action ${actualIndex}`;
+                                        } else if (actualIndex === historyStep) {
+                                            actionName = currentLastAction || `Action ${actualIndex}`;
                                         } else {
-                                            actionName = futureStates[actualIndex - pastStates.length - 1]?.state?.lastAction || `Action ${actualIndex}`;
+                                            actionName = futureStates[actualIndex - historyStep - 1]?.lastAction || `Action ${actualIndex}`;
                                         }
                                     }
 
-                                    let label = isCurrent ? "État actuel" : diff < 0 ? `Annuler : ${actionName}` : `Rétablir : ${actionName}`;
+                                    let label = isCurrent ? `${actionName} (Actuel)` : actionName;
 
                                     return (
                                         <button
@@ -173,7 +185,10 @@ export default function EditorHeader({
 
                     <div className="relative hidden sm:block" ref={zoomMenuRef}>
                         <button
-                            onClick={() => setIsZoomMenuOpen(!isZoomMenuOpen)}
+                            onClick={() => {
+                                setIsZoomMenuOpen(!isZoomMenuOpen);
+                                if (!isZoomMenuOpen) setIsHistoryMenuOpen(false);
+                            }}
                             className="px-2 md:px-3 py-1 md:py-1.5 rounded-xl text-ink-light text-[10px] md:text-xs font-bold flex items-center gap-1 md:gap-1.5 hover:bg-black/5 transition-all shadow-sm"
                             title="Niveau de zoom"
                         >
