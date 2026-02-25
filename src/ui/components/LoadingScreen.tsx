@@ -4,7 +4,7 @@ import React from "react";
 
 export const LoadingScreen = () => {
     return (
-        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-paper">
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-paper animate-in fade-in duration-700">
             <div className="paper-grain opacity-60"></div>
 
             <div className="relative z-10 flex flex-col items-center">
