@@ -59,8 +59,37 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Scrappi - Creative Canvas",
-  description: "Create an infinite visual scrapbook",
+  title: "Scrappi - Votre Carnet Créatif Infini",
+  description: "Créez, organisez et partagez vos scrapbooks numériques. Un espace infini pour votre créativité, vos souvenirs et vos inspirations.",
+  keywords: ["scrapbook", "créativité", "numérique", "journaling", "design", "canvas"],
+  authors: [{ name: "Scrappi Team" }],
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "https://scrappi.app",
+    siteName: "Scrappi",
+    title: "Scrappi - Votre Carnet Créatif Infini",
+    description: "Créez, organisez et partagez vos scrapbooks numériques. Un espace infini pour votre créativité.",
+    images: [
+      {
+        url: "/favicon.svg",
+        width: 1200,
+        height: 630,
+        alt: "Scrappi Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Scrappi - Votre Carnet Créatif Infini",
+    description: "Créez, organisez et partagez vos scrapbooks numériques.",
+    images: ["/favicon.svg"],
+  },
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -69,9 +98,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.png" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
       </head>
       <body
