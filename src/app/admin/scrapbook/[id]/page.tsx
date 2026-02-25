@@ -7,6 +7,7 @@ import { getScrapbook } from "@/infra/db/firestoreService";
 import { getAnyElements } from "@/infra/db/adminService";
 import { Scrapbook, CanvasElement } from "@/domain/entities";
 import InfiniteCanvas from "@/features/canvas/components/CanvasStage";
+import { useCanvasStore } from "@/features/canvas/store/useCanvasStore";
 import Link from "next/link";
 
 export default function AdminScrapbookViewer() {
@@ -17,9 +18,6 @@ export default function AdminScrapbookViewer() {
     const [scrapbook, setScrapbook] = useState<Scrapbook | null>(null);
     const [elements, setElements] = useState<CanvasElement[]>([]);
     const [loading, setLoading] = useState(true);
-    const [scale, setScale] = useState(1);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     useEffect(() => {
         if (!authLoading && (!user || !isAdmin)) {
@@ -35,6 +33,9 @@ export default function AdminScrapbookViewer() {
                 ]);
                 setScrapbook(sb);
                 setElements(elems);
+                const store = useCanvasStore.getState();
+                store.setElements(elems);
+                store.setActiveTool('hand');
             } catch (error) {
                 console.error("Failed to load scrapbook:", error);
             } finally {
@@ -86,18 +87,7 @@ export default function AdminScrapbookViewer() {
 
             {/* Canvas (read-only: no tool, no draggable, no save) */}
             <div className="flex-1 relative">
-                <InfiniteCanvas
-                    elements={elements}
-                    scale={scale}
-                    setScale={setScale}
-                    position={position}
-                    setPosition={setPosition}
-                    activeTool="hand"
-                    activeColor="#000"
-                    activeStrokeWidth={2}
-                    selectedIds={selectedIds}
-                    setSelectedIds={setSelectedIds}
-                />
+                <InfiniteCanvas />
             </div>
         </div>
     );

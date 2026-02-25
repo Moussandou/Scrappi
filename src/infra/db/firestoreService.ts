@@ -208,6 +208,62 @@ export const updateUserProfile = async (userId: string, data: { displayName?: st
 };
 
 
+export const saveDirtyElements = async (
+    scrapbookId: string,
+    userId: string,
+    addedOrUpdated: CanvasElement[],
+    deletedIds: string[]
+) => {
+    const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");
+
+    // Prepare operations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const operations: { type: 'set' | 'delete', ref: any, data?: any }[] = [];
+
+    // Identify updates/adds
+    addedOrUpdated.forEach(el => {
+        // Sanitize and include userId for security rules
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sanitized: any = { ...el, userId };
+        Object.keys(sanitized).forEach(key => {
+            if (sanitized[key] === undefined) {
+                delete sanitized[key];
+            }
+        });
+
+        operations.push({
+            type: 'set',
+            ref: doc(subcollectionRef, el.id),
+            data: sanitized
+        });
+    });
+
+    // Identify deletions
+    deletedIds.forEach(id => {
+        operations.push({
+            type: 'delete',
+            ref: doc(subcollectionRef, id)
+        });
+    });
+
+    // Execute in batches of 500
+    const chunkSize = 500;
+    for (let i = 0; i < operations.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        const chunk = operations.slice(i, i + chunkSize);
+
+        chunk.forEach(op => {
+            if (op.type === 'set') {
+                batch.set(op.ref, op.data);
+            } else {
+                batch.delete(op.ref);
+            }
+        });
+
+        await batch.commit();
+    }
+};
+
 export const saveElements = async (scrapbookId: string, elements: CanvasElement[], userId: string) => {
     const subcollectionRef = collection(db, "scrapbooks", scrapbookId, "elements");
 

@@ -7,38 +7,24 @@ import type Konva from "konva";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
 import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
+import { useCanvasStore } from "../store/useCanvasStore";
 
-interface InfiniteCanvasProps {
-    elements: CanvasElement[];
-    onElementChange?: (id: string, partial: Partial<CanvasElement>) => void;
-    onElementsChange?: (changes: Array<{ id: string, partial: Partial<CanvasElement> }>) => void;
-    onAddElement?: (element: CanvasElement) => void;
-    scale: number;
-    setScale: (s: number) => void;
-    position: { x: number, y: number };
-    setPosition: (pos: { x: number, y: number }) => void;
-    activeTool: 'select' | 'draw' | 'arrow' | 'eraser' | 'hand';
-    activeColor: string;
-    activeStrokeWidth: number;
-    selectedIds: string[];
-    setSelectedIds: (ids: string[]) => void;
-}
+export default function InfiniteCanvas() {
+    const elements = useCanvasStore(state => state.elements);
+    const selectedIds = useCanvasStore(state => state.selectedIds);
+    const scale = useCanvasStore(state => state.scale);
+    const position = useCanvasStore(state => state.position);
+    const activeTool = useCanvasStore(state => state.activeTool);
+    const activeColor = useCanvasStore(state => state.activeColor);
+    const activeStrokeWidth = useCanvasStore(state => state.activeStrokeWidth);
 
-export default function InfiniteCanvas({
-    elements,
-    onElementChange,
-    onAddElement,
-    scale,
-    setScale,
-    position,
-    setPosition,
-    activeTool,
-    activeColor,
-    activeStrokeWidth,
-    selectedIds,
-    setSelectedIds,
-    onElementsChange
-}: InfiniteCanvasProps) {
+    const setScale = useCanvasStore(state => state.setScale);
+    const setPosition = useCanvasStore(state => state.setPosition);
+    const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
+    const updateElement = useCanvasStore(state => state.updateElement);
+    const updateElements = useCanvasStore(state => state.updateElements);
+    const addElement = useCanvasStore(state => state.addElement);
+
     const stageRef = useRef<Konva.Stage | null>(null);
     const transformerRef = useRef<Konva.Transformer | null>(null);
     const nodesRef = useRef<Record<string, Konva.Node>>({});
@@ -286,17 +272,17 @@ export default function InfiniteCanvas({
                     };
                 }).filter(c => c !== null) as Array<{ id: string, partial: Partial<CanvasElement> }>;
 
-                if (onElementsChange) onElementsChange(changes);
+                updateElements(changes);
                 return;
             }
         }
-        if (onElementChange) onElementChange(id, newProps);
-    }, [onElementsChange, onElementChange]);
+        updateElement(id, newProps);
+    }, [updateElements, updateElement]);
 
     const handleMouseUp = () => {
         lastTouchRef.current = null;
         if (currentLine) {
-            if (onAddElement) onAddElement(currentLine);
+            addElement(currentLine);
             setCurrentLine(null);
         } else if (selectionBox) {
             // Box selection logic
@@ -332,6 +318,45 @@ export default function InfiniteCanvas({
         }
     };
 
+    const getVisibleElements = () => {
+        if (!process.env.NEXT_PUBLIC_ENABLE_CULLING) {
+            // Let developers toggle if wanted, or we just force it below:
+        }
+
+        // Viewport bounds in canvas coordinates
+        const vx1 = -position.x / scale;
+        const vy1 = -position.y / scale;
+        const vx2 = (dimensions.width - position.x) / scale;
+        const vy2 = (dimensions.height - position.y) / scale;
+
+        return elements.filter(el => {
+            // Include if selected (since it has a transformer)
+            if (selectedIds.includes(el.id)) return true;
+
+            // Approximate bounding box
+            const ex1 = el.x;
+            const ey1 = el.y;
+            const ex2 = el.x + (el.width || 0);
+            const ey2 = el.y + (el.height || 0);
+
+            // For lines/arrows, they might be large, just render them to be safe
+            if (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser') {
+                return true;
+            }
+
+            // AABB Collision Detection with a margin
+            const MARGIN = 200 / scale; // Render slightly outside screen
+            return (
+                ex1 < vx2 + MARGIN &&
+                ex2 > vx1 - MARGIN &&
+                ey1 < vy2 + MARGIN &&
+                ey2 > vy1 - MARGIN
+            );
+        });
+    };
+
+    const visibleElements = getVisibleElements();
+
     if (dimensions.width === 0) return null;
 
     return (
@@ -363,7 +388,7 @@ export default function InfiniteCanvas({
                     height={100000}
                     fill="transparent"
                 />
-                {elements.map((el) => (
+                {visibleElements.map((el) => (
                     <RenderElement
                         key={el.id}
                         element={el}
@@ -411,26 +436,24 @@ export default function InfiniteCanvas({
                             if (!transformerRef.current) return;
                             const nodes = transformerRef.current.nodes();
                             // Update all selected elements based on their new node attributes
-                            if (onElementChange) {
-                                nodes.forEach((node: Konva.Node) => {
-                                    if (!nodesRef.current) return;
-                                    const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
-                                    if (id) {
-                                        const scaleX = node.scaleX();
-                                        const scaleY = node.scaleY();
-                                        node.scaleX(1);
-                                        node.scaleY(1);
+                            nodes.forEach((node: Konva.Node) => {
+                                if (!nodesRef.current) return;
+                                const id = Object.keys(nodesRef.current).find(key => nodesRef.current[key] === node);
+                                if (id) {
+                                    const scaleX = node.scaleX();
+                                    const scaleY = node.scaleY();
+                                    node.scaleX(1);
+                                    node.scaleY(1);
 
-                                        onElementChange(id, {
-                                            x: node.x(),
-                                            y: node.y(),
-                                            width: Math.max(5, node.width() * scaleX),
-                                            height: Math.max(5, node.height() * scaleY),
-                                            rotation: node.rotation()
-                                        });
-                                    }
-                                });
-                            }
+                                    updateElement(id, {
+                                        x: node.x(),
+                                        y: node.y(),
+                                        width: Math.max(5, node.width() * scaleX),
+                                        height: Math.max(5, node.height() * scaleY),
+                                        rotation: node.rotation()
+                                    });
+                                }
+                            });
                         }}
                         boundBoxFunc={(oldBox, newBox) => {
                             if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {

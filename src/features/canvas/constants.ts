@@ -21,3 +21,4 @@ export const TOOL_HUD_COLORS = [
 export const SELECTION_STROKE_COLOR = CANVAS_COLORS.Sage;
 export const SELECTION_FILL_COLOR = "rgba(138, 154, 134, 0.2)"; // Sage with 0.2 opacity
 export const DEFAULT_STROKE_COLOR = CANVAS_COLORS.Ink;
+export const DEFAULT_STROKE_WIDTH = 2;

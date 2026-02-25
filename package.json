@@ -22,6 +22,7 @@
     "react-konva-utils": "^2.0.0",
     "tailwind-merge": "^3.5.0",
     "use-image": "^1.1.4",
+    "zundo": "^2.3.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
@@ -31,10 +32,10 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "firebase-tools": "^13.33.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.18",
-    "firebase-tools": "^13.33.1"
+    "vitest": "^4.0.18"
   }
 }
