@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Link from "next/link";
+
 
 interface VideoUploadModalProps {
     isOpen: boolean;
@@ -158,7 +158,10 @@ export default function VideoUploadModal({ isOpen, onClose, onUpload, uploading,
 
                 <div className="p-4 bg-white/30 border-t border-black/5 flex justify-center">
                     <p className="text-[10px] text-ink-light font-medium tracking-tight">
-                        Surveillez votre consommation dans le <Link href="/admin" className="text-sage hover:underline">Poste de Surveillance</Link>.
+                        {storageMode === 'local'
+                            ? "Vos vidéos sont gardées sur votre PC."
+                            : "Vos vidéos sont stockées en toute sécurité dans votre projet Cloud."
+                        }
                     </p>
                 </div>
             </div>
