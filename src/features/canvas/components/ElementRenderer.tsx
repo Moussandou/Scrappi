@@ -18,9 +18,10 @@ interface ElementProps {
     onChange: (id: string, newProps: Partial<CanvasElement>) => void;
     isDraggable: boolean;
     onNodeRegister?: (id: string, node: Konva.Node) => void;
+    onDragMove?: (id: string, e: KonvaEventObject<DragEvent>) => void;
 }
 
-export const RenderElement = memo(function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister }: ElementProps) {
+export const RenderElement = memo(function RenderElement({ element, isSelected, onSelect, onChange, isDraggable, onNodeRegister, onDragMove }: ElementProps) {
     const shapeRef = useRef<Konva.Group | Konva.Shape | Konva.Line | Konva.Arrow | Konva.Image | null>(null);
     const isImageType = element.type === 'image' || element.type === 'sticker';
     const [resolvedSrc, setResolvedSrc] = useState(isImageType && !isLocalRef(element.content) ? element.content : '');
@@ -61,6 +62,12 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
             x: e.target.x(),
             y: e.target.y()
         });
+    };
+
+    const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+        if (onDragMove) {
+            onDragMove(element.id, e);
+        }
     };
 
     const handleTransformEnd = () => {
@@ -113,6 +120,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onDblClick={handleDoubleClick}
                     onDblTap={handleDoubleClick}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
                 >
                     {/* Hit area: makes the entire bounding box grabbable */}
@@ -187,6 +195,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     isDraggable={isDraggable}
                     onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
                         shapeRef.current = node as Konva.Image;
@@ -201,6 +210,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     isDraggable={isDraggable}
                     onSelect={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
                     onNodeRegister={(node) => {
                         shapeRef.current = node as Konva.Image;
@@ -223,6 +233,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onClick={() => onSelect(element.id)}
                     onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
                 />
             )}
@@ -244,6 +255,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onClick={() => onSelect(element.id)}
                     onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     hitStrokeWidth={20}
                     globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
                 />
@@ -266,6 +278,7 @@ export const RenderElement = memo(function RenderElement({ element, isSelected, 
                     onClick={() => onSelect(element.id)}
                     onTap={() => onSelect(element.id)}
                     onDragEnd={handleDragEnd}
+                    onDragMove={handleDragMove}
                     hitStrokeWidth={20}
                     pointerLength={10}
                     pointerWidth={10}
@@ -294,11 +307,12 @@ interface MediaElementProps {
     isDraggable: boolean;
     onSelect: () => void;
     onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
+    onDragMove?: (e: KonvaEventObject<DragEvent>) => void;
     onTransformEnd: () => void;
     onNodeRegister: (node: Konva.Node) => void;
 }
 
-function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
+function VideoElement({ element, isDraggable, onSelect, onDragEnd, onDragMove, onTransformEnd, onNodeRegister }: MediaElementProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
     const konvaImageRef = useRef<Konva.Image | null>(null);
@@ -387,13 +401,14 @@ function VideoElement({ element, isDraggable, onSelect, onDragEnd, onTransformEn
             onClick={onSelect}
             onTap={onSelect}
             onDragEnd={onDragEnd}
+            onDragMove={onDragMove}
             onTransformEnd={onTransformEnd}
         />
     );
 }
 
 // Sub-component to handle Animated GIF rendering
-function GifElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd, onNodeRegister }: MediaElementProps) {
+function GifElement({ element, isDraggable, onSelect, onDragEnd, onDragMove, onTransformEnd, onNodeRegister }: MediaElementProps) {
     const [gifImage, setGifImage] = useState<HTMLImageElement | null>(null);
     const konvaImageRef = useRef<Konva.Image | null>(null);
 
@@ -448,6 +463,7 @@ function GifElement({ element, isDraggable, onSelect, onDragEnd, onTransformEnd,
             onClick={onSelect}
             onTap={onSelect}
             onDragEnd={onDragEnd}
+            onDragMove={onDragMove}
             onTransformEnd={onTransformEnd}
         />
     );

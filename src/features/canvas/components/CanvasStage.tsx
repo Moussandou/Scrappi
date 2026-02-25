@@ -1,19 +1,21 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
-import { Stage, Layer, Rect, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Transformer, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import Konva from "konva";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
 import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
 import { useCanvasStore } from "../store/useCanvasStore";
+import { useSnapping } from "../hooks/useSnapping";
 
 export interface CanvasStageRef {
     exportToPNG: (filename: string, paperColor?: string) => void;
 }
 
 const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
+    const { guidelines, setGuidelines, getSnappingOffset } = useSnapping();
     const elements = useCanvasStore(state => state.elements);
     const selectedIds = useCanvasStore(state => state.selectedIds);
     const scale = useCanvasStore(state => state.scale);
@@ -399,10 +401,18 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                     points: [startX, startY, pos.x, pos.y]
                 });
             } else {
-                setCurrentLine({
-                    ...currentLine,
-                    points: [...(currentLine.points || []), pos.x, pos.y]
-                });
+                // Freehand: Only add point if distance is > 3px to keep curves smooth
+                const pts = currentLine.points || [];
+                const lastX = pts[pts.length - 2];
+                const lastY = pts[pts.length - 1];
+                const dist = Math.sqrt(Math.pow(pos.x - lastX, 2) + Math.pow(pos.y - lastY, 2));
+
+                if (dist > 3) {
+                    setCurrentLine({
+                        ...currentLine,
+                        points: [...pts, pos.x, pos.y]
+                    });
+                }
             }
         } else if (selectionBox) {
             setSelectionBox({ ...selectionBox, x2: pos.x, y2: pos.y });
@@ -411,7 +421,16 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
 
     const handleSelect = useCallback((id: string) => {
         if (activeToolRef.current === 'select') {
-            setSelectedIds([id]);
+            const currentElements = elementsRef.current;
+            const el = currentElements.find(e => e.id === id);
+
+            if (el && el.groupId) {
+                // Select all elements in this group
+                const groupIds = currentElements.filter(e => e.groupId === el.groupId).map(e => e.id);
+                setSelectedIds(groupIds);
+            } else {
+                setSelectedIds([id]);
+            }
         }
     }, [setSelectedIds]);
 
@@ -447,6 +466,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     }, [updateElements, updateElement]);
 
     const handleMouseUp = () => {
+        setGuidelines([]);
         lastTouchRef.current = null;
         if (currentLine) {
             addElement(currentLine);
@@ -458,7 +478,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             const x2 = Math.max(selectionBox.x1, selectionBox.x2);
             const y2 = Math.max(selectionBox.y1, selectionBox.y2);
 
-            const selected = elements.filter(el => {
+            const selectedRaw = elements.filter(el => {
                 // Approximate bounding boxes for simplicity
                 const elX = el.x;
                 const elY = el.y;
@@ -480,10 +500,97 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                 return elX + elW >= x1 && elX <= x2 && elY + elH >= y1 && elY <= y2;
             }).map(el => el.id);
 
-            setSelectedIds(selected);
+            // Expand selection to include all members of any selected group
+            const expandedSelection = new Set<string>();
+            selectedRaw.forEach(id => {
+                const el = elements.find(e => e.id === id);
+                if (el && el.groupId) {
+                    elements.filter(e => e.groupId === el.groupId).forEach(groupEl => expandedSelection.add(groupEl.id));
+                } else {
+                    expandedSelection.add(id);
+                }
+            });
+
+            setSelectedIds(Array.from(expandedSelection));
             setSelectionBox(null);
         }
     };
+
+    const handleDragMove = useCallback((id: string, e: KonvaEventObject<DragEvent>) => {
+        if (!selectedIdsRef.current.includes(id)) return;
+
+        const node = e.target;
+        const originalData = elementsRef.current.find(el => el.id === id);
+        if (!originalData) return;
+
+        const dxRaw = node.x() - originalData.x;
+        const dyRaw = node.y() - originalData.y;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        selectedIdsRef.current.forEach(selId => {
+            const el = elementsRef.current.find(e => e.id === selId);
+            if (!el) return;
+            const x = el.x + dxRaw;
+            const y = el.y + dyRaw;
+            const w = el.width || 50;
+            const h = el.height || 50;
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x + w > maxX) maxX = x + w;
+            if (y + h > maxY) maxY = y + h;
+        });
+        const draggedBox = {
+            minX, maxX, minY, maxY,
+            centerX: minX + (maxX - minX) / 2,
+            centerY: minY + (maxY - minY) / 2
+        };
+
+        const staticBoxes = elementsRef.current
+            .filter(el => !selectedIdsRef.current.includes(el.id))
+            .map(el => {
+                const w = el.width || 50;
+                const h = el.height || 50;
+                return {
+                    minX: el.x,
+                    maxX: el.x + w,
+                    minY: el.y,
+                    maxY: el.y + h,
+                    centerX: el.x + w / 2,
+                    centerY: el.y + h / 2
+                };
+            });
+
+        const { dx: snapDx, dy: snapDy, guides } = getSnappingOffset(draggedBox, staticBoxes, scale);
+
+        const dx = dxRaw + snapDx;
+        const dy = dyRaw + snapDy;
+
+        node.position({ x: originalData.x + dx, y: originalData.y + dy });
+
+        let hasMovedOthers = false;
+
+        // Move other selected nodes visually
+        selectedIdsRef.current.forEach(selId => {
+            if (selId === id) return;
+            const otherNode = nodesRef.current[selId];
+            if (!otherNode) return;
+            const otherOriginalData = elementsRef.current.find(el => el.id === selId);
+            if (!otherOriginalData) return;
+
+            otherNode.position({
+                x: otherOriginalData.x + dx,
+                y: otherOriginalData.y + dy
+            });
+            hasMovedOthers = true;
+        });
+
+        // Let Transformer update its bounding box to wrap the newly positioned nodes
+        if (hasMovedOthers && transformerRef.current) {
+            transformerRef.current.getLayer()?.batchDraw();
+        }
+
+        setGuidelines(guides);
+    }, [getSnappingOffset, setGuidelines, scale]);
 
     const getVisibleElements = () => {
         if (isExporting) return elements;
@@ -567,8 +674,22 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                             onChange={handleElementChange}
                             isDraggable={activeTool === 'select'}
                             onNodeRegister={handleNodeRegister}
+                            onDragMove={handleDragMove}
                         />
                     ))}
+                    {guidelines.map((guide, i) => {
+                        const isV = guide.orientation === 'V';
+                        return (
+                            <Line
+                                key={`guide-${i}`}
+                                points={isV ? [guide.position, -50000, guide.position, 50000] : [-50000, guide.position, 50000, guide.position]}
+                                stroke="#f87171"
+                                strokeWidth={1 / scale}
+                                dash={[5 / scale, 5 / scale]}
+                                listening={false}
+                            />
+                        );
+                    })}
                     {currentLine && (
                         <RenderElement
                             element={currentLine}
@@ -595,13 +716,13 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                             ref={transformerRef}
                             anchorFill={SELECTION_STROKE_COLOR}
                             anchorStroke="#ffffff"
-                            anchorSize={10}
-                            anchorCornerRadius={3}
+                            anchorSize={12}
+                            anchorCornerRadius={6}
                             borderStroke={SELECTION_STROKE_COLOR}
                             borderStrokeWidth={2}
-                            borderDash={[4, 4]}
-                            padding={10}
-                            rotateAnchorOffset={30}
+                            padding={8}
+                            rotateAnchorOffset={40}
+                            rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
                             onTransformEnd={() => {
                                 if (!transformerRef.current) return;
                                 const nodes = transformerRef.current.nodes();

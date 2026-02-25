@@ -12,6 +12,8 @@ export function useCanvasShortcuts(
     const setActiveTool = useCanvasStore(state => state.setActiveTool);
     const removeElements = useCanvasStore(state => state.removeElements);
     const setSelectedIds = useCanvasStore(state => state.setSelectedIds);
+    const groupElements = useCanvasStore(state => state.groupElements);
+    const ungroupElements = useCanvasStore(state => state.ungroupElements);
 
     // Temporal actions from zundo
     const undo = useCanvasStore.temporal.getState().undo;
@@ -46,7 +48,14 @@ export function useCanvasShortcuts(
             const isMod = e.metaKey || e.ctrlKey;
 
             if (isMod) {
-                if (e.key.toLowerCase() === 'a') {
+                if (e.key.toLowerCase() === 'g') {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        ungroupElements(selectedIdsRef.current);
+                    } else {
+                        groupElements(selectedIdsRef.current);
+                    }
+                } else if (e.key.toLowerCase() === 'a') {
                     e.preventDefault();
                     setSelectedIds(elementsRef.current.map(el => el.id));
                 } else if (e.key.toLowerCase() === 'z') {
@@ -81,5 +90,5 @@ export function useCanvasShortcuts(
             document.removeEventListener("mousedown", handleClickOutsideHelp);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isHelpOpen, setIsHelpOpen, undo, redo, setActiveTool, removeElements, setSelectedIds]);
+    }, [isHelpOpen, setIsHelpOpen, undo, redo, setActiveTool, removeElements, setSelectedIds, groupElements, ungroupElements]);
 }

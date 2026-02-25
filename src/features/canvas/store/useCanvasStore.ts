@@ -25,6 +25,8 @@ interface CanvasState {
     updateElements: (changes: Array<{ id: string; partial: Partial<CanvasElement> }>) => void;
     removeElement: (id: string) => void;
     removeElements: (ids: string[]) => void;
+    groupElements: (ids: string[]) => void;
+    ungroupElements: (ids: string[]) => void;
     setSelectedIds: (ids: string[]) => void;
     clearSelection: () => void;
 
@@ -85,6 +87,22 @@ export const useCanvasStore = create<CanvasState>()(
                 selectedIds: state.selectedIds.filter(selId => !ids.includes(selId)),
                 lastAction: `Suppression multiple (${ids.length})`
             })),
+
+            groupElements: (ids) => set((state) => {
+                if (ids.length < 2) return state; // Only group 2 or more
+                const newGroupId = crypto.randomUUID();
+                return {
+                    elements: state.elements.map(el => ids.includes(el.id) ? { ...el, groupId: newGroupId } : el),
+                    lastAction: `Groupe d'éléments`
+                };
+            }),
+
+            ungroupElements: (ids) => set((state) => {
+                return {
+                    elements: state.elements.map(el => ids.includes(el.id) ? { ...el, groupId: undefined } : el),
+                    lastAction: `Dégrouper des éléments`
+                };
+            }),
 
             setSelectedIds: (ids) => set({ selectedIds: ids }),
             clearSelection: () => set({ selectedIds: [] }),

@@ -44,6 +44,7 @@ export interface CanvasElement {
     height: number;
     rotation: number;
     zIndex: number;
+    groupId?: string;
     backgroundColor?: string;
     content: string; // URL for images/videos/stickers or raw text
     points?: number[]; // For drawings
