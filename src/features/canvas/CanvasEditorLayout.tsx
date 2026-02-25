@@ -227,23 +227,55 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         const viewportHeight = window.innerHeight;
 
         if (elements.length > 0) {
-            const minX = Math.min(...elements.map(el => el.x));
-            const minY = Math.min(...elements.map(el => el.y));
-            const maxX = Math.max(...elements.map(el => el.x + (el.width || 0)));
-            const maxY = Math.max(...elements.map(el => el.y + (el.height || 0)));
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+
+            elements.forEach(el => {
+                let ex1 = el.x;
+                let ey1 = el.y;
+                let ex2 = el.x + (el.width || 0);
+                let ey2 = el.y + (el.height || 0);
+
+                if (el.type === 'line' || el.type === 'arrow' || el.type === 'eraser') {
+                    if (el.points && el.points.length > 0) {
+                        const xs = el.points.filter((_, i) => i % 2 === 0);
+                        const ys = el.points.filter((_, i) => i % 2 === 1);
+                        ex1 = el.x + Math.min(...xs);
+                        ey1 = el.y + Math.min(...ys);
+                        ex2 = el.x + Math.max(...xs);
+                        ey2 = el.y + Math.max(...ys);
+                    }
+                }
+
+                if (ex1 < minX) minX = ex1;
+                if (ey1 < minY) minY = ey1;
+                if (ex2 > maxX) maxX = ex2;
+                if (ey2 > maxY) maxY = ey2;
+            });
 
             const contentWidth = maxX - minX;
             const contentHeight = maxY - minY;
 
-            const padding = 40;
-            const scaleX = (viewportWidth - padding * 2) / contentWidth;
-            const scaleY = (viewportHeight - padding * 2) / contentHeight;
+            // Padding and available viewport space (accounting for UI)
+            const padding = 100;
+            // Left sidebar is generally ~280px on desktop
+            const sidebarOffset = viewportWidth >= 768 ? 280 : 0;
+            // Header is generally ~100px down on desktop
+            const topOffset = 80;
+
+            const availableWidth = viewportWidth - sidebarOffset - padding * 2;
+            const availableHeight = viewportHeight - topOffset - padding * 2;
+
+            const scaleX = availableWidth / contentWidth;
+            const scaleY = availableHeight / contentHeight;
             const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 1.5);
 
             setScale(newScale);
             setPosition({
-                x: (viewportWidth / 2) - (minX + contentWidth / 2) * newScale,
-                y: (viewportHeight / 2) - (minY + contentHeight / 2) * newScale
+                x: sidebarOffset + (availableWidth / 2) - (minX + contentWidth / 2) * newScale,
+                y: topOffset + (availableHeight / 2) - (minY + contentHeight / 2) * newScale
             });
         } else {
             setScale(1);
@@ -375,7 +407,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
     const handleExport = () => {
         if (stageRef.current) {
-            stageRef.current.exportToPNG(scrapbook?.title || 'scrappi_export');
+            stageRef.current.exportToPNG(scrapbook?.title || 'scrappi_export', paperColor || '#ffffff');
         }
     };
 
@@ -420,6 +452,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     handleRedo={redo}
                     historyStep={pastStates.length}
                     historyLength={pastStates.length + futureStates.length + 1}
+                    pastStates={pastStates}
+                    futureStates={futureStates}
                     scale={scale}
                     setScale={setScale}
                     handleSave={handleSave}

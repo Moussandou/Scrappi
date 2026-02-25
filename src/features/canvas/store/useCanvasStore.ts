@@ -9,6 +9,7 @@ interface CanvasState {
     // Data State
     elements: CanvasElement[];
     selectedIds: string[];
+    lastAction?: string;
 
     // UI State
     activeTool: Tool;
@@ -53,11 +54,13 @@ export const useCanvasStore = create<CanvasState>()(
             setElements: (elements) => set({ elements }),
 
             addElement: (element) => set((state) => ({
-                elements: [...state.elements, element]
+                elements: [...state.elements, element],
+                lastAction: `Ajout ${element.type === 'text' ? 'de texte' : element.type === 'image' ? "d'image" : element.type === 'line' ? 'de ligne' : "d'élément"}`
             })),
 
             updateElement: (id, partial) => set((state) => ({
-                elements: state.elements.map(el => el.id === id ? { ...el, ...partial } : el)
+                elements: state.elements.map(el => el.id === id ? { ...el, ...partial } : el),
+                lastAction: `Modification d'élément`
             })),
 
             updateElements: (changes) => set((state) => {
@@ -66,18 +69,21 @@ export const useCanvasStore = create<CanvasState>()(
                     elements: state.elements.map(el => {
                         const partial = changesMap.get(el.id);
                         return partial ? { ...el, ...partial } : el;
-                    })
+                    }),
+                    lastAction: `Modification multiple`
                 };
             }),
 
             removeElement: (id) => set((state) => ({
                 elements: state.elements.filter(el => el.id !== id),
-                selectedIds: state.selectedIds.filter(selId => selId !== id)
+                selectedIds: state.selectedIds.filter(selId => selId !== id),
+                lastAction: `Suppression d'élément`
             })),
 
             removeElements: (ids) => set((state) => ({
                 elements: state.elements.filter(el => !ids.includes(el.id)),
-                selectedIds: state.selectedIds.filter(selId => !ids.includes(selId))
+                selectedIds: state.selectedIds.filter(selId => !ids.includes(selId)),
+                lastAction: `Suppression multiple (${ids.length})`
             })),
 
             setSelectedIds: (ids) => set({ selectedIds: ids }),
@@ -91,7 +97,7 @@ export const useCanvasStore = create<CanvasState>()(
             setPosition: (position) => set({ position })
         }),
         {
-            partialize: (state) => ({ elements: state.elements }), // Only elements history is tracked
+            partialize: (state) => ({ elements: state.elements, lastAction: state.lastAction }), // Track elements and their last action
         }
     )
 );

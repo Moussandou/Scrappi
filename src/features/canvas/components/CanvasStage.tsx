@@ -3,14 +3,14 @@
 import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Stage, Layer, Rect, Transformer } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import type Konva from "konva";
+import Konva from "konva";
 import { CanvasElement } from "@/domain/entities";
 import { RenderElement } from "./ElementRenderer";
 import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
 import { useCanvasStore } from "../store/useCanvasStore";
 
 export interface CanvasStageRef {
-    exportToPNG: (filename: string) => void;
+    exportToPNG: (filename: string, paperColor?: string) => void;
 }
 
 const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
@@ -43,7 +43,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     const [isExporting, setIsExporting] = useState(false);
 
     useImperativeHandle(ref, () => ({
-        exportToPNG: async (title: string) => {
+        exportToPNG: async (title: string, paperColor: string = '#ffffff') => {
             if (!containerRef.current || !stageRef.current) return;
             const stage = stageRef.current;
 
@@ -58,7 +58,22 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                 const oldScale = stage.scaleX();
                 const oldPos = stage.position();
 
+                // Add background rect
+                const layer = stage.getLayers()[0];
+                const bgRect = new Konva.Rect({
+                    x: -100000,
+                    y: -100000,
+                    width: 200000,
+                    height: 200000,
+                    fill: paperColor,
+                    listening: false,
+                    id: 'temp-bg-rect'
+                });
+
                 try {
+                    layer.add(bgRect);
+                    bgRect.moveToBottom();
+
                     // Temporarily un-scale the stage to take a 1:1 picture
                     stage.scale({ x: 1, y: 1 });
                     stage.position({ x: 0, y: 0 });

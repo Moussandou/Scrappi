@@ -16,6 +16,8 @@ interface EditorHeaderProps {
     handleRedo: () => void;
     historyStep: number;
     historyLength: number;
+    pastStates: any[];
+    futureStates: any[];
     scale: number;
     setScale: (scale: number) => void;
     handleSave: () => Promise<void>;
@@ -41,6 +43,8 @@ export default function EditorHeader({
     handleRedo,
     historyStep,
     historyLength,
+    pastStates,
+    futureStates,
     scale,
     setScale,
     handleSave,
@@ -53,11 +57,13 @@ export default function EditorHeader({
     const router = useRouter();
     const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
     const zoomMenuRef = useRef<HTMLDivElement>(null);
+    const [isHistoryMenuOpen, setIsHistoryMenuOpen] = useState(false);
+    const historyMenuRef = useRef<HTMLDivElement>(null);
     const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
 
     return (
         <div className="pt-4 md:pt-6 px-4 md:px-8 flex justify-center">
-            <header className="pointer-events-auto flex items-center gap-2 md:gap-6 bg-white/80 backdrop-blur-md px-3 md:px-6 py-2 md:py-2.5 rounded-2xl border border-black/5 shadow-soft max-w-full md:max-w-fit transition-all hover:bg-white overflow-hidden">
+            <header className="pointer-events-auto flex items-center gap-2 md:gap-6 bg-white/80 backdrop-blur-md px-3 md:px-6 py-2 md:py-2.5 rounded-2xl border border-black/5 shadow-soft max-w-full md:max-w-fit transition-all hover:bg-white">
                 <div className="flex items-center gap-2 md:gap-4">
                     <button
                         onClick={() => router.push("/library")}
@@ -109,13 +115,58 @@ export default function EditorHeader({
 
                     <div className="h-6 md:h-8 w-px bg-ink/10"></div>
 
-                    <div className="flex items-center gap-0 md:gap-1">
-                        <button onClick={handleUndo} disabled={historyStep === 0} className="size-8 md:size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-20" title="Annuler (Ctrl+Z)">
-                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">undo</span>
-                        </button>
-                        <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-8 md:size-9 rounded-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/5 transition-colors disabled:opacity-20" title="Rétablir (Ctrl+Y)">
-                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">redo</span>
-                        </button>
+                    <div className="relative flex items-center" ref={historyMenuRef}>
+                        <div className="flex bg-black/5 rounded-xl">
+                            <button onClick={handleUndo} disabled={historyStep === 0} className="size-8 md:size-9 rounded-l-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Annuler (Ctrl+Z)">
+                                <span className="material-symbols-outlined text-[18px] md:text-[20px]">undo</span>
+                            </button>
+                            <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-8 md:size-9 border-r border-l border-ink/10 flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Rétablir (Ctrl+Y)">
+                                <span className="material-symbols-outlined text-[18px] md:text-[20px]">redo</span>
+                            </button>
+                            <button onClick={() => setIsHistoryMenuOpen(!isHistoryMenuOpen)} disabled={historyLength <= 1} className="w-6 md:w-8 rounded-r-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Historique">
+                                <span className="material-symbols-outlined text-[14px] md:text-[16px]">history</span>
+                            </button>
+                        </div>
+
+                        {isHistoryMenuOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-56 bg-white/90 backdrop-blur-md rounded-2xl border border-black/5 shadow-xl py-2 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+                                {Array.from({ length: historyLength }).map((_, i) => {
+                                    // Reverse the index so the most recent is at the top
+                                    const actualIndex = historyLength - 1 - i;
+                                    const isCurrent = historyStep === actualIndex;
+                                    const diff = actualIndex - historyStep;
+
+                                    let actionName = "État initial";
+                                    if (actualIndex > 0) {
+                                        if (actualIndex <= pastStates.length) {
+                                            actionName = pastStates[actualIndex - 1]?.state?.lastAction || `Action ${actualIndex}`;
+                                        } else {
+                                            actionName = futureStates[actualIndex - pastStates.length - 1]?.state?.lastAction || `Action ${actualIndex}`;
+                                        }
+                                    }
+
+                                    let label = isCurrent ? "État actuel" : diff < 0 ? `Annuler : ${actionName}` : `Rétablir : ${actionName}`;
+
+                                    return (
+                                        <button
+                                            key={actualIndex}
+                                            onClick={() => {
+                                                if (diff < 0) {
+                                                    for (let j = 0; j < Math.abs(diff); j++) handleUndo();
+                                                } else if (diff > 0) {
+                                                    for (let j = 0; j < diff; j++) handleRedo();
+                                                }
+                                                setIsHistoryMenuOpen(false);
+                                            }}
+                                            className={`w-full px-4 py-2 text-left text-sm hover:bg-sage hover:text-white transition-colors flex items-center gap-2 ${isCurrent ? 'text-sage font-bold bg-sage/5' : 'text-ink-light'}`}
+                                        >
+                                            <div className={`shrink-0 w-2 h-2 rounded-full ${isCurrent ? 'bg-sage' : 'bg-transparent'}`}></div>
+                                            <span className="truncate">{label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="h-6 md:h-8 w-px bg-ink/10 hidden sm:block"></div>
