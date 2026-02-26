@@ -112,13 +112,14 @@ export async function restoreDirectory(): Promise<FileSystemDirectoryHandle | nu
 
         // Request permission (requires user gesture context)
         // Note: This might fail if not called from a user gesture
+        // We catch silently to avoid console noise on page load
         const requested = await handle.requestPermission({ mode: "readwrite" });
         if (requested === "granted") {
             currentDirHandle = handle;
             return handle;
         }
     } catch {
-        console.error("Failed to restore directory handle");
+        // Silent catch for handle restoration (often fails without user gesture)
     }
 
     return null;
@@ -269,6 +270,36 @@ export async function disconnectDirectory(): Promise<void> {
     revokeAllBlobUrls();
     currentDirHandle = null;
     await clearHandle();
+}
+
+/**
+ * Save the entire project project metadata and elements to a 'project.json' file
+ * in the selected local directory.
+ */
+export async function saveProjectLocally(
+    projectId: string,
+    scrapbook: any,
+    elements: any[]
+): Promise<void> {
+    const dir = currentDirHandle;
+    if (!dir) return;
+
+    try {
+        const projectData = {
+            projectId,
+            lastUpdated: new Date().toISOString(),
+            scrapbook,
+            elements
+        };
+
+        const fileHandle = await dir.getFileHandle("project.json", { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(projectData, null, 2));
+        await writable.close();
+    } catch (e) {
+        console.error("Failed to save project.json locally", e);
+        throw e;
+    }
 }
 
 /**

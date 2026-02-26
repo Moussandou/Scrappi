@@ -62,6 +62,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const resetStore = useCanvasStore(state => state?.resetStore) || NO_OP;
     const setProjectLoading = useCanvasStore(state => state?.setProjectLoading) || NO_OP;
     const setActiveBrushType = useCanvasStore(state => state?.setActiveBrushType) || NO_OP;
+    const copySelection = useCanvasStore(state => state?.copySelection) || NO_OP;
+    const cutSelection = useCanvasStore(state => state?.cutSelection) || NO_OP;
+    const pasteSelection = useCanvasStore(state => state?.pasteSelection) || NO_OP;
+    const pasteSelectionAt = useCanvasStore(state => state?.pasteSelectionAt) || NO_OP;
 
     const currentLastAction = useCanvasStore(state => state?.lastAction);
     const activeTool = useCanvasStore(state => state?.activeTool) || 'select';
@@ -156,9 +160,13 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     }, [setDimensions]);
 
     const handleContextMenu = useCallback((e: any, clickedId: string | null) => {
+        // Prevent default only for the custom menu
+        e.evt.preventDefault();
+
         const store = useCanvasStore.getState();
+
+        // If the element is not already selected, select it
         if (clickedId && !store.selectedIds.includes(clickedId)) {
-            // Include grouping logic: if element belongs to group, select whole group
             const el = store.elements.find(el => el.id === clickedId);
             if (el && el.groupId) {
                 const groupIds = store.elements.filter(e => e.groupId === el.groupId).map(e => e.id);
@@ -342,6 +350,16 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     paperType: paperType
                 });
             }
+            if (storageMode.directoryReady) {
+                const currentElements = useCanvasStore.getState().elements;
+                const localStorageService = await import("@/infra/storage/localStorageService");
+                await localStorageService.saveProjectLocally(projectId, {
+                    ...scrapbook,
+                    backgroundColor: paperColor,
+                    paperType: paperType
+                }, currentElements);
+            }
+
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
@@ -350,6 +368,36 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             setSaving(false);
         }
     };
+
+    // -- Auto-Save --
+    useEffect(() => {
+        if (loading || !user) return;
+
+        const timer = setTimeout(() => {
+            const currentElements = useCanvasStore.getState().elements;
+            const hasChanges = JSON.stringify(currentElements) !== JSON.stringify(lastSavedElementsRef.current)
+                || scrapbook?.backgroundColor !== paperColor
+                || scrapbook?.paperType !== paperType;
+
+            if (hasChanges && !saving) {
+                console.log("Auto-saving...");
+                handleSave();
+
+                // Also save to local file system if connected
+                if (storageMode.directoryReady) {
+                    import("@/infra/storage/localStorageService").then(m => {
+                        m.saveProjectLocally(projectId, {
+                            ...scrapbook,
+                            backgroundColor: paperColor,
+                            paperType: paperType
+                        }, currentElements);
+                    });
+                }
+            }
+        }, 5000); // 5 seconds debounce
+
+        return () => clearTimeout(timer);
+    }, [elements, paperColor, paperType, user, loading, projectId, storageMode.directoryReady]);
 
     const handleTitleUpdate = async () => {
         if (!tempTitle.trim() || tempTitle === scrapbook?.title) {
@@ -749,7 +797,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             isStickerTrayOpen={media.isStickerTrayOpen}
                         />
 
-                        {!media.isImageModalOpen && !media.isVideoModalOpen && (
+                        {!media.isImageModalOpen && !media.isVideoModalOpen && !contextMenu && (
                             <FloatingContextHUD
                                 selectedElements={
                                     selectedIds.length > 0
@@ -775,7 +823,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 onDelete={() => removeElements(selectedIds)}
                                 onGroup={() => groupElements?.(selectedIds)}
                                 onUngroup={() => ungroupElements?.(selectedIds)}
-                                onMoveZ={handleMoveZ}
                                 onUpdateElement={handleUpdateElement}
                                 onAlign={handleAlign}
                                 onDistribute={handleDistribute}
@@ -824,45 +871,75 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 className="fixed z-[300] bg-white rounded-xl shadow-xl border border-black/10 py-2 w-48 text-sm text-ink font-medium pointer-events-auto"
                                 style={{
                                     left: Math.min(contextMenu.x, dimensions.width - 200),
-                                    top: Math.min(contextMenu.y, dimensions.height - 250)
+                                    top: Math.min(contextMenu.y, dimensions.height - 400) // Increased safety margin for long menu
                                 }}
                                 onContextMenu={e => e.preventDefault()}
                             >
                                 {contextMenu.id || selectedIds.length > 0 ? (
                                     <>
                                         <button className="w-full text-left px-4 py-2 hover:bg-sage/10 hover:text-sage transition-colors flex items-center justify-between"
-                                            onClick={handleDuplicate}
+                                            onClick={() => { cutSelection(); setContextMenu(null); }}
                                         >
-                                            Dupliquer <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                                            Couper <span className="text-[10px] opacity-40 font-bold">⌘X</span>
                                         </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 hover:text-sage transition-colors flex items-center justify-between"
+                                            onClick={() => { copySelection(); setContextMenu(null); }}
+                                        >
+                                            Copier <span className="text-[10px] opacity-40 font-bold">⌘C</span>
+                                        </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 hover:text-sage transition-colors flex items-center justify-between"
+                                            onClick={() => { handleDuplicate(); setContextMenu(null); }}
+                                        >
+                                            Dupliquer <span className="text-[10px] opacity-40 font-bold">⌘D</span>
+                                        </button>
+                                        <div className="h-px bg-black/5 my-1" />
                                         <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
                                             onClick={handleToggleLock}
                                         >
                                             Verrouiller/Dév. <span className="material-symbols-outlined text-[16px]">lock</span>
                                         </button>
                                         <div className="h-px bg-black/5 my-1" />
+                                        <div className="px-4 py-1 text-[10px] font-bold text-ink/30 uppercase tracking-widest">Ordre</div>
                                         <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
-                                            onClick={() => handleMoveZ('forward')}
+                                            onClick={() => { handleMoveZ('front'); setContextMenu(null); }}
+                                        >
+                                            Premier plan <span className="material-symbols-outlined text-[16px]">flip_to_front</span>
+                                        </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
+                                            onClick={() => { handleMoveZ('forward'); setContextMenu(null); }}
                                         >
                                             Avancer <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
                                         </button>
                                         <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
-                                            onClick={() => handleMoveZ('backward')}
+                                            onClick={() => { handleMoveZ('backward'); setContextMenu(null); }}
                                         >
                                             Reculer <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
                                         </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
+                                            onClick={() => { handleMoveZ('back'); setContextMenu(null); }}
+                                        >
+                                            Arrière plan <span className="material-symbols-outlined text-[16px]">flip_to_back</span>
+                                        </button>
                                         <div className="h-px bg-black/5 my-1" />
                                         <button className="w-full text-left px-4 py-2 hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-between"
-                                            onClick={() => removeElements(selectedIds)}
+                                            onClick={() => { removeElements(selectedIds); setContextMenu(null); }}
                                         >
                                             Supprimer <span className="material-symbols-outlined text-[16px]">delete</span>
                                         </button>
                                     </>
                                 ) : (
-                                    <div className="px-4 py-2 text-ink/50 text-xs text-center flex flex-col items-center gap-2">
-                                        <span className="material-symbols-outlined">touch_app</span>
-                                        Sélectionnez un élément pour voir les options
-                                    </div>
+                                    <>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 hover:text-sage transition-colors flex items-center justify-between"
+                                            onClick={() => { pasteSelectionAt(contextMenu.x, contextMenu.y); setContextMenu(null); }}
+                                        >
+                                            Coller ici <span className="text-[10px] opacity-40 font-bold">⌘V</span>
+                                        </button>
+                                        <div className="h-px bg-black/5 my-1" />
+                                        <div className="px-4 py-2 text-ink/50 text-xs text-center flex flex-col items-center gap-2">
+                                            <span className="material-symbols-outlined">touch_app</span>
+                                            Droit sur un objet pour plus d'options
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         )}

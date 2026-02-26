@@ -28,6 +28,7 @@ interface CanvasState {
     scale: number;
     position: { x: number; y: number };
     isSnappingEnabled: boolean;
+    clipboard: CanvasElement[];
 
     // Data Actions
     setElements: (elements: CanvasElement[]) => void;
@@ -55,6 +56,10 @@ interface CanvasState {
     setScale: (scale: number) => void;
     setPosition: (position: { x: number; y: number }) => void;
     setIsSnappingEnabled: (enabled: boolean) => void;
+    copySelection: () => void;
+    cutSelection: () => void;
+    pasteSelection: () => void;
+    pasteSelectionAt: (x: number, y: number) => void;
     resetStore: () => void;
 }
 
@@ -98,6 +103,7 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
         scale: 1,
         position: { x: 0, y: 0 },
         isSnappingEnabled: true,
+        clipboard: [],
 
         // Data Actions
         setElements: (elements) => {
@@ -240,6 +246,84 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
         setScale: (scale) => set({ scale }),
         setPosition: (position) => set({ position }),
         setIsSnappingEnabled: (enabled) => set({ isSnappingEnabled: enabled }),
+
+        copySelection: () => {
+            const { elements, selectedIds } = get();
+            const selected = elements.filter(el => selectedIds.includes(el.id));
+            if (selected.length > 0) {
+                set({ clipboard: [...selected] });
+            }
+        },
+
+        cutSelection: () => {
+            const { elements, selectedIds } = get();
+            const selected = elements.filter(el => selectedIds.includes(el.id));
+            if (selected.length > 0) {
+                const historyUpdates = saveHistory(`Couper (${selected.length})`, get());
+                set({
+                    ...historyUpdates,
+                    clipboard: [...selected],
+                    elements: elements.filter(el => !selectedIds.includes(el.id)),
+                    selectedIds: []
+                });
+            }
+        },
+
+        pasteSelection: () => {
+            const { clipboard, elements } = get();
+            if (clipboard.length === 0) return;
+
+            const historyUpdates = saveHistory(`Coller (${clipboard.length})`, get());
+            const offset = 20;
+            const newElements = clipboard.map(el => ({
+                ...el,
+                id: crypto.randomUUID(),
+                x: (el.x || 0) + offset,
+                y: (el.y || 0) + offset,
+                groupId: el.groupId ? crypto.randomUUID() : undefined // New group ID if it was grouped
+            }));
+
+            set({
+                ...historyUpdates,
+                elements: [...elements, ...newElements],
+                selectedIds: newElements.map(el => el.id)
+            });
+        },
+
+        pasteSelectionAt: (x, y) => {
+            const { clipboard, elements, scale, position } = get();
+            if (clipboard.length === 0) return;
+
+            const historyUpdates = saveHistory(`Coller ici (${clipboard.length})`, get());
+
+            // Convert screen coordinates to canvas coordinates
+            const canvasX = (x - position.x) / scale;
+            const canvasY = (y - position.y) / scale;
+
+            // Find center of selected elements to offset them around the paste point
+            const minX = Math.min(...clipboard.map(el => el.x || 0));
+            const minY = Math.min(...clipboard.map(el => el.y || 0));
+            const maxX = Math.max(...clipboard.map(el => (el.x || 0) + (el.width || 0)));
+            const maxY = Math.max(...clipboard.map(el => (el.y || 0) + (el.height || 0)));
+
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+
+            const newElements = clipboard.map(el => ({
+                ...el,
+                id: crypto.randomUUID(),
+                x: canvasX + ((el.x || 0) - centerX),
+                y: canvasY + ((el.y || 0) - centerY),
+                groupId: el.groupId ? crypto.randomUUID() : undefined
+            }));
+
+            set({
+                ...historyUpdates,
+                elements: [...elements, ...newElements],
+                selectedIds: newElements.map(el => el.id)
+            });
+        },
+
         resetStore: () => set({
             elements: [],
             selectedIds: [],

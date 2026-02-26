@@ -16,7 +16,7 @@ interface FloatingContextHUDProps {
     onDelete: () => void;
     onGroup?: () => void;
     onUngroup?: () => void;
-    onMoveZ: (direction: 'forward' | 'backward' | 'front' | 'back') => void;
+    onMoveZ?: (direction: 'forward' | 'backward' | 'front' | 'back') => void;
     onUpdateElement?: (id: string, props: Partial<CanvasElement>) => void;
     onAlign?: (alignment: 'left' | 'center' | 'right') => void;
     onDistribute?: () => void;
@@ -143,17 +143,6 @@ export default function FloatingContextHUD({
                     </div>
                 )}
 
-                {/* Z-Index Controls */}
-                <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
-                    <button onClick={() => onMoveZ('front')} className="w-12 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Premier plan">
-                        <span className="material-symbols-outlined text-[18px]">flip_to_front</span>
-                        <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Avant</span>
-                    </button>
-                    <button onClick={() => onMoveZ('back')} className="w-12 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Arrière plan">
-                        <span className="material-symbols-outlined text-[18px]">flip_to_back</span>
-                        <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Arr.</span>
-                    </button>
-                </div>
 
                 {/* Shadow Toggle */}
                 {canHaveShadow && selectedElements[0] && (

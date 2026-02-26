@@ -12,6 +12,7 @@ interface LayersPanelProps {
 export default function LayersPanel({ isOpen, onClose }: LayersPanelProps) {
     const { elements, selectedIds, setSelectedIds, updateElement } = useCanvasStore();
     const [draggedId, setDraggedId] = useState<string | null>(null);
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
@@ -69,10 +70,12 @@ export default function LayersPanel({ isOpen, onClose }: LayersPanelProps) {
         const el = e.currentTarget as HTMLElement;
         el.style.opacity = '1';
         setDraggedId(null);
+        setDragOverId(null);
     };
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault(); // Necessary to allow dropping
+    const handleDragOver = (e: React.DragEvent, id: string) => {
+        e.preventDefault();
+        setDragOverId(id);
     };
 
     const handleDrop = (e: React.DragEvent, targetId: string) => {
@@ -134,10 +137,14 @@ export default function LayersPanel({ isOpen, onClose }: LayersPanelProps) {
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, el.id)}
                                 onDragEnd={handleDragEnd}
-                                onDragOver={handleDragOver}
+                                onDragOver={(e) => handleDragOver(e, el.id)}
                                 onDrop={(e) => handleDrop(e, el.id)}
                                 onClick={(e) => handleSelect(el.id, e.shiftKey || e.metaKey || e.ctrlKey)}
-                                className={`group flex items-center gap-2 p-2 rounded-xl text-sm transition-colors cursor-pointer border ${isSelected ? 'bg-sage/10 border-sage/30' : 'hover:bg-black/5 border-transparent'} ${el.isHidden ? 'opacity-50' : ''}`}
+                                className={`group flex items-center gap-2 p-2 rounded-xl text-sm transition-all cursor-pointer border 
+                                    ${isSelected ? 'bg-sage/10 border-sage/30' : 'hover:bg-black/5 border-transparent'} 
+                                    ${el.isHidden ? 'opacity-50' : ''}
+                                    ${dragOverId === el.id && draggedId !== el.id ? 'border-t-sage border-t-2 -translate-y-1' : ''}
+                                `}
                             >
                                 <span className={`material-symbols-outlined cursor-grab active:cursor-grabbing text-[14px] text-ink-light/50 hover:text-ink`}>
                                     drag_indicator

@@ -18,6 +18,9 @@ export function useCanvasShortcuts(
     const setSelectedIds = useCanvasStore(state => state?.setSelectedIds) || NO_OP;
     const groupElements = useCanvasStore(state => state?.groupElements) || NO_OP;
     const ungroupElements = useCanvasStore(state => state?.ungroupElements) || NO_OP;
+    const copySelection = useCanvasStore(state => state?.copySelection) || NO_OP;
+    const cutSelection = useCanvasStore(state => state?.cutSelection) || NO_OP;
+    const pasteSelection = useCanvasStore(state => state?.pasteSelection) || NO_OP;
 
     // Custom History actions directly from store
     const undo = useCanvasStore(state => state?.undo) || NO_OP;
@@ -78,6 +81,24 @@ export function useCanvasShortcuts(
                 if (key === 'y') {
                     e.preventDefault();
                     redo?.();
+                    return;
+                }
+
+                if (key === 'c') {
+                    e.preventDefault();
+                    copySelection?.();
+                    return;
+                }
+
+                if (key === 'x') {
+                    e.preventDefault();
+                    cutSelection?.();
+                    return;
+                }
+
+                if (key === 'v') {
+                    e.preventDefault();
+                    pasteSelection?.();
                     return;
                 }
 
