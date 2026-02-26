@@ -16,6 +16,7 @@ import FloatingContextHUD from "./components/FloatingContextHUD";
 import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
+import ExportModal, { ExportOptions } from "./components/ExportModal";
 import MiniMap from "./components/MiniMap";
 import { PaperType } from "./components/PaperSelector";
 
@@ -91,6 +92,9 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [paperType, setPaperType] = useState<PaperType>('watercolor');
     const [paperColor, setPaperColor] = useState<string>('#ffffff'); // Default to white
+
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     const helpRef = useRef<HTMLDivElement>(null);
     const lastSavedElementsRef = useRef<CanvasElement[]>([]);
@@ -445,8 +449,18 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     };
 
     const handleExport = () => {
+        setIsExportModalOpen(true);
+    };
+
+    const executeExport = async (options: ExportOptions) => {
         if (stageRef.current) {
-            stageRef.current.exportToPNG(scrapbook?.title || 'scrappi_export', paperColor || '#ffffff');
+            setIsExporting(true);
+            try {
+                await stageRef.current.exportImage(scrapbook?.title || 'scrappi_export', paperColor || '#ffffff', options);
+            } finally {
+                setIsExporting(false);
+                setIsExportModalOpen(false);
+            }
         }
     };
 
@@ -653,6 +667,14 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
             {/* Mini-Map */}
             <MiniMap />
+
+            {/* Export Modal */}
+            <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExport={executeExport}
+                isExporting={isExporting}
+            />
         </div>
     );
 }

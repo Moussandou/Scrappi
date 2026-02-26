@@ -10,8 +10,10 @@ import { SELECTION_STROKE_COLOR, SELECTION_FILL_COLOR } from "../constants";
 import { useCanvasStore } from "../store/useCanvasStore";
 import { useSnapping } from "../hooks/useSnapping";
 
+import { ExportOptions } from "./ExportModal";
+
 export interface CanvasStageRef {
-    exportToPNG: (filename: string, paperColor?: string) => void;
+    exportImage: (title: string, paperColor: string, options: ExportOptions) => void;
 }
 
 const EMPTY_ARRAY: any[] = [];
@@ -51,7 +53,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     const [isExporting, setIsExporting] = useState(false);
 
     useImperativeHandle(ref, () => ({
-        exportToPNG: async (title: string, paperColor: string = '#ffffff') => {
+        exportImage: async (title: string, paperColor: string = '#ffffff', options: ExportOptions) => {
             if (!containerRef.current || !stageRef.current) return;
             const stage = stageRef.current;
 
@@ -66,21 +68,24 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                 const oldScale = stage.scaleX();
                 const oldPos = stage.position();
 
-                // Add background rect
                 const layer = stage.getLayers()[0];
-                const bgRect = new Konva.Rect({
-                    x: -100000,
-                    y: -100000,
-                    width: 200000,
-                    height: 200000,
-                    fill: paperColor,
-                    listening: false,
-                    id: 'temp-bg-rect'
-                });
+                let bgRect: Konva.Rect | null = null;
 
                 try {
-                    layer.add(bgRect);
-                    bgRect.moveToBottom();
+                    // Add background rect if not transparent
+                    if (!options.transparentBackground) {
+                        bgRect = new Konva.Rect({
+                            x: -100000,
+                            y: -100000,
+                            width: 200000,
+                            height: 200000,
+                            fill: paperColor,
+                            listening: false,
+                            id: 'temp-bg-rect'
+                        });
+                        layer.add(bgRect);
+                        bgRect.moveToBottom();
+                    }
 
                     // Temporarily un-scale the stage to take a 1:1 picture
                     stage.scale({ x: 1, y: 1 });
@@ -138,13 +143,15 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                     };
 
                     // Apply padding
-                    const padding = 50;
+                    const padding = 50 * options.resolution; // Adjust padding based on resolution
                     const exportConfig = {
                         x: box.x - padding,
                         y: box.y - padding,
                         width: box.width + padding * 2,
                         height: box.height + padding * 2,
-                        pixelRatio: 2 // High resolution
+                        pixelRatio: options.resolution,
+                        mimeType: `image/${options.format}`,
+                        quality: options.quality
                     };
 
                     console.log("Export Box:", box);
@@ -155,12 +162,14 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                     let targetArea = exportConfig.width * exportConfig.height * Math.pow(exportConfig.pixelRatio, 2);
 
                     if (targetArea > MAX_PIXELS) {
+                        // @ts-ignore: Konva config accepts number, ExportResolution is too strict here
                         exportConfig.pixelRatio = Math.sqrt(MAX_PIXELS / (exportConfig.width * exportConfig.height));
                         console.warn("Canvas area too large, downgrading pixelRatio to", exportConfig.pixelRatio);
                     }
 
                     // Failsafe for absurd bounds
                     if (exportConfig.pixelRatio < 0.05) {
+                        // @ts-ignore
                         exportConfig.pixelRatio = 0.05;
                     }
 
@@ -171,10 +180,10 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
 
                     const arr = dataURL.split(',');
                     if (arr.length < 2 || arr[1].length === 0) {
-                        throw new Error(`DataURL incomplet (CORS ou dimensions excessives). Entête: ${dataURL.substring(0, 30)}`);
+                        throw new Error(`DataURL incomplet (CORS ou dimensions excessives).`);
                     }
 
-                    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+                    const mime = arr[0].match(/:(.*?);/)?.[1] || `image/${options.format}`;
                     const bstr = atob(arr[1]);
                     let n = bstr.length;
                     const u8arr = new Uint8Array(n);
@@ -186,7 +195,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
 
                     // Trigger download
                     const link = document.createElement('a');
-                    link.download = `${title || 'scrappi_export'}.png`;
+                    link.download = `${title || 'scrappi_export'}.${options.format}`;
                     link.href = blobUrl;
                     document.body.appendChild(link);
                     link.click();
@@ -196,9 +205,12 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
 
                 } catch (err) {
                     console.error("Export Error:", err);
-                    alert("Une erreur est survenue lors de l'exportation. L'image est peut-être trop grande ou des éléments bloquent l'export (CORS).");
+                    alert("Une erreur est survenue lors de l'exportation. Vérifiez s'il y a des images externes bloquées (CORS).");
                 } finally {
                     // Restore stage state
+                    if (bgRect) {
+                        bgRect.destroy();
+                    }
                     stage.scale({ x: oldScale, y: oldScale });
                     stage.position(oldPos);
                     stage.draw();
