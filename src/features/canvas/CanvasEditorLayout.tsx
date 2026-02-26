@@ -141,8 +141,19 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     useEffect(() => {
         const handleClick = () => setContextMenu(null);
         window.addEventListener('click', handleClick);
-        return () => window.removeEventListener('click', handleClick);
-    }, []);
+
+        // Handle dimensions
+        const handleResize = () => {
+            setDimensions({ width: window.innerWidth, height: window.innerHeight });
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('click', handleClick);
+            window.removeEventListener('resize', handleResize);
+        }
+    }, [setDimensions]);
 
     const handleContextMenu = useCallback((e: any, clickedId: string | null) => {
         const store = useCanvasStore.getState();
@@ -642,7 +653,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
             <div className="absolute inset-0 z-20">
                 {elements.length === 0 && <EmptyProjectState />}
-                <Canvas ref={stageRef} />
+                <Canvas
+                    ref={stageRef}
+                    onContextMenu={handleContextMenu}
+                />
             </div>
 
             <div className="fixed inset-0 z-50 pointer-events-none">
@@ -807,7 +821,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                         {/* Context Menu Overlay */}
                         {contextMenu && (
                             <div
-                                className="fixed z-[300] bg-white rounded-xl shadow-xl border border-black/10 py-2 w-48 text-sm text-ink font-medium"
+                                className="fixed z-[300] bg-white rounded-xl shadow-xl border border-black/10 py-2 w-48 text-sm text-ink font-medium pointer-events-auto"
                                 style={{
                                     left: Math.min(contextMenu.x, dimensions.width - 200),
                                     top: Math.min(contextMenu.y, dimensions.height - 250)
