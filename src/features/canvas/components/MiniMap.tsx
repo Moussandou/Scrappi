@@ -61,7 +61,7 @@ export default function MiniMap() {
             if (!isNaN(ex1) && ex1 < minX) minX = ex1;
             if (!isNaN(ey1) && ey1 < minY) minY = ey1;
             if (!isNaN(ex2) && ex2 > maxX) maxX = ex2;
-            if (!isNaN(ey2) && ey2 > Math.max(maxY, ey2)) maxY = ey2;
+            if (!isNaN(ey2) && ey2 > maxY) maxY = ey2;
         });
 
         // Add padding

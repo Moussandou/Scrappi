@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, memo } from "react";
-import type Konva from "konva";
+import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Text, Image as KonvaImage, Group, Rect, Line, Arrow, Path } from "react-konva";
 import { Html } from "react-konva-utils";
@@ -82,6 +82,40 @@ export const RenderElement = memo(function RenderElement({
         }
     }, [onNodeRegister, element.id]);
 
+    // -- Filtering and Caching logic --
+    useEffect(() => {
+        const node = shapeRef.current;
+        if (!node || (element.type !== 'image' && element.type !== 'sticker')) return;
+
+        // Apply filters
+        const activeFilters = [];
+        if (element.blurRadius) activeFilters.push(Konva.Filters.Blur);
+        if (element.brightness !== undefined) activeFilters.push(Konva.Filters.Brightness);
+        if (element.contrast !== undefined) activeFilters.push(Konva.Filters.Contrast);
+        if (element.grayscale) activeFilters.push(Konva.Filters.Grayscale);
+        if (element.sepia) activeFilters.push(Konva.Filters.Sepia);
+        if (element.invert) activeFilters.push(Konva.Filters.Invert);
+
+        if (activeFilters.length > 0) {
+            node.filters(activeFilters);
+            node.cache();
+        } else {
+            node.filters([]);
+            node.clearCache();
+        }
+
+        // Redraw layer
+        node.getLayer()?.batchDraw();
+    }, [
+        element.blurRadius,
+        element.brightness,
+        element.contrast,
+        element.grayscale,
+        element.sepia,
+        element.invert,
+        img
+    ]);
+
     const handleDragStart = (e: KonvaEventObject<DragEvent>) => {
         if (onDragStart) onDragStart(element.id, e);
     };
@@ -137,6 +171,7 @@ export const RenderElement = memo(function RenderElement({
         <Group>
             {element.type === 'text' && (
                 <Group
+                    id={element.id}
                     ref={(node) => { shapeRef.current = node; }}
                     x={element.x}
                     y={element.y}
@@ -259,6 +294,7 @@ export const RenderElement = memo(function RenderElement({
 
             {(element.type === 'image' || element.type === 'sticker') && (
                 <KonvaImage
+                    id={element.id}
                     ref={(node) => { shapeRef.current = node; }}
                     image={img}
                     x={element.x}
@@ -280,6 +316,17 @@ export const RenderElement = memo(function RenderElement({
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
+
+                    // Filters props
+                    blurRadius={element.blurRadius}
+                    brightness={element.brightness}
+                    contrast={element.contrast}
+
+                    // Crop props
+                    cropX={element.cropX}
+                    cropY={element.cropY}
+                    cropWidth={element.cropWidth}
+                    cropHeight={element.cropHeight}
                 />
             )}
 
@@ -316,6 +363,7 @@ export const RenderElement = memo(function RenderElement({
                 if (element.type === 'line') {
                     return (
                         <Path
+                            id={element.id}
                             ref={(node) => { shapeRef.current = node; }}
                             data={pathData}
                             fill={element.strokeColor || DEFAULT_STROKE_COLOR}
@@ -343,6 +391,7 @@ export const RenderElement = memo(function RenderElement({
                 // Fallback to standard Line for eraser
                 return (
                     <Line
+                        id={element.id}
                         ref={(node) => { shapeRef.current = node; }}
                         points={element.points || []}
                         stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
@@ -368,6 +417,7 @@ export const RenderElement = memo(function RenderElement({
 
             {element.type === 'arrow' && (
                 <Arrow
+                    id={element.id}
                     ref={(node) => { shapeRef.current = node; }}
                     points={element.points || []}
                     stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
@@ -495,6 +545,7 @@ function VideoElement({ element, isDraggable, onSelect, onDragStart, onDragEnd, 
 
     return (
         <KonvaImage
+            id={element.id}
             ref={registerRef}
             image={videoElement || undefined}
             x={element.x}
@@ -562,6 +613,7 @@ function GifElement({ element, isDraggable, onSelect, onDragStart, onDragEnd, on
 
     return (
         <KonvaImage
+            id={element.id}
             ref={registerRef}
             image={gifImage || undefined}
             x={element.x}

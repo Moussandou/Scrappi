@@ -4,7 +4,6 @@ import { resizeDimensions } from '../utils';
 import { CanvasElement } from '@/domain/entities';
 
 interface StorageMode {
-    mode: 'local' | 'cloud';
     uploadFile: (file: File, path: string, onProgress?: (p: number) => void) => Promise<string>;
 }
 

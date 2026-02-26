@@ -72,6 +72,19 @@ export interface CanvasElement {
     shadowBlur?: number;
     shadowOffsetX?: number;
     shadowOffsetY?: number;
+    // Crop properties
+    cropX?: number;
+    cropY?: number;
+    cropWidth?: number;
+    cropHeight?: number;
+    // Image Filters
+    brightness?: number; // -1 to 1
+    contrast?: number; // -100 to 100
+    blurRadius?: number; // 0 to 40
+    grayscale?: boolean;
+    sepia?: boolean;
+    invert?: boolean;
+    saturation?: number; // -1 to 1
 }
 
 export interface CanvasPage {

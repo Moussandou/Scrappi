@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { uploadImage } from "@/infra/db/storageService";
 import {
     isFileSystemAccessSupported,
     pickDirectory,
@@ -13,15 +12,14 @@ import {
     revokeAllBlobUrls,
 } from "@/infra/storage/localStorageService";
 
-type StorageMode = "cloud" | "local";
-
-const STORAGE_MODE_KEY = "scrappi-storage-mode";
+type StorageMode = "local";
 
 export interface UseStorageModeReturn {
     mode: StorageMode;
     isLocalSupported: boolean;
     directoryName: string | null;
     directoryReady: boolean;
+    isInitializing: boolean;
     setMode: (mode: StorageMode) => Promise<void>;
     changeDirectory: () => Promise<void>;
     uploadFile: (file: File, directory: string, onProgress?: (p: number) => void) => Promise<string>;
@@ -30,14 +28,10 @@ export interface UseStorageModeReturn {
 }
 
 export function useStorageMode(): UseStorageModeReturn {
-    const [mode, setModeState] = useState<StorageMode>(() => {
-        if (typeof window !== 'undefined') {
-            return (localStorage.getItem(STORAGE_MODE_KEY) as StorageMode) || "cloud";
-        }
-        return "cloud";
-    });
+    const [mode, setModeState] = useState<StorageMode>("local");
     const [directoryName, setDirectoryName] = useState<string | null>(null);
     const [directoryReady, setDirectoryReady] = useState(false);
+    const [isInitializing, setIsInitializing] = useState(true);
 
     // Check support only on client side to avoid hydration mismatch
     const [isLocalSupported, setIsLocalSupported] = useState(false);
@@ -54,57 +48,50 @@ export function useStorageMode(): UseStorageModeReturn {
     // Cache for resolved URLs within this hook instance
     const resolvedCache = useRef(new Map<string, string>());
 
-    // Restore saved mode and directory handle on mount
+    // Restore saved directory handle on mount
     useEffect(() => {
-        if (!isLocalSupported) return;
-
-        const savedMode = localStorage.getItem(STORAGE_MODE_KEY) as StorageMode | null;
-        if (savedMode === "local") {
-            // No longer need setModeState("local") here as it's initialized above
-            restoreDirectory().then(handle => {
-                if (handle) {
-                    setDirectoryName(handle.name);
-                    setDirectoryReady(true);
-                } else {
-                    // Handle lost or permission denied
-                    setDirectoryReady(false);
-                }
-            });
+        if (!isLocalSupported) {
+            setIsInitializing(false);
+            return;
         }
+
+        restoreDirectory().then(handle => {
+            if (handle) {
+                setDirectoryName(handle.name);
+                setDirectoryReady(true);
+            }
+        }).finally(() => {
+            setIsInitializing(false);
+        });
 
         return () => revokeAllBlobUrls();
     }, [isLocalSupported]);
 
     const setMode = useCallback(async (newMode: StorageMode) => {
-        if (newMode === "local") {
-            if (!isLocalSupported) {
-                alert("Votre navigateur ne supporte pas l'API File System Access.");
+        // Enforce local
+        if (!isLocalSupported) {
+            alert("Votre navigateur ne supporte pas l'API File System Access.");
+            return;
+        }
+
+        // Try to restore existing handle first
+        let handle = await restoreDirectory();
+
+        // If no handle or permission denied, ask user to pick
+        if (!handle) {
+            try {
+                handle = await pickDirectory();
+            } catch {
+                // User cancelled
+                console.log("Selection cancelled");
                 return;
             }
+        }
 
-            // Try to restore existing handle first
-            let handle = await restoreDirectory();
-
-            // If no handle or permission denied, ask user to pick
-            if (!handle) {
-                try {
-                    handle = await pickDirectory();
-                } catch {
-                    // User cancelled
-                    console.log("Selection cancelled");
-                    return;
-                }
-            }
-
-            if (handle) {
-                setDirectoryName(handle.name);
-                setDirectoryReady(true);
-                setModeState("local");
-                localStorage.setItem(STORAGE_MODE_KEY, "local");
-            }
-        } else {
-            setModeState("cloud");
-            localStorage.setItem(STORAGE_MODE_KEY, "cloud");
+        if (handle) {
+            setDirectoryName(handle.name);
+            setDirectoryReady(true);
+            setModeState("local");
         }
     }, [isLocalSupported]);
 
@@ -114,12 +101,6 @@ export function useStorageMode(): UseStorageModeReturn {
             const handle = await pickDirectory();
             setDirectoryName(handle.name);
             setDirectoryReady(true);
-
-            // Also ensure we switch to local mode
-            if (mode !== "local") {
-                setModeState("local");
-                localStorage.setItem(STORAGE_MODE_KEY, "local");
-            }
         } catch (_e) {
             console.log("Directory change cancelled");
         }
@@ -130,30 +111,25 @@ export function useStorageMode(): UseStorageModeReturn {
         directory: string,
         onProgress?: (p: number) => void
     ): Promise<string> => {
-        if (mode === "local") {
-            if (!directoryReady) {
-                // Try to restore permission on the fly (requires user gesture usually)
-                const handle = await restoreDirectory();
-                if (handle) {
+        if (!directoryReady) {
+            // Try to restore permission on the fly (requires user gesture usually)
+            const handle = await restoreDirectory();
+            if (handle) {
+                setDirectoryReady(true);
+                setDirectoryName(handle.name);
+            } else {
+                // If still not ready, prompt for directory
+                try {
+                    const newHandle = await pickDirectory();
                     setDirectoryReady(true);
-                    setDirectoryName(handle.name);
-                } else {
-                    // If still not ready, prompt for directory
-                    try {
-                        const newHandle = await pickDirectory();
-                        setDirectoryReady(true);
-                        setDirectoryName(newHandle.name);
-                    } catch {
-                        throw new Error("Dossier local non accessible. Veuillez en sélectionner un.");
-                    }
+                    setDirectoryName(newHandle.name);
+                } catch {
+                    throw new Error("Dossier local non accessible. Veuillez en sélectionner un.");
                 }
             }
-            return saveFileLocally(file, directory, onProgress);
         }
-
-        // Fallback to cloud
-        return uploadImage(file, directory, onProgress);
-    }, [mode, directoryReady]);
+        return saveFileLocally(file, directory, onProgress);
+    }, [directoryReady]);
 
     const resolveUrl = useCallback(async (src: string): Promise<string> => {
         if (!src) return "";
@@ -175,10 +151,9 @@ export function useStorageMode(): UseStorageModeReturn {
 
     const disconnect = useCallback(async () => {
         await disconnectDirectory();
-        setModeState("cloud");
+        setModeState("local");
         setDirectoryName(null);
         setDirectoryReady(false);
-        localStorage.setItem(STORAGE_MODE_KEY, "cloud");
         resolvedCache.current.clear();
     }, []);
 
@@ -187,6 +162,7 @@ export function useStorageMode(): UseStorageModeReturn {
         isLocalSupported,
         directoryName,
         directoryReady,
+        isInitializing,
         setMode,
         changeDirectory,
         uploadFile,
@@ -199,5 +175,6 @@ export function useStorageMode(): UseStorageModeReturn {
  * Convenience: get the display label for the current mode.
  */
 export function getStorageModeLabel(mode: StorageMode): string {
-    return mode === "local" ? "Stockage local" : "Stockage cloud";
+    return "Stockage local";
 }
+

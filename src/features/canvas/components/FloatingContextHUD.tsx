@@ -41,20 +41,27 @@ export default function FloatingContextHUD({
     const [fontPickerOpen, setFontPickerOpen] = useState(false);
     const [fonts, setFonts] = useState<GoogleFont[]>([]);
     const [fontSearch, setFontSearch] = useState("");
-    const fontPickerRef = useRef<HTMLDivElement>(null);
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
-    // Close font picker on click outside
+    const fontPickerRef = useRef<HTMLDivElement>(null);
+    const filtersRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
-        if (!fontPickerOpen) return;
+        // Only add listener if either picker is open
+        if (!fontPickerOpen && !filtersOpen) return;
+
         const handleClickOutside = (e: MouseEvent) => {
             if (fontPickerRef.current && !fontPickerRef.current.contains(e.target as Node)) {
                 setFontPickerOpen(false);
                 setFontSearch("");
             }
+            if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) {
+                setFiltersOpen(false);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [fontPickerOpen]);
+    }, [fontPickerOpen, filtersOpen]);
 
     if (selectedElements.length === 0) return null;
 
@@ -64,6 +71,8 @@ export default function FloatingContextHUD({
     const hasEraser = selectedElements.some(el => el.type === 'eraser');
     const hasVideo = selectedElements.some(el => el.type === 'video');
     const firstVideo = selectedElements.find(el => el.type === 'video');
+    const hasImage = selectedElements.some(el => el.type === 'image' || el.type === 'sticker');
+    const firstImage = selectedElements.find(el => el.type === 'image' || el.type === 'sticker');
 
     const showColor = !hasEraser && (hasPostIt || hasText || hasLines);
     const showThickness = hasLines || hasEraser;
@@ -160,6 +169,101 @@ export default function FloatingContextHUD({
                     </div>
                 )}
 
+                {/* Image Filters & Crop */}
+                {hasImage && firstImage && onUpdateElement && (
+                    <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
+                        <div className="relative" ref={filtersRef}>
+                            <button
+                                onClick={() => setFiltersOpen(!filtersOpen)}
+                                className={`w-12 h-11 flex flex-col items-center justify-center gap-0.5 rounded-lg transition-all ${filtersOpen ? 'bg-white text-ink shadow-sm' : 'hover:bg-white text-ink-light hover:text-ink'}`}
+                                title="Filtres Image"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">photo_filter</span>
+                                <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Filtres</span>
+                            </button>
+
+                            {filtersOpen && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl border border-black/5 shadow-2xl p-4 flex flex-col gap-4 z-[101]">
+                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-sage border-b border-black/5 pb-2">Filtres Image</h3>
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold uppercase text-ink-light">
+                                                <span>Luminosité</span>
+                                                <span>{Math.round((firstImage.brightness || 0) * 100)}%</span>
+                                            </div>
+                                            <input
+                                                type="range" min="-1" max="1" step="0.05"
+                                                value={firstImage.brightness || 0}
+                                                onChange={(e) => onUpdateElement(firstImage.id, { brightness: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-sage"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold uppercase text-ink-light">
+                                                <span>Contraste</span>
+                                                <span>{Math.round(firstImage.contrast || 0)}</span>
+                                            </div>
+                                            <input
+                                                type="range" min="-100" max="100" step="1"
+                                                value={firstImage.contrast || 0}
+                                                onChange={(e) => onUpdateElement(firstImage.id, { contrast: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-sage"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold uppercase text-ink-light">
+                                                <span>Flou</span>
+                                                <span>{Math.round(firstImage.blurRadius || 0)}px</span>
+                                            </div>
+                                            <input
+                                                type="range" min="0" max="40" step="1"
+                                                value={firstImage.blurRadius || 0}
+                                                onChange={(e) => onUpdateElement(firstImage.id, { blurRadius: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-sage"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 border-t border-black/5 pt-3">
+                                        <button
+                                            onClick={() => onUpdateElement(firstImage.id, { grayscale: !firstImage.grayscale })}
+                                            className={`px-1 py-2 rounded-lg text-[9px] font-bold uppercase transition-all ${firstImage.grayscale ? 'bg-sage text-white shadow-md' : 'bg-black/5 text-ink-light hover:bg-black/10'}`}
+                                        >Gris</button>
+                                        <button
+                                            onClick={() => onUpdateElement(firstImage.id, { sepia: !firstImage.sepia })}
+                                            className={`px-1 py-2 rounded-lg text-[9px] font-bold uppercase transition-all ${firstImage.sepia ? 'bg-sage text-white shadow-md' : 'bg-black/5 text-ink-light hover:bg-black/10'}`}
+                                        >Sepia</button>
+                                        <button
+                                            onClick={() => onUpdateElement(firstImage.id, { invert: !firstImage.invert })}
+                                            className={`px-1 py-2 rounded-lg text-[9px] font-bold uppercase transition-all ${firstImage.invert ? 'bg-sage text-white shadow-md' : 'bg-black/5 text-ink-light hover:bg-black/10'}`}
+                                        >Inverser</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                // Simple auto-reset crop for now as a "center crop" demo, 
+                                // real interactive crop mode is phase 2
+                                if (firstImage.cropX) {
+                                    onUpdateElement(firstImage.id, { cropX: undefined, cropY: undefined, cropWidth: undefined, cropHeight: undefined });
+                                } else {
+                                    onUpdateElement(firstImage.id, {
+                                        cropX: 50, cropY: 50,
+                                        cropWidth: firstImage.width - 100,
+                                        cropHeight: firstImage.height - 100
+                                    });
+                                }
+                            }}
+                            className={`w-12 h-11 flex flex-col items-center justify-center gap-0.5 rounded-lg transition-all ${firstImage.cropX ? 'bg-sage/10 text-sage' : 'hover:bg-white text-ink-light hover:text-ink'}`}
+                            title="Recadrage Auto"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">crop</span>
+                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Crop</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Color Picker */}
                 {showColor && (
                     <div className="flex items-center gap-1 px-1 border-r border-black/5 mr-1">
@@ -172,6 +276,24 @@ export default function FloatingContextHUD({
                             />
                             {!activeColor && <span className="material-symbols-outlined text-xs text-ink/20">palette</span>}
                         </div>
+                        {typeof window !== 'undefined' && 'EyeDropper' in window && (
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        // @ts-ignore
+                                        const eyeDropper = new window.EyeDropper();
+                                        const result = await eyeDropper.open();
+                                        handleColorSelect(result.sRGBHex);
+                                    } catch (e) {
+                                        console.log("Eyedropper cancelled or failed", e);
+                                    }
+                                }}
+                                className="size-7 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors text-ink-light hover:text-ink"
+                                title="Pipette"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">colorize</span>
+                            </button>
+                        )}
                     </div>
                 )}
 

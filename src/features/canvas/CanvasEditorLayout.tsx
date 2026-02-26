@@ -19,6 +19,7 @@ import VideoUploadModal from "./components/VideoUploadModal";
 import ExportModal, { ExportOptions } from "./components/ExportModal";
 import LayersPanel from "./components/LayersPanel";
 import MiniMap from "./components/MiniMap";
+import EmptyProjectState from './components/EmptyProjectState';
 import { PaperType } from "./components/PaperSelector";
 
 import { useCanvasStore } from "./store/useCanvasStore";
@@ -99,6 +100,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+    const [showLocalFolderPrompt, setShowLocalFolderPrompt] = useState(false);
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, id: string | null } | null>(null);
 
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const helpRef = useRef<HTMLDivElement>(null);
@@ -133,6 +136,91 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             }
         }
     }, [selectedIds, elements, setActiveColor, setActiveStrokeWidth]);
+
+    // Close context menu on click
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, []);
+
+    const handleContextMenu = useCallback((e: any, clickedId: string | null) => {
+        const store = useCanvasStore.getState();
+        if (clickedId && !store.selectedIds.includes(clickedId)) {
+            // Include grouping logic: if element belongs to group, select whole group
+            const el = store.elements.find(el => el.id === clickedId);
+            if (el && el.groupId) {
+                const groupIds = store.elements.filter(e => e.groupId === el.groupId).map(e => e.id);
+                store.setSelectedIds(groupIds);
+            } else {
+                store.setSelectedIds([clickedId]);
+            }
+        }
+
+        setContextMenu({
+            x: e.evt.clientX,
+            y: e.evt.clientY,
+            id: clickedId
+        });
+    }, []);
+
+    const handleDuplicate = useCallback(() => {
+        const store = useCanvasStore.getState();
+        const currentElements = store.elements;
+        const currentSelectedIds = store.selectedIds;
+
+        if (currentSelectedIds.length === 0) return;
+
+        const newElements = currentElements
+            .filter(el => currentSelectedIds.includes(el.id))
+            .map(el => ({
+                ...el,
+                id: crypto.randomUUID(),
+                x: el.x + 20,
+                y: el.y + 20,
+            }));
+
+        newElements.forEach(el => store.addElement(el));
+        store.setSelectedIds(newElements.map(el => el.id));
+    }, []);
+
+    const handleToggleLock = useCallback(() => {
+        const store = useCanvasStore.getState();
+        const currentElements = store.elements;
+        const currentSelectedIds = store.selectedIds;
+
+        if (currentSelectedIds.length === 0) return;
+
+        const selectedEls = currentElements.filter(el => currentSelectedIds.includes(el.id));
+        const allLocked = selectedEls.every(el => el.isLocked);
+
+        const updates = currentSelectedIds.map(id => ({
+            id,
+            partial: { isLocked: !allLocked }
+        }));
+        store.updateElements(updates);
+
+        if (!allLocked) {
+            store.setSelectedIds([]);
+        }
+        setContextMenu(null);
+    }, []);
+
+    // Check if we need local folder access
+    useEffect(() => {
+        if (loading || storageMode.isInitializing) return;
+
+        const hasLocalAssets = elements.some(el =>
+            (el.type === 'image' || el.type === 'video' || el.type === 'gif') &&
+            el.content?.startsWith('local:')
+        );
+
+        if (hasLocalAssets && !storageMode.directoryReady && storageMode.isLocalSupported) {
+            setShowLocalFolderPrompt(true);
+        } else {
+            setShowLocalFolderPrompt(false);
+        }
+    }, [loading, storageMode.isInitializing, storageMode.directoryReady, storageMode.isLocalSupported, elements]);
 
     // Data Loading
     useEffect(() => {
@@ -553,6 +641,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             <div className={`fixed inset-0 pointer-events-none z-10 ${getPaperClass()}`}></div>
 
             <div className="absolute inset-0 z-20">
+                {elements.length === 0 && <EmptyProjectState />}
                 <Canvas ref={stageRef} />
             </div>
 
@@ -608,7 +697,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onClose={() => media.setIsImageModalOpen(false)}
                             onUpload={media.handleFileSelection}
                             uploading={media.uploading}
-                            storageMode={storageMode.mode}
                         />
 
                         <VideoUploadModal
@@ -616,7 +704,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                             onClose={() => media.setIsVideoModalOpen(false)}
                             onUpload={media.handleVideoSelection}
                             uploading={media.uploading}
-                            storageMode={storageMode.mode}
                         />
 
                         {media.uploading && (
@@ -679,6 +766,91 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 onAlign={handleAlign}
                                 onDistribute={handleDistribute}
                             />
+                        )}
+
+                        {/* Local Folder Missing Prompt */}
+                        {showLocalFolderPrompt && (
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-md">
+                                <div className="bg-white p-8 rounded-3xl max-w-md w-full shadow-2xl border border-black/5 animate-in zoom-in-95 duration-300">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="size-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-2xl">folder_off</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-ink">Dossier Local Manquant</h3>
+                                            <p className="text-xs text-ink-light">Images introuvables</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-ink/80 mb-6 leading-relaxed">
+                                        Ce projet contient des images ou vidéos sauvegardées sur votre ordinateur. Pour les afficher correctement, veuillez reconnecter le dossier local associé à ce projet.
+                                    </p>
+                                    <div className="flex flex-col gap-3">
+                                        <button
+                                            onClick={async () => {
+                                                await storageMode.changeDirectory();
+                                            }}
+                                            className="w-full py-3 bg-sage text-white font-bold rounded-xl shadow-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <span className="material-symbols-outlined">folder_open</span>
+                                            Lier le dossier
+                                        </button>
+                                        <button
+                                            onClick={() => setShowLocalFolderPrompt(false)}
+                                            className="w-full py-3 text-ink-light font-bold text-sm hover:text-ink transition-colors"
+                                        >
+                                            Ignorer pour le moment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {/* Context Menu Overlay */}
+                        {contextMenu && (
+                            <div
+                                className="fixed z-[300] bg-white rounded-xl shadow-xl border border-black/10 py-2 w-48 text-sm text-ink font-medium"
+                                style={{
+                                    left: Math.min(contextMenu.x, dimensions.width - 200),
+                                    top: Math.min(contextMenu.y, dimensions.height - 250)
+                                }}
+                                onContextMenu={e => e.preventDefault()}
+                            >
+                                {contextMenu.id || selectedIds.length > 0 ? (
+                                    <>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 hover:text-sage transition-colors flex items-center justify-between"
+                                            onClick={handleDuplicate}
+                                        >
+                                            Dupliquer <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                                        </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
+                                            onClick={handleToggleLock}
+                                        >
+                                            Verrouiller/Dév. <span className="material-symbols-outlined text-[16px]">lock</span>
+                                        </button>
+                                        <div className="h-px bg-black/5 my-1" />
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
+                                            onClick={() => handleMoveZ('forward')}
+                                        >
+                                            Avancer <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                        </button>
+                                        <button className="w-full text-left px-4 py-2 hover:bg-sage/10 transition-colors flex items-center justify-between"
+                                            onClick={() => handleMoveZ('backward')}
+                                        >
+                                            Reculer <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                        </button>
+                                        <div className="h-px bg-black/5 my-1" />
+                                        <button className="w-full text-left px-4 py-2 hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-between"
+                                            onClick={() => removeElements(selectedIds)}
+                                        >
+                                            Supprimer <span className="material-symbols-outlined text-[16px]">delete</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="px-4 py-2 text-ink/50 text-xs text-center flex flex-col items-center gap-2">
+                                        <span className="material-symbols-outlined">touch_app</span>
+                                        Sélectionnez un élément pour voir les options
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -749,6 +921,6 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 isOpen={isLayersPanelOpen}
                 onClose={() => setIsLayersPanelOpen(false)}
             />
-        </div>
+        </div >
     );
 }

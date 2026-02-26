@@ -21,7 +21,16 @@ const DEFAULT_POSITION = { x: 0, y: 0 };
 
 const NO_OP = () => { };
 
-const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
+interface CanvasStageProps {
+    width?: number;
+    height?: number;
+    showGrid?: boolean;
+    paperType?: string;
+    paperColor?: string;
+    onContextMenu?: (e: KonvaEventObject<PointerEvent>, clickedId: string | null) => void;
+}
+
+const InfiniteCanvas = forwardRef<CanvasStageRef, CanvasStageProps>((props, ref) => {
     const { guidelines, setGuidelines, getSnappingOffset } = useSnapping();
     const elements = useCanvasStore(state => state?.elements) || EMPTY_ARRAY;
     const selectedIds = useCanvasStore(state => state?.selectedIds) || EMPTY_ARRAY;
@@ -273,33 +282,68 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
         const stage = stageRef.current;
         if (!stage) return;
 
-        const oldScale = scale;
-
-        // If ctrl or cmd is pressed, we zoom
         if (e.evt.ctrlKey || e.evt.metaKey) {
-            const scaleBy = 1.05;
+            // Zoom (Smooth, continuous calculation covering trackpads and stepped wheels)
+            const oldScale = scale;
             const pointer = stage.getPointerPosition();
             if (!pointer) return;
 
-            const mousePointTo = {
-                x: pointer.x / oldScale - stage.x() / oldScale,
-                y: pointer.y / oldScale - stage.y() / oldScale,
-            };
+            // Map deltaY to a multiplier. 
+            // - deltaY > 0 means zooming out (scrolling down/pinching in)
+            // - deltaY < 0 means zooming in (scrolling up/pinching out)
+            let multiplier = 1;
 
-            const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
-            setScale(newScale);
+            if (e.evt.deltaMode === 1) { // DOM_DELTA_LINE
+                multiplier = Math.exp(-e.evt.deltaY * 0.05);
+            } else if (e.evt.deltaMode === 2) { // DOM_DELTA_PAGE
+                multiplier = Math.exp(-e.evt.deltaY * 0.5);
+            } else { // DOM_DELTA_PIXEL (standard mouse wheel / trackpad)
+                // 150 divisor provides a good balance between trackpad smoothness and mouse wheel steps
+                multiplier = Math.exp(-e.evt.deltaY / 150);
+            }
 
+            const newScale = oldScale * multiplier;
+            // Limites de zoom (5% to 1000%)
+            const limitedScale = Math.min(Math.max(newScale, 0.05), 10);
+
+            setScale(limitedScale);
             setPosition({
-                x: -(mousePointTo.x - pointer.x / newScale) * newScale,
-                y: -(mousePointTo.y - pointer.y / newScale) * newScale,
+                x: pointer.x - (pointer.x - position.x) * (limitedScale / oldScale),
+                y: pointer.y - (pointer.y - position.y) * (limitedScale / oldScale),
             });
         } else {
-            // Otherwise we pan (smooth scroll)
+            // Pan
+            const dx = e.evt.deltaX;
+            const dy = e.evt.deltaY;
             setPosition({
-                x: position.x - e.evt.deltaX,
-                y: position.y - e.evt.deltaY,
+                x: position.x - dx,
+                y: position.y - dy
             });
         }
+    };
+
+    const handleContextMenu = (e: KonvaEventObject<PointerEvent>) => {
+        e.evt.preventDefault();
+        if (!props.onContextMenu) return;
+
+        const target = e.target;
+        const stage = target.getStage();
+
+        // Find if target is part of an element group
+        let clickedId: string | null = null;
+        if (target !== stage) {
+            // Traverse up to find a group/shape with an ID, which we added in ElementRenderer
+            let current: Konva.Node | null = target;
+            while (current && current !== stage) {
+                if (current.id()) {
+                    clickedId = current.id();
+                    break;
+                }
+                current = current.parent;
+            }
+        }
+
+        props.onContextMenu(e, clickedId);
     };
 
     const handleMouseDown = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
@@ -713,6 +757,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                 width={dimensions.width}
                 height={dimensions.height}
                 onWheel={handleWheel}
+                onContextMenu={handleContextMenu}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleMouseDown}
                 onMouseMove={handleMouseMove}
