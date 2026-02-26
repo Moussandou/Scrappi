@@ -32,7 +32,7 @@ export default function ProjectSidebar({
     onPaperColorChange,
     storageMode,
 }: ProjectSidebarProps) {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [showStorageWarning, setShowStorageWarning] = useState(false);
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         storage: true,
@@ -52,19 +52,19 @@ export default function ProjectSidebar({
 
                 {/* Header */}
                 <header
-                    className="p-5 flex items-center justify-between cursor-pointer shrink-0"
+                    className="p-4 md:p-5 flex items-center justify-between cursor-pointer shrink-0"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[20px] text-sage">auto_awesome_motion</span>
-                        <h3 className="font-bold text-ink text-sm">Atelier</h3>
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <span className="material-symbols-outlined text-[18px] md:text-[20px] text-sage">settings</span>
+                        <h3 className="font-bold text-ink text-xs md:text-sm">Options</h3>
                     </div>
                     <span className={`material-symbols-outlined text-[20px] text-ink-light transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}>
                         keyboard_arrow_down
                     </span>
                 </header>
 
-                <div className={`flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-8 transition-all duration-300 ${isCollapsed ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible'}`}>
+                <div className={`flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 md:pb-5 space-y-6 md:space-y-8 transition-all duration-300 ${isCollapsed ? 'opacity-0 invisible pointer-events-none hidden' : 'opacity-100 visible'}`}>
 
                     {/* Paper Settings */}
                     <div className="flex flex-col gap-3">
@@ -191,18 +191,6 @@ export default function ProjectSidebar({
                     </div>
 
                 </div>
-
-                {/* Footer status */}
-                {!isCollapsed && (
-                    <footer className="p-5 border-t border-black/5 bg-white/50 shrink-0">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="size-1.5 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                                <span className="text-[9px] text-ink-light font-bold uppercase tracking-widest">Atelier Prêt</span>
-                            </div>
-                        </div>
-                    </footer>
-                )}
             </div>
 
             <style jsx>{`
@@ -217,6 +205,6 @@ export default function ProjectSidebar({
                     border-radius: 20px;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }

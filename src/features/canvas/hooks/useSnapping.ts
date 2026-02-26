@@ -6,7 +6,7 @@ export interface GuideLine {
     position: number;
 }
 
-const SNAP_THRESHOLD = 5;
+const SNAP_THRESHOLD = 10;
 
 interface BBox {
     minX: number;

@@ -24,8 +24,10 @@ interface CanvasState {
     activeTool: Tool;
     activeColor: string;
     activeStrokeWidth: number;
+    activeBrushType: 'solid' | 'watercolor' | 'charcoal' | 'marker';
     scale: number;
     position: { x: number; y: number };
+    isSnappingEnabled: boolean;
 
     // Data Actions
     setElements: (elements: CanvasElement[]) => void;
@@ -49,8 +51,10 @@ interface CanvasState {
     setActiveTool: (tool: Tool) => void;
     setActiveColor: (color: string) => void;
     setActiveStrokeWidth: (width: number) => void;
+    setActiveBrushType: (brushType: 'solid' | 'watercolor' | 'charcoal' | 'marker') => void;
     setScale: (scale: number) => void;
     setPosition: (position: { x: number; y: number }) => void;
+    setIsSnappingEnabled: (enabled: boolean) => void;
     resetStore: () => void;
 }
 
@@ -90,8 +94,10 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
         activeTool: 'select',
         activeColor: DEFAULT_STROKE_COLOR,
         activeStrokeWidth: DEFAULT_STROKE_WIDTH,
+        activeBrushType: 'solid',
         scale: 1,
         position: { x: 0, y: 0 },
+        isSnappingEnabled: true,
 
         // Data Actions
         setElements: (elements) => {
@@ -230,8 +236,10 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
         setActiveTool: (tool) => set({ activeTool: tool }),
         setActiveColor: (color) => set({ activeColor: color }),
         setActiveStrokeWidth: (width) => set({ activeStrokeWidth: width }),
+        setActiveBrushType: (brushType) => set({ activeBrushType: brushType }),
         setScale: (scale) => set({ scale }),
         setPosition: (position) => set({ position }),
+        setIsSnappingEnabled: (enabled) => set({ isSnappingEnabled: enabled }),
         resetStore: () => set({
             elements: [],
             selectedIds: [],

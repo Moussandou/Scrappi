@@ -38,8 +38,9 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
     const removeElements = useCanvasStore(state => state?.removeElements) || NO_OP;
 
     const activeTool = useCanvasStore(state => state?.activeTool) || 'select';
-    const activeColor = useCanvasStore(state => state?.activeColor) || '#000000';
+    const activeColor = useCanvasStore(state => state?.activeColor) || '#1a1e26';
     const activeStrokeWidth = useCanvasStore(state => state?.activeStrokeWidth) || 2;
+    const activeBrushType = useCanvasStore(state => state?.activeBrushType) || 'solid';
 
     const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage | null>(null);
@@ -337,6 +338,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
                 points: [pos.x, pos.y],
                 strokeColor: activeTool === 'eraser' ? '#ffffff' : activeColor,
                 strokeWidth: activeTool === 'eraser' ? activeStrokeWidth * 3 : activeStrokeWidth,
+                brushType: activeTool === 'draw' ? activeBrushType : 'solid',
             });
         } else if (activeTool === 'select') {
             const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-rect';
@@ -489,7 +491,11 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
         lastTouchRef.current = null;
         if (currentLine) {
             addElement(currentLine);
-            setSelectedIds([currentLine.id]);
+            if (activeToolRef.current !== 'draw' && activeToolRef.current !== 'eraser') {
+                setSelectedIds([currentLine.id]);
+            } else {
+                setSelectedIds([]);
+            }
             setCurrentLine(null);
         } else if (selectionBox) {
             // Box selection logic
@@ -499,6 +505,8 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             const y2 = Math.max(selectionBox.y1, selectionBox.y2);
 
             const selectedRaw = elements.filter(el => {
+                if (el.isLocked || el.isHidden) return false;
+
                 // Approximate bounding boxes for simplicity
                 const elX = el.x;
                 const elY = el.y;
@@ -584,27 +592,37 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             centerY: minY + (maxY - minY) / 2
         };
 
-        const staticBoxes = elementsRef.current
-            .filter(el => !selectedIdsRef.current.includes(el.id))
-            .map(el => {
-                const w = el.width || 50;
-                const h = el.height || 50;
-                return {
-                    minX: el.x,
-                    maxX: el.x + w,
-                    minY: el.y,
-                    maxY: el.y + h,
-                    centerX: el.x + w / 2,
-                    centerY: el.y + h / 2
-                };
-            });
+        let finalDx = dxRaw;
+        let finalDy = dyRaw;
 
-        const { dx: snapDx, dy: snapDy, guides } = getSnappingOffset(draggedBox, staticBoxes, scale);
+        // Snapping Logic
+        const isSnappingEnabled = useCanvasStore.getState().isSnappingEnabled;
+        if (!e.evt.altKey && isSnappingEnabled) {
+            const staticBoxes = elementsRef.current
+                .filter(el => !selectedIdsRef.current.includes(el.id))
+                .map(el => {
+                    const w = el.width || 50;
+                    const h = el.height || 50;
+                    return {
+                        minX: el.x,
+                        maxX: el.x + w,
+                        minY: el.y,
+                        maxY: el.y + h,
+                        centerX: el.x + w / 2,
+                        centerY: el.y + h / 2
+                    };
+                });
 
-        const dx = dxRaw + snapDx;
-        const dy = dyRaw + snapDy;
+            const { dx: snapDx, dy: snapDy, guides } = getSnappingOffset(draggedBox, staticBoxes, scale);
+            finalDx += snapDx;
+            finalDy += snapDy;
+            setGuidelines(guides);
+        } else {
+            setGuidelines([]);
+        }
 
-        node.position({ x: originalData.x + dx, y: originalData.y + dy });
+        // Apply visual movement immediately
+        node.position({ x: originalData.x + finalDx, y: originalData.y + finalDy });
 
         let hasMovedOthers = false;
 
@@ -617,8 +635,8 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             if (!otherOriginalData) return;
 
             otherNode.position({
-                x: otherOriginalData.x + dx,
-                y: otherOriginalData.y + dy
+                x: otherOriginalData.x + finalDx,
+                y: otherOriginalData.y + finalDy
             });
             hasMovedOthers = true;
         });
@@ -628,11 +646,12 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
             transformerRef.current.getLayer()?.batchDraw();
         }
 
-        setGuidelines(guides);
     }, [getSnappingOffset, setGuidelines, scale]);
 
     const getVisibleElements = () => {
-        if (isExporting) return elements;
+        const sorted = [...elements].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+        if (isExporting) return sorted.filter(el => !el.isHidden);
 
         if (!process.env.NEXT_PUBLIC_ENABLE_CULLING) {
             // Let developers toggle if wanted, or we just force it below:
@@ -644,7 +663,9 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
         const vx2 = (dimensions.width - position.x) / scale;
         const vy2 = (dimensions.height - position.y) / scale;
 
-        return elements.filter(el => {
+        return sorted.filter(el => {
+            if (el.isHidden) return false;
+
             // Include if selected (since it has a transformer)
             if (selectedIds.includes(el.id)) return true;
 

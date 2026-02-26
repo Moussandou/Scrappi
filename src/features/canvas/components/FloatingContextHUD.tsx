@@ -18,6 +18,8 @@ interface FloatingContextHUDProps {
     onUngroup?: () => void;
     onMoveZ: (direction: 'forward' | 'backward' | 'front' | 'back') => void;
     onUpdateElement?: (id: string, props: Partial<CanvasElement>) => void;
+    onAlign?: (alignment: 'left' | 'center' | 'right') => void;
+    onDistribute?: () => void;
 }
 
 export default function FloatingContextHUD({
@@ -32,7 +34,9 @@ export default function FloatingContextHUD({
     onGroup,
     onUngroup,
     onMoveZ,
-    onUpdateElement
+    onUpdateElement,
+    onAlign,
+    onDistribute
 }: FloatingContextHUDProps) {
     const [fontPickerOpen, setFontPickerOpen] = useState(false);
     const [fonts, setFonts] = useState<GoogleFont[]>([]);
@@ -65,6 +69,7 @@ export default function FloatingContextHUD({
     const showThickness = hasLines || hasEraser;
     const showFont = (hasPostIt || hasText);
     const showVideo = hasVideo;
+    const canHaveShadow = selectedElements.some(el => el.type !== 'eraser' && el.type !== 'line' && el.type !== 'arrow');
 
     const currentFont = activeFontFamily || DEFAULT_FONT;
 
@@ -96,26 +101,64 @@ export default function FloatingContextHUD({
                 {(selectedElements.length > 1 || selectedElements.some(el => !!el.groupId)) && (
                     <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
                         {selectedElements.length > 1 && !selectedElements.every(el => !!el.groupId && el.groupId === selectedElements[0].groupId) && (
-                            <button onClick={onGroup} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-sage" title="Grouper (Ctrl+G)">
+                            <button onClick={onGroup} className="w-14 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-sage" title="Grouper (Ctrl+G)">
                                 <span className="material-symbols-outlined text-[18px]">group</span>
+                                <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Grouper</span>
                             </button>
                         )}
                         {selectedElements.some(el => !!el.groupId) && (
-                            <button onClick={onUngroup} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-red-500" title="Dégrouper (Ctrl+Shift+G)">
+                            <button onClick={onUngroup} className="w-14 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-red-500" title="Dégrouper (Ctrl+Shift+G)">
                                 <span className="material-symbols-outlined text-[18px]">group_off</span>
+                                <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Dég.</span>
                             </button>
                         )}
                     </div>
                 )}
+
+                {/* Alignment Controls */}
+                {selectedElements.length > 1 && onAlign && onDistribute && (
+                    <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
+                        <button onClick={() => onAlign('left')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Aligner à gauche">
+                            <span className="material-symbols-outlined text-[18px]">format_align_left</span>
+                        </button>
+                        <button onClick={() => onAlign('center')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Centrer horizontalement">
+                            <span className="material-symbols-outlined text-[18px]">format_align_center</span>
+                        </button>
+                        <button onClick={() => onAlign('right')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Aligner à droite">
+                            <span className="material-symbols-outlined text-[18px]">format_align_right</span>
+                        </button>
+                        <div className="w-px h-4 bg-black/10 mx-1"></div>
+                        <button onClick={onDistribute} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Distribuer horizontalement">
+                            <span className="material-symbols-outlined text-[18px]">horizontal_distribute</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Z-Index Controls */}
                 <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
-                    <button onClick={() => onMoveZ('front')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Premier plan">
+                    <button onClick={() => onMoveZ('front')} className="w-12 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Premier plan">
                         <span className="material-symbols-outlined text-[18px]">flip_to_front</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Avant</span>
                     </button>
-                    <button onClick={() => onMoveZ('back')} className="p-1.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Arrière plan">
+                    <button onClick={() => onMoveZ('back')} className="w-12 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-white rounded-lg transition-all text-ink-light hover:text-ink" title="Arrière plan">
                         <span className="material-symbols-outlined text-[18px]">flip_to_back</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Arr.</span>
                     </button>
                 </div>
+
+                {/* Shadow Toggle */}
+                {canHaveShadow && selectedElements[0] && (
+                    <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
+                        <button
+                            onClick={() => onUpdateElement?.(selectedElements[0].id, { hasShadow: !selectedElements[0].hasShadow })}
+                            className={`w-12 h-11 flex flex-col items-center justify-center gap-0.5 rounded-lg transition-all ${selectedElements[0].hasShadow ? 'bg-white text-ink shadow-sm' : 'hover:bg-white text-ink-light hover:text-ink'}`}
+                            title={selectedElements[0].hasShadow ? "Désactiver l'ombre" : "Activer l'ombre"}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">shadow</span>
+                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-60">Ombre</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Color Picker */}
                 {showColor && (
@@ -221,6 +264,20 @@ export default function FloatingContextHUD({
                 {/* Stroke Width Picker */}
                 {showThickness && (
                     <div className="flex items-center bg-black/5 rounded-xl p-1 gap-1 mr-1">
+                        <div className="flex items-center gap-1 border-r border-black/10 pr-1 mr-1">
+                            {selectedElements[0] && selectedElements[0].type === 'line' && ['solid', 'marker', 'charcoal', 'watercolor'].map((brush) => (
+                                <button
+                                    key={brush}
+                                    onClick={() => onUpdateElement?.(selectedElements[0].id, { brushType: brush as any })}
+                                    className={`size-7 rounded-lg flex items-center justify-center transition-all ${selectedElements[0].brushType === brush || (!selectedElements[0].brushType && brush === 'solid') ? 'bg-white text-ink shadow-sm' : 'text-ink-light hover:text-ink hover:bg-white/50'}`}
+                                    title={`Pinceau: ${brush}`}
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">
+                                        {brush === 'solid' ? 'edit' : brush === 'marker' ? 'draw' : brush === 'charcoal' ? 'gesture' : 'water_drop'}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
                         {[2, 4, 8, 16].map((w) => (
                             <button
                                 key={w}
@@ -254,10 +311,11 @@ export default function FloatingContextHUD({
                 {/* Delete Button */}
                 <button
                     onClick={onDelete}
-                    className="size-8 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all ml-1"
+                    className="h-10 w-12 ml-1 flex flex-col items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all gap-0.5"
                     title="Supprimer"
                 >
                     <span className="material-symbols-outlined text-[18px]">delete</span>
+                    <span className="text-[8px] font-bold uppercase tracking-wider opacity-80 current-text">Suppr.</span>
                 </button>
             </div>
         </div>

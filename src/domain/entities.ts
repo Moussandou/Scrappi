@@ -60,6 +60,18 @@ export interface CanvasElement {
     loop?: boolean;
     volume?: number;
     autoPlay?: boolean;
+    // Drawing properties
+    brushType?: 'solid' | 'watercolor' | 'charcoal' | 'marker';
+    // Custom layers properties
+    name?: string;
+    isLocked?: boolean;
+    isHidden?: boolean;
+    // Shadows
+    hasShadow?: boolean;
+    shadowColor?: string;
+    shadowBlur?: number;
+    shadowOffsetX?: number;
+    shadowOffsetY?: number;
 }
 
 export interface CanvasPage {

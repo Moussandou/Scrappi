@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Scrapbook } from "@/domain/entities";
+import { useStore } from "zustand";
+import { useCanvasStore } from "../store/useCanvasStore";
 
 interface EditorHeaderProps {
     scrapbook: Scrapbook | null;
@@ -31,6 +33,8 @@ interface EditorHeaderProps {
     } | null;
     logout: () => Promise<void>;
     handleExport: () => void;
+    onToggleLayers: () => void;
+    isLayersPanelOpen: boolean;
 }
 
 export default function EditorHeader({
@@ -54,7 +58,9 @@ export default function EditorHeader({
     saveSuccess,
     user,
     logout,
-    handleExport
+    handleExport,
+    onToggleLayers,
+    isLayersPanelOpen
 }: EditorHeaderProps) {
     const router = useRouter();
     const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false);
@@ -62,6 +68,9 @@ export default function EditorHeader({
     const [isHistoryMenuOpen, setIsHistoryMenuOpen] = useState(false);
     const historyMenuRef = useRef<HTMLDivElement>(null);
     const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+
+    const isSnappingEnabled = useStore(useCanvasStore, state => state.isSnappingEnabled);
+    const setIsSnappingEnabled = useStore(useCanvasStore, state => state.setIsSnappingEnabled);
 
     return (
         <div className="pt-4 md:pt-6 px-4 md:px-8 flex justify-center">
@@ -119,11 +128,13 @@ export default function EditorHeader({
 
                     <div className="relative flex items-center" ref={historyMenuRef}>
                         <div className="flex bg-black/5 rounded-xl">
-                            <button onClick={handleUndo} disabled={historyStep === 0} className="size-8 md:size-9 rounded-l-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Annuler (Ctrl+Z)">
+                            <button onClick={handleUndo} disabled={historyStep === 0} className="w-10 h-10 md:w-12 md:h-12 rounded-l-xl flex flex-col items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30 gap-0.5" title="Annuler (Ctrl+Z)">
                                 <span className="material-symbols-outlined text-[18px] md:text-[20px]">undo</span>
+                                <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-wider opacity-60">Undo</span>
                             </button>
-                            <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="size-8 md:size-9 border-r border-l border-ink/10 flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30" title="Rétablir (Ctrl+Y)">
+                            <button onClick={handleRedo} disabled={historyStep === historyLength - 1} className="w-10 h-10 md:w-12 md:h-12 border-r border-l border-ink/10 flex flex-col items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30 gap-0.5" title="Rétablir (Ctrl+Y)">
                                 <span className="material-symbols-outlined text-[18px] md:text-[20px]">redo</span>
+                                <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-wider opacity-60">Redo</span>
                             </button>
                             <button
                                 onClick={() => {
@@ -131,10 +142,11 @@ export default function EditorHeader({
                                     if (!isHistoryMenuOpen) setIsZoomMenuOpen(false);
                                 }}
                                 disabled={historyLength <= 1}
-                                className="w-6 md:w-8 rounded-r-xl flex items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30"
+                                className="w-7 h-10 md:w-8 md:h-12 rounded-r-xl flex flex-col items-center justify-center text-ink-light hover:text-ink hover:bg-black/10 transition-colors disabled:opacity-30 gap-0.5"
                                 title="Historique"
                             >
                                 <span className="material-symbols-outlined text-[14px] md:text-[16px]">history</span>
+                                <span className="text-[6px] font-bold uppercase tracking-wider opacity-60">Hist.</span>
                             </button>
                         </div>
 
@@ -183,17 +195,26 @@ export default function EditorHeader({
 
                     <div className="h-6 md:h-8 w-px bg-ink/10 hidden sm:block"></div>
 
+                    <button
+                        onClick={() => setIsSnappingEnabled(!isSnappingEnabled)}
+                        className={`hidden sm:flex w-10 h-10 md:w-12 md:h-12 rounded-xl flex-col items-center justify-center transition-all gap-0.5 ${isSnappingEnabled ? 'text-sage bg-sage/10 hover:bg-sage/20' : 'text-ink-light hover:text-ink bg-black/5 hover:bg-black/10'}`}
+                        title={isSnappingEnabled ? "Désactiver le magnétisme" : "Activer le magnétisme"}
+                    >
+                        <span className="material-symbols-outlined text-[16px] md:text-[18px]">{isSnappingEnabled ? 'grid_on' : 'grid_off'}</span>
+                        <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-wider opacity-60">Aimant</span>
+                    </button>
+
                     <div className="relative hidden sm:block" ref={zoomMenuRef}>
                         <button
                             onClick={() => {
                                 setIsZoomMenuOpen(!isZoomMenuOpen);
                                 if (!isZoomMenuOpen) setIsHistoryMenuOpen(false);
                             }}
-                            className="px-2 md:px-3 py-1 md:py-1.5 rounded-xl text-ink-light text-[10px] md:text-xs font-bold flex items-center gap-1 md:gap-1.5 hover:bg-black/5 transition-all shadow-sm"
+                            className="w-10 h-10 md:w-14 md:h-12 rounded-xl text-ink-light font-bold flex flex-col items-center justify-center hover:bg-black/5 transition-all shadow-sm bg-black/5 gap-0.5"
                             title="Niveau de zoom"
                         >
-                            {Math.round(scale * 100)}%
-                            <span className="material-symbols-outlined text-[14px] md:text-[16px]">expand_more</span>
+                            <span className="text-[10px] md:text-[11px] leading-tight">{Math.round(scale * 100)}%</span>
+                            <span className="text-[7px] md:text-[8px] uppercase tracking-wider opacity-60">Zoom</span>
                         </button>
 
                         {isZoomMenuOpen && (
@@ -218,6 +239,14 @@ export default function EditorHeader({
                 <div className="h-6 md:h-8 w-px bg-ink/10 mx-1"></div>
 
                 <div className="flex items-center gap-2 md:gap-3">
+                    <button
+                        onClick={onToggleLayers}
+                        className={`px-2 md:px-4 py-1.5 md:py-2 rounded-full transition-all text-[10px] md:text-xs font-bold flex items-center gap-1.5 md:gap-2 ${isLayersPanelOpen ? 'bg-ink text-white shadow-md' : 'text-ink hover:text-ink bg-black/5 hover:bg-black/10'}`}
+                        title="Ouvrir le panneau des calques"
+                    >
+                        <span className="material-symbols-outlined text-[14px] md:text-[16px]">layers</span>
+                        <span className="hidden xs:inline">Calques</span>
+                    </button>
                     <button
                         onClick={handleExport}
                         className="px-2 md:px-4 py-1.5 md:py-2 rounded-full text-ink hover:text-ink bg-black/5 hover:bg-black/10 transition-all text-[10px] md:text-xs font-bold flex items-center gap-1.5 md:gap-2"

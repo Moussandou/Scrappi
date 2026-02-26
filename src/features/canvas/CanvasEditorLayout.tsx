@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "zustand";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,7 @@ import StickerTray from "./components/StickerTray";
 import ImageUploadModal from "./components/ImageUploadModal";
 import VideoUploadModal from "./components/VideoUploadModal";
 import ExportModal, { ExportOptions } from "./components/ExportModal";
+import LayersPanel from "./components/LayersPanel";
 import MiniMap from "./components/MiniMap";
 import { PaperType } from "./components/PaperSelector";
 
@@ -59,11 +60,13 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
     const setPosition = useCanvasStore(state => state?.setPosition) || NO_OP;
     const resetStore = useCanvasStore(state => state?.resetStore) || NO_OP;
     const setProjectLoading = useCanvasStore(state => state?.setProjectLoading) || NO_OP;
+    const setActiveBrushType = useCanvasStore(state => state?.setActiveBrushType) || NO_OP;
 
     const currentLastAction = useCanvasStore(state => state?.lastAction);
     const activeTool = useCanvasStore(state => state?.activeTool) || 'select';
     const activeColor = useCanvasStore(state => state?.activeColor) || '#1a1e26';
     const activeStrokeWidth = useCanvasStore(state => state?.activeStrokeWidth) || 2;
+    const activeBrushType = useCanvasStore(state => state?.activeBrushType) || 'solid';
     const scale = useCanvasStore(state => state?.scale) ?? 1;
     const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
 
@@ -95,7 +98,9 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
 
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const helpRef = useRef<HTMLDivElement>(null);
     const lastSavedElementsRef = useRef<CanvasElement[]>([]);
     const stageRef = useRef<CanvasStageRef>(null);
@@ -383,6 +388,16 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
         });
     };
 
+    const handleUpdateElement = useCallback((id: string, partial: Partial<CanvasElement>) => {
+        if (id === 'mock-tool') {
+            if (partial.strokeColor) handleColorSelect(partial.strokeColor);
+            if (partial.strokeWidth !== undefined) handleStrokeWidthChange(partial.strokeWidth);
+            if (partial.brushType) setActiveBrushType(partial.brushType as 'solid' | 'watercolor' | 'charcoal' | 'marker');
+            return;
+        }
+        updateElement(id, partial);
+    }, [handleColorSelect, handleStrokeWidthChange, setActiveBrushType, updateElement]);
+
     const handleMoveZ = (direction: 'forward' | 'backward' | 'front' | 'back') => {
         if (selectedIds.length === 0) return;
 
@@ -445,6 +460,54 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     setElements(filtered);
                 }
             }
+        }
+    };
+
+    const handleAlign = (alignment: 'left' | 'center' | 'right') => {
+        if (selectedIds.length < 2) return;
+        const selectedEls = elements.filter(el => selectedIds.includes(el.id));
+
+        let targetX = 0;
+        if (alignment === 'left') {
+            targetX = Math.min(...selectedEls.map(el => el.x));
+        } else if (alignment === 'right') {
+            targetX = Math.max(...selectedEls.map(el => el.x + (el.width || 0)));
+        } else if (alignment === 'center') {
+            const minX = Math.min(...selectedEls.map(el => el.x));
+            const maxX = Math.max(...selectedEls.map(el => el.x + (el.width || 0)));
+            targetX = minX + (maxX - minX) / 2;
+        }
+
+        selectedEls.forEach(el => {
+            let newX = targetX;
+            if (alignment === 'right') newX = targetX - (el.width || 0);
+            if (alignment === 'center') newX = targetX - (el.width || 0) / 2;
+            updateElement(el.id, { x: newX });
+        });
+    };
+
+    const handleDistribute = () => {
+        if (selectedIds.length < 3) return;
+        const selectedEls = elements.filter(el => selectedIds.includes(el.id)).sort((a, b) => a.x - b.x);
+
+        const first = selectedEls[0];
+        const last = selectedEls[selectedEls.length - 1];
+
+        // Calculate total available space between first element's right edge and last element's left edge
+        let totalInnerWidth = 0;
+        for (let i = 1; i < selectedEls.length - 1; i++) {
+            totalInnerWidth += (selectedEls[i].width || 0);
+        }
+
+        const availableSpace = (last.x) - (first.x + (first.width || 0));
+        const spacing = (availableSpace - totalInnerWidth) / (selectedEls.length - 1);
+
+        let currentX = first.x + (first.width || 0) + spacing;
+
+        for (let i = 1; i < selectedEls.length - 1; i++) {
+            const el = selectedEls[i];
+            updateElement(el.id, { x: currentX });
+            currentX += (el.width || 0) + spacing;
         }
     };
 
@@ -516,6 +579,8 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                     user={user}
                     logout={logout}
                     handleExport={handleExport}
+                    onToggleLayers={() => setIsLayersPanelOpen(!isLayersPanelOpen)}
+                    isLayersPanelOpen={isLayersPanelOpen}
                 />
 
                 <div className="absolute inset-0 pointer-events-none">
@@ -596,6 +661,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                                 y: 0,
                                                 strokeColor: activeColor,
                                                 strokeWidth: activeStrokeWidth,
+                                                brushType: activeBrushType,
                                             } as CanvasElement]
                                             : []
                                 }
@@ -609,7 +675,9 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                 onGroup={() => groupElements?.(selectedIds)}
                                 onUngroup={() => ungroupElements?.(selectedIds)}
                                 onMoveZ={handleMoveZ}
-                                onUpdateElement={updateElement}
+                                onUpdateElement={handleUpdateElement}
+                                onAlign={handleAlign}
+                                onDistribute={handleDistribute}
                             />
                         )}
                     </div>
@@ -674,6 +742,12 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                 onClose={() => setIsExportModalOpen(false)}
                 onExport={executeExport}
                 isExporting={isExporting}
+            />
+
+            {/* Layers Panel */}
+            <LayersPanel
+                isOpen={isLayersPanelOpen}
+                onClose={() => setIsLayersPanelOpen(false)}
             />
         </div>
     );

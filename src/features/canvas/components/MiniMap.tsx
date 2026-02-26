@@ -140,7 +140,7 @@ export default function MiniMap() {
 
     return (
         <div
-            className="fixed bottom-6 left-6 md:bottom-8 md:left-8 z-[100] bg-white backdrop-blur-md rounded-2xl border-2 border-sage shadow-xl p-2 origin-bottom-left transition-all hover:bg-white overflow-hidden pointer-events-auto"
+            className="fixed bottom-24 left-10 md:bottom-8 md:left-28 z-[100] bg-white backdrop-blur-md rounded-2xl border-2 border-sage shadow-xl p-2 origin-bottom-left transition-all hover:bg-white overflow-hidden pointer-events-auto"
             style={{ width: (mapW || MINIMAP_SIZE) + 16, height: (mapH || MINIMAP_SIZE) + 16, display: 'block' }}
         >
             <div

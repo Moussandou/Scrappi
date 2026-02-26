@@ -3,8 +3,9 @@
 import { useRef, useEffect, useState, useCallback, memo } from "react";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { Text, Image as KonvaImage, Group, Rect, Line, Arrow } from "react-konva";
+import { Text, Image as KonvaImage, Group, Rect, Line, Arrow, Path } from "react-konva";
 import { Html } from "react-konva-utils";
+import { getStroke } from 'perfect-freehand';
 import useImage from "use-image";
 import { CanvasElement } from "@/domain/entities";
 import { loadFont } from "@/infra/fonts/googleFontsService";
@@ -37,6 +38,20 @@ export const RenderElement = memo(function RenderElement({
     const [resolvedSrc, setResolvedSrc] = useState(isImageType && !isLocalRef(element.content) ? element.content : '');
     const [img] = useImage(resolvedSrc, resolvedSrc ? 'anonymous' : undefined);
     const [isEditing, setIsEditing] = useState(false);
+
+    const getSvgPathFromStroke = useCallback((stroke: number[][]) => {
+        if (!stroke.length) return '';
+        const d = stroke.reduce(
+            (acc, [x0, y0], i, arr) => {
+                const [x1, y1] = arr[(i + 1) % arr.length];
+                acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+                return acc;
+            },
+            ['M', ...stroke[0], 'Q']
+        );
+        d.push('Z');
+        return d.join(' ');
+    }, []);
 
     // Resolve local: URLs to blob URLs for image types
     useEffect(() => {
@@ -107,7 +122,7 @@ export const RenderElement = memo(function RenderElement({
         if (element.type === 'text') {
             setIsEditing(true);
         }
-    }, [element.type]);
+    }, [element.type, element.isLocked]);
 
     const fontFamily = element.fontFamily || DEFAULT_FONT;
 
@@ -128,15 +143,16 @@ export const RenderElement = memo(function RenderElement({
                     width={element.width}
                     height={element.height || 50}
                     rotation={element.rotation}
-                    draggable={isDraggable}
-                    onClick={() => onSelect(element.id)}
-                    onTap={() => onSelect(element.id)}
+                    draggable={isDraggable && !element.isLocked}
+                    onClick={() => { if (!element.isLocked) onSelect(element.id); }}
+                    onTap={() => { if (!element.isLocked) onSelect(element.id); }}
                     onDblClick={handleDoubleClick}
                     onDblTap={handleDoubleClick}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
+                    listening={!element.isLocked}
                 >
                     {/* Hit area: makes the entire bounding box grabbable */}
                     <Rect
@@ -144,9 +160,11 @@ export const RenderElement = memo(function RenderElement({
                         height={element.height || 50}
                         fill={element.backgroundColor || "rgba(0,0,0,0.01)"}
                         cornerRadius={element.backgroundColor ? 8 : 0}
-                        shadowColor={element.backgroundColor ? "rgba(0,0,0,0.1)" : undefined}
-                        shadowBlur={element.backgroundColor ? 10 : 0}
-                        shadowOffsetY={element.backgroundColor ? 4 : 0}
+                        shadowColor={element.backgroundColor && element.hasShadow ? (element.shadowColor || "rgba(0,0,0,0.2)") : "rgba(0,0,0,0.15)"}
+                        shadowBlur={element.backgroundColor && element.hasShadow ? (element.shadowBlur ?? 20) : 15}
+                        shadowOffsetX={element.backgroundColor && element.hasShadow ? (element.shadowOffsetX ?? 0) : 0}
+                        shadowOffsetY={element.backgroundColor && element.hasShadow ? (element.shadowOffsetY ?? 10) : 5}
+                        shadowOpacity={element.backgroundColor && element.hasShadow ? 1 : 0}
                     />
                     <Text
                         text={element.content}
@@ -160,6 +178,11 @@ export const RenderElement = memo(function RenderElement({
                         fill={element.strokeColor || DEFAULT_STROKE_COLOR} // use strokeColor to store text color natively
                         opacity={isEditing ? 0 : 1}
                         padding={element.backgroundColor ? 16 : 0}
+                        shadowColor={!element.backgroundColor && element.hasShadow ? (element.shadowColor || "rgba(0,0,0,0.3)") : undefined}
+                        shadowBlur={!element.backgroundColor && element.hasShadow ? (element.shadowBlur ?? 5) : 0}
+                        shadowOffsetX={!element.backgroundColor && element.hasShadow ? (element.shadowOffsetX ?? 2) : 0}
+                        shadowOffsetY={!element.backgroundColor && element.hasShadow ? (element.shadowOffsetY ?? 2) : 0}
+                        shadowOpacity={!element.backgroundColor && element.hasShadow ? 1 : 0}
                     />
                     {isEditing && (
                         <Html
@@ -207,8 +230,8 @@ export const RenderElement = memo(function RenderElement({
             {element.type === 'video' && (
                 <VideoElement
                     element={element}
-                    isDraggable={isDraggable}
-                    onSelect={() => onSelect(element.id)}
+                    isDraggable={isDraggable && !element.isLocked}
+                    onSelect={() => { if (!element.isLocked) onSelect(element.id); }}
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
@@ -222,8 +245,8 @@ export const RenderElement = memo(function RenderElement({
             {element.type === 'gif' && (
                 <GifElement
                     element={element}
-                    isDraggable={isDraggable}
-                    onSelect={() => onSelect(element.id)}
+                    isDraggable={isDraggable && !element.isLocked}
+                    onSelect={() => { if (!element.isLocked) onSelect(element.id); }}
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
                     onTransformEnd={handleTransformEnd}
@@ -244,10 +267,15 @@ export const RenderElement = memo(function RenderElement({
                     height={element.height}
                     rotation={element.rotation || 0}
                     cornerRadius={element.type === 'sticker' ? 0 : 8}
-                    draggable={isDraggable}
-                    listening={isDraggable}
-                    onClick={() => onSelect(element.id)}
-                    onTap={() => onSelect(element.id)}
+                    shadowColor={element.hasShadow ? (element.shadowColor || "rgba(0,0,0,0.3)") : "rgba(0,0,0,0.15)"}
+                    shadowBlur={element.hasShadow ? (element.shadowBlur ?? 25) : 15}
+                    shadowOffsetX={element.hasShadow ? (element.shadowOffsetX ?? 0) : 0}
+                    shadowOffsetY={element.hasShadow ? (element.shadowOffsetY ?? 15) : 5}
+                    shadowOpacity={element.hasShadow ? 1 : 1}
+                    draggable={isDraggable && !element.isLocked}
+                    listening={isDraggable && !element.isLocked}
+                    onClick={() => { if (!element.isLocked) onSelect(element.id); }}
+                    onTap={() => { if (!element.isLocked) onSelect(element.id); }}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
@@ -255,29 +283,88 @@ export const RenderElement = memo(function RenderElement({
                 />
             )}
 
-            {(element.type === 'line' || element.type === 'eraser') && (
-                <Line
-                    ref={(node) => { shapeRef.current = node; }}
-                    points={element.points || []}
-                    stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
-                    strokeWidth={element.strokeWidth || 4}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    x={element.x}
-                    y={element.y}
-                    rotation={element.rotation}
-                    draggable={isDraggable}
-                    listening={isDraggable}
-                    onClick={() => onSelect(element.id)}
-                    onTap={() => onSelect(element.id)}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragMove={handleDragMove}
-                    hitStrokeWidth={20}
-                    globalCompositeOperation={element.type === 'eraser' ? 'destination-out' : 'source-over'}
-                />
-            )}
+            {(element.type === 'line' || element.type === 'eraser') && (() => {
+                // Determine stroke options based on brush type
+                let strokeOptions = {
+                    size: element.strokeWidth || 4,
+                    thinning: 0,
+                    smoothing: 0.5,
+                    streamline: 0.5,
+                    taperStart: 0,
+                    taperEnd: 0
+                };
+
+                if (element.brushType === 'marker') {
+                    strokeOptions = { ...strokeOptions, size: (element.strokeWidth || 4) * 1.5, thinning: -0.6, smoothing: 0.9, streamline: 0.1 };
+                } else if (element.brushType === 'charcoal') {
+                    strokeOptions = { ...strokeOptions, thinning: 0.9, smoothing: 0.1, streamline: 0.2, taperEnd: 10, taperStart: 10 };
+                } else if (element.brushType === 'watercolor') {
+                    strokeOptions = { ...strokeOptions, size: (element.strokeWidth || 4) * 3.5, thinning: 0.4, streamline: 0.8, smoothing: 0.9 };
+                }
+
+                // Convert flat points to [x, y] format
+                const flatPoints = element.points || [];
+                const pairedPoints = [];
+                for (let i = 0; i < flatPoints.length; i += 2) {
+                    pairedPoints.push([flatPoints[i], flatPoints[i + 1]]);
+                }
+
+                const pathData = getSvgPathFromStroke(getStroke(pairedPoints, strokeOptions));
+                const isEraser = element.type === 'eraser';
+
+                // We use Path for drawing tools utilizing perfect-freehand
+                if (element.type === 'line') {
+                    return (
+                        <Path
+                            ref={(node) => { shapeRef.current = node; }}
+                            data={pathData}
+                            fill={element.strokeColor || DEFAULT_STROKE_COLOR}
+                            opacity={element.brushType === 'watercolor' ? 0.3 : (element.brushType === 'marker' ? 0.6 : 1)}
+                            shadowColor={element.brushType === 'charcoal' ? element.strokeColor : undefined}
+                            shadowBlur={element.brushType === 'charcoal' ? 2 : 0}
+                            shadowOpacity={element.brushType === 'charcoal' ? 0.5 : 0}
+                            x={element.x}
+                            y={element.y}
+                            rotation={element.rotation}
+                            draggable={isDraggable && !element.isLocked}
+                            listening={isDraggable && !element.isLocked}
+                            onClick={() => { if (!element.isLocked) onSelect(element.id); }}
+                            onTap={() => { if (!element.isLocked) onSelect(element.id); }}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onDragMove={handleDragMove}
+                            globalCompositeOperation={
+                                element.brushType === 'watercolor' || element.brushType === 'marker' ? 'multiply' : 'source-over'
+                            }
+                        />
+                    );
+                }
+
+                // Fallback to standard Line for eraser
+                return (
+                    <Line
+                        ref={(node) => { shapeRef.current = node; }}
+                        points={element.points || []}
+                        stroke={element.strokeColor || DEFAULT_STROKE_COLOR}
+                        strokeWidth={element.strokeWidth || 4}
+                        tension={0.5}
+                        lineCap="round"
+                        lineJoin="round"
+                        x={element.x}
+                        y={element.y}
+                        rotation={element.rotation}
+                        draggable={isDraggable && !element.isLocked}
+                        listening={isDraggable && !element.isLocked}
+                        onClick={() => { if (!element.isLocked) onSelect(element.id); }}
+                        onTap={() => { if (!element.isLocked) onSelect(element.id); }}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDragMove={handleDragMove}
+                        hitStrokeWidth={20}
+                        globalCompositeOperation='destination-out'
+                    />
+                );
+            })()}
 
             {element.type === 'arrow' && (
                 <Arrow
@@ -291,10 +378,10 @@ export const RenderElement = memo(function RenderElement({
                     x={element.x}
                     y={element.y}
                     rotation={element.rotation}
-                    draggable={isDraggable}
-                    listening={isDraggable}
-                    onClick={() => onSelect(element.id)}
-                    onTap={() => onSelect(element.id)}
+                    draggable={isDraggable && !element.isLocked}
+                    listening={isDraggable && !element.isLocked}
+                    onClick={() => { if (!element.isLocked) onSelect(element.id); }}
+                    onTap={() => { if (!element.isLocked) onSelect(element.id); }}
                     onDragEnd={handleDragEnd}
                     onDragMove={handleDragMove}
                     hitStrokeWidth={20}
@@ -415,6 +502,10 @@ function VideoElement({ element, isDraggable, onSelect, onDragStart, onDragEnd, 
             width={element.width}
             height={element.height}
             rotation={element.rotation}
+            cornerRadius={8}
+            shadowColor="rgba(0,0,0,0.15)"
+            shadowBlur={15}
+            shadowOffsetY={5}
             draggable={isDraggable}
             listening={isDraggable}
             onClick={onSelect}
@@ -478,6 +569,10 @@ function GifElement({ element, isDraggable, onSelect, onDragStart, onDragEnd, on
             width={element.width}
             height={element.height}
             rotation={element.rotation}
+            cornerRadius={8}
+            shadowColor="rgba(0,0,0,0.15)"
+            shadowBlur={15}
+            shadowOffsetY={5}
             draggable={isDraggable}
             listening={isDraggable}
             onClick={onSelect}
