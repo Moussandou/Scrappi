@@ -339,6 +339,7 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
             strokeColor: !isPostIt ? '#1a1e26' : undefined,
         };
         addElement(newElement);
+        setSelectedIds([id]);
     };
 
     const handleStrokeWidthChange = (width: number) => {
@@ -623,8 +624,10 @@ export default function CanvasEditorLayout({ projectId }: { projectId: string })
                                             { key: 'A', label: 'Flèche' },
                                             { key: 'E', label: 'Gomme' },
                                             { key: '⌘A', label: 'Tout choisir' },
+                                            { key: '⌘G', label: 'Grouper' },
+                                            { key: '⌘⇧G', label: 'Dégrouper' },
                                             { key: '⌘Z', label: 'Annuler' },
-                                            { key: '⌘Y', label: 'Refaire' },
+                                            { key: '⌘⇧Z', label: 'Refaire' },
                                             { key: '⌫', label: 'Supprimer' },
                                         ].map((item) => (
                                             <div key={item.key} className="flex items-center justify-between text-[10px]">

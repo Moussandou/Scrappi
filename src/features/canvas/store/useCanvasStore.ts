@@ -95,12 +95,18 @@ export const useCanvasStore = create<CanvasState>()((set, get) => {
 
         // Data Actions
         setElements: (elements) => {
-            set({ elements }); // Explicitly set without recording history (used for loading)
+            set((state) => {
+                const historyUpdates = saveHistory(`Réorganisation des plans`, state);
+                return {
+                    ...historyUpdates,
+                    elements
+                };
+            });
         },
 
         addElement: (element) => {
             set((state) => {
-                const actionName = `Ajout ${element.type === 'text' ? 'de texte' : element.type === 'image' ? "d'image" : element.type === 'line' ? 'de ligne' : "d'élément"}`;
+                const actionName = `Ajout ${element.type === 'text' ? 'de texte' : element.type === 'image' ? "d'image" : element.type === 'line' ? 'de ligne' : element.type === 'arrow' ? 'de flèche' : "d'élément"}`;
                 const historyUpdates = saveHistory(actionName, state);
                 return {
                     ...historyUpdates,

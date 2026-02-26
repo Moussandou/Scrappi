@@ -14,6 +14,7 @@ const NO_OP = () => { };
 
 export function useMediaManager(projectId: string, storageMode: StorageMode) {
     const addElement = useCanvasStore(state => state?.addElement) || NO_OP;
+    const setSelectedIds = useCanvasStore(state => state?.setSelectedIds) || NO_OP;
     const scale = useCanvasStore(state => state?.scale) ?? 1;
     const position = useCanvasStore(state => state?.position) || DEFAULT_POSITION;
     // Using useCanvasStore.getState() might be better for non-reactive reads, but this ensures reactivity when count changes.
@@ -59,6 +60,7 @@ export function useMediaManager(projectId: string, storageMode: StorageMode) {
                 zIndex: elementsCount + 1,
             };
             addElement(newElement);
+            setSelectedIds([newElement.id]);
         } catch (error) {
             console.error("Failed to upload image", error);
             alert("Erreur lors de l'upload de l'image.");
@@ -112,6 +114,7 @@ export function useMediaManager(projectId: string, storageMode: StorageMode) {
                 loop: true,
             };
             addElement(newElement);
+            setSelectedIds([newElement.id]);
         } catch (error) {
             console.error("Failed to upload video", error);
             alert("Erreur lors de l'upload de la vidéo.");
@@ -148,6 +151,7 @@ export function useMediaManager(projectId: string, storageMode: StorageMode) {
                 zIndex: elementsCount + 1,
             };
             addElement(newElement);
+            setSelectedIds([newElement.id]);
         } catch (error) {
             console.error("Failed to add sticker", error);
         } finally {
@@ -187,6 +191,7 @@ export function useMediaManager(projectId: string, storageMode: StorageMode) {
                 zIndex: elementsCount + 1,
             };
             addElement(newElement);
+            setSelectedIds([newElement.id]);
         } catch (error) {
             console.error("Failed to upload image from drop", error);
             alert("Erreur lors de l'upload de l'image.");

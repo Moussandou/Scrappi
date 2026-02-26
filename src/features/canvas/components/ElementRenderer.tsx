@@ -129,7 +129,6 @@ export const RenderElement = memo(function RenderElement({
                     height={element.height || 50}
                     rotation={element.rotation}
                     draggable={isDraggable}
-                    listening={isDraggable}
                     onClick={() => onSelect(element.id)}
                     onTap={() => onSelect(element.id)}
                     onDblClick={handleDoubleClick}

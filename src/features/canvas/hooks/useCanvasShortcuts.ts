@@ -45,48 +45,65 @@ export function useCanvasShortcuts(
 
         const handleKeyDown = (e: KeyboardEvent) => {
             const activeEl = document.activeElement;
-            const isTyping = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA" || activeEl?.getAttribute("contenteditable") === "true";
+            const isTyping = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA" || (activeEl as HTMLElement)?.isContentEditable;
 
             if (isTyping || isEditingTitleRef.current) return;
 
             const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
             const isMod = isMac ? e.metaKey : e.ctrlKey;
+            const key = e.key.toLowerCase();
 
+            // 1. Modifier Shortcuts (Cmd/Ctrl + Key)
             if (isMod) {
-                if (e.key.toLowerCase() === 'g') {
+                if (key === 'g') {
                     e.preventDefault();
-                    if (e.shiftKey) {
-                        ungroupElements?.(selectedIdsRef.current);
-                    } else {
-                        groupElements?.(selectedIdsRef.current);
-                    }
-                } else if (e.key.toLowerCase() === 'a') {
+                    if (e.shiftKey) ungroupElements?.(selectedIdsRef.current);
+                    else groupElements?.(selectedIdsRef.current);
+                    return;
+                }
+
+                if (key === 'a') {
                     e.preventDefault();
                     setSelectedIds?.(elementsRef.current.map(el => el.id));
-                } else if (e.key.toLowerCase() === 'z') {
+                    return;
+                }
+
+                if (key === 'z') {
                     e.preventDefault();
                     if (e.shiftKey) redo?.();
                     else undo?.();
-                } else if (e.key.toLowerCase() === 'y') {
+                    return;
+                }
+
+                if (key === 'y') {
                     e.preventDefault();
                     redo?.();
                     return;
                 }
+
+                // If Cmd is pressed but we didn't match anything above, don't allow tool switches
+                return;
             }
 
+            // 2. Global Functional Keys (No Modifiers)
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (selectedIdsRef.current.length > 0) {
+                    e.preventDefault();
                     removeElements?.(selectedIdsRef.current);
                 }
                 return;
             }
 
-            const key = e.key.toLowerCase();
-            if (key === 'v') setActiveTool?.('select');
-            else if (key === 'h') setActiveTool?.('hand');
-            else if (key === 'b') setActiveTool?.('draw');
-            else if (key === 'a') setActiveTool?.('arrow');
-            else if (key === 'e') setActiveTool?.('eraser');
+            // 3. Single-Key Tool Shortcuts (No Modifiers, No Alt)
+            if (e.altKey) return;
+
+            switch (key) {
+                case 'v': setActiveTool?.('select'); break;
+                case 'h': setActiveTool?.('hand'); break;
+                case 'b': setActiveTool?.('draw'); break;
+                case 'a': setActiveTool?.('arrow'); break;
+                case 'e': setActiveTool?.('eraser'); break;
+            }
         };
 
         window.addEventListener("keydown", handleKeyDown);

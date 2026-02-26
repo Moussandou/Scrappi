@@ -477,6 +477,7 @@ const InfiniteCanvas = forwardRef<CanvasStageRef>((props, ref) => {
         lastTouchRef.current = null;
         if (currentLine) {
             addElement(currentLine);
+            setSelectedIds([currentLine.id]);
             setCurrentLine(null);
         } else if (selectionBox) {
             // Box selection logic

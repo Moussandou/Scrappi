@@ -31,7 +31,7 @@ export default function Toolbar({
                 <ToolbarButton
                     onClick={() => setActiveTool('hand')}
                     isActive={activeTool === 'hand'}
-                    title="Main (Déplacer le canevas)"
+                    title="Main / Pan (H)"
                     icon="back_hand"
                 />
                 <ToolbarButton
@@ -43,7 +43,7 @@ export default function Toolbar({
                 <ToolbarButton
                     onClick={() => setActiveTool('draw')}
                     isActive={activeTool === 'draw'}
-                    title="Crayon / Dessiner (P)"
+                    title="Crayon / Dessiner (B)"
                     icon="brush"
                 />
                 <ToolbarButton
